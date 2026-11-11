@@ -1,6 +1,6 @@
-# Spec: Pode Gastar (v6, para revisão)
+# Spec: Pode Gastar (v6)
 
-Status: versão para revisão. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Substitui a v5. Mudança de spec vai na PR #1, conforme o CLAUDE.md.
+Status: aprovada e mesclada na main pela PR #1. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Substitui a v5. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Problema
 
