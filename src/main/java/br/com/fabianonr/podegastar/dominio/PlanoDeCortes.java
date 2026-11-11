@@ -3,8 +3,12 @@ package br.com.fabianonr.podegastar.dominio;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Monta as sugestões de corte (R5 e R6) para uma compra que não cabe no livre, mas cabe no total
@@ -109,8 +113,6 @@ final class PlanoDeCortes {
   }
 
   private Avaliacao semCobertura(BigDecimal aindaFalta) {
-    List<Item> todos = new ArrayList<>(emDiscussao);
-    todos.addAll(candidatos(Categoria.SERIA_LEGAL));
     if (compra.categoria() == Categoria.SERIA_LEGAL) {
       return Avaliacao.naoCabe(
           livre,
@@ -118,12 +120,73 @@ final class PlanoDeCortes {
           aindaFalta,
           "não há itens seria legal suficientes para cobrir a compra");
     }
+    if (compra.categoria() == Categoria.DEVO_FAZER) {
+      List<Sugestao> opcoes = opcoesDeUltimoRecurso();
+      if (!opcoes.isEmpty()) {
+        return cabeComCortes(opcoes, List.of(), null);
+      }
+    }
+    List<Item> todos = new ArrayList<>(emDiscussao);
+    todos.addAll(candidatos(Categoria.SERIA_LEGAL));
     todos.addAll(candidatos(Categoria.QUERO_FAZER));
     if (compra.categoria() == Categoria.DEVO_FAZER) {
       todos.addAll(candidatos(Categoria.DEVO_FAZER));
-      aindaFalta = falta.subtract(somaDeCortes(todos));
     }
-    return cabeComCortes(List.of(), todos, aindaFalta);
+    return cabeComCortes(List.of(), todos, falta.subtract(somaDeCortes(todos)));
+  }
+
+  /**
+   * R7: compra DEVO_FAZER que EM_DISCUSSAO, SERIA_LEGAL e QUERO_FAZER não cobrem. Os itens em
+   * discussão entram sempre primeiro, como em R6.
+   */
+  private List<Sugestao> opcoesDeUltimoRecurso() {
+    List<Item> seria = candidatos(Categoria.SERIA_LEGAL);
+    List<Item> quero = candidatos(Categoria.QUERO_FAZER);
+    List<Item> devo = candidatos(Categoria.DEVO_FAZER);
+    BigDecimal aposDiscussao = falta.subtract(somaDeCortes(emDiscussao));
+    BigDecimal aposSeria = aposDiscussao.subtract(somaDeCortes(seria));
+    BigDecimal aposQuero = aposSeria.subtract(somaDeCortes(quero));
+
+    Map<Set<String>, Sugestao> opcoes = new LinkedHashMap<>();
+
+    // Opção 1: todos os seria legal, todos os quero e um devo que feche o valor.
+    umDevoQueCubra(devo, aposQuero)
+        .ifPresent(
+            d -> guardar(opcoes, Opcao.OPCAO_1, juntar(emDiscussao, seria, quero, List.of(d))));
+
+    // Opção 2: todos os seria legal e a combinação de quero com devo de menor intensidade.
+    melhorCombinacao(juntar(quero, devo), aposSeria)
+        .ifPresent(c -> guardar(opcoes, Opcao.OPCAO_2, juntar(emDiscussao, seria, c)));
+
+    // Opção 3: todos os seria legal e um devo, por valor e intensidade baixa, se cobrir a falta.
+    umDevoQueCubra(devo, aposSeria)
+        .ifPresent(d -> guardar(opcoes, Opcao.OPCAO_3, juntar(emDiscussao, seria, List.of(d))));
+
+    return List.copyOf(opcoes.values());
+  }
+
+  /** Opções com os mesmos itens são a mesma sugestão; fica a primeira. */
+  private static void guardar(Map<Set<String>, Sugestao> opcoes, Opcao opcao, List<Item> itens) {
+    Set<String> chave = itens.stream().map(Item::nome).collect(Collectors.toSet());
+    opcoes.putIfAbsent(chave, Sugestao.de(opcao, itens));
+  }
+
+  private static Optional<Item> umDevoQueCubra(List<Item> devo, BigDecimal alvo) {
+    return devo.stream()
+        .filter(i -> i.valorDeCorte().compareTo(alvo) >= 0)
+        .min(
+            Comparator.comparing(Item::valorDeCorte)
+                .thenComparingInt(Item::intensidade)
+                .thenComparing(Item::nome));
+  }
+
+  @SafeVarargs
+  private static List<Item> juntar(List<Item>... listas) {
+    List<Item> todos = new ArrayList<>();
+    for (List<Item> lista : listas) {
+      todos.addAll(lista);
+    }
+    return todos;
   }
 
   private Avaliacao cabeComCortes(
