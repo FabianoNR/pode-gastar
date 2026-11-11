@@ -37,7 +37,7 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Ordem: primeiro os itens EM_DISCUSSAO, de qualquer categoria. Dentro deles, categoria (seria legal, depois quero, depois devo) e só depois intensidade (menor primeiro). Depois, os itens PENDENTE conforme a categoria da compra.
 - Compra seria legal: só itens seria legal. Nunca sugere trocar por quero ou devo. Se não bastar, a resposta é não, com motivo.
 - Compra quero ou devo: primeiro seria legal, depois quero.
-- Devo PENDENTE: só como último recurso, em três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e pares de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
+- Devo PENDENTE: só como último recurso, em três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
 - Se nenhuma opção cobrir, mostra a lista completa e o quanto ainda falta.
 - Itens REALIZADOS nunca são sugeridos. O cartão nunca é sugerido.
 - Item PARCIAL pode ser cortado: o corte cancela só o restante, e o item vira REALIZADO com o valor já gasto.

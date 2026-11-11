@@ -18,5 +18,5 @@ Data: 2026-11-09
 
 ## Consequências
 
-- Os testes de regra devem cobrir a fronteira de 50% e de 100% do saldo livre com valores de centavos.
+- Os testes de regra devem cobrir valores de centavos nas fronteiras de decisão definidas na spec.
 - Qualquer `double` ou `float` em código de valor monetário é erro de revisão e deve ser recusado no PR.
