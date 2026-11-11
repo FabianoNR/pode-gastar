@@ -37,13 +37,7 @@ public record Mes(
     if (valor.compareTo(total) > 0) {
       return Avaliacao.naoCabe(livre, total, valor.subtract(total), Avaliacao.MOTIVO_NAO_CABE);
     }
-    return Avaliacao.cabeComCortes(
-        livre,
-        total,
-        valor.subtract(livre),
-        Avaliacao.MOTIVO_CABE_COM_CORTES,
-        List.of(),
-        List.of());
+    return PlanoDeCortes.montar(itens, compra, livre, total, valor.subtract(livre));
   }
 
   private BigDecimal somar(Function<Item, BigDecimal> valor) {
