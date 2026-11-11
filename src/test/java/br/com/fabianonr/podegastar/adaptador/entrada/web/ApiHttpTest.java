@@ -5,16 +5,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.com.fabianonr.podegastar.configuracao.ConfiguracaoAplicacao;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Contrato HTTP da spec (v6): CA12, 404 para mesId inexistente e CA13. */
+@Import(ConfiguracaoAplicacao.class)
 @WebMvcTest(controllers = {AvaliacaoController.class, HealthController.class})
 class ApiHttpTest {
 
