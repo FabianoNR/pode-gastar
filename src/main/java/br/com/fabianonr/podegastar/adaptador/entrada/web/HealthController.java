@@ -9,6 +9,6 @@ public class HealthController {
 
   @GetMapping("/health")
   public Map<String, String> health() {
-    throw new UnsupportedOperationException("não implementado");
+    return Map.of("status", "UP");
   }
 }
