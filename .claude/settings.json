@@ -64,5 +64,18 @@
       "Bash(gh pr merge *)",
       "Bash(gh repo delete *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && { [ -f ./mvnw ] || exit 0; ./mvnw -q spotless:apply; }"
+          }
+        ]
+      }
+    ]
   }
 }
