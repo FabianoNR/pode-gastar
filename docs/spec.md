@@ -5,10 +5,11 @@ Status: v7 em revisão, ainda não aprovada nem mesclada na main. Substitui a v6
 ## Histórico
 
 - **v7 (2026-11-12):**
-  - R6: as combinações passam a ser ordenadas por menor soma de intensidades, depois por menor soma de valores, depois por ordem alfabética dos nomes.
+  - R6: as combinações passam a ser ordenadas por menor soma de intensidades, depois por menor soma de valores, depois pelo menor id.
   - R11 (nova): em compra `SERIA_LEGAL`, só entram nas sugestões itens `SERIA_LEGAL` e `EM_DISCUSSAO`.
   - O item ganha `id`, identificador interno único dentro do mês. O nome serve só para exibição, e itens com o mesmo nome continuam sendo itens diferentes.
-  - A resposta da avaliação ganha `avisos`, com uma mensagem por nome repetido no mês.
+  - A resposta da avaliação ganha `avisos`, com uma mensagem por nome repetido no mês. A comparação de nomes ignora maiúsculas e espaços nas pontas.
+  - Contrato: novo erro 422 para grupo com mais de 20 itens ao calcular as sugestões.
   - Os textos exibidos ao usuário vêm prontos do serviço de aplicação; a mensagem de `EM_DISCUSSAO` (R8) vira o campo `mensagem` do item.
   - Pendência registrada: o cartão de crédito ainda é reconhecido pelo nome.
 - **v6:** aprovada e mesclada na main pela PR #1. Escopo de decisão fechado. Substituiu a v5.
@@ -75,7 +76,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - Dentro de cada grupo, as combinações que cobrem a falta são ordenadas, nesta ordem:
     1. menor soma das intensidades dos itens da combinação;
     2. em empate, menor soma dos valores dos itens;
-    3. em empate, ordem alfabética dos nomes, só para o resultado ser sempre o mesmo.
+    3. em empate, menor id, na ordem alfabética dos ids. O id é único no mês, então o resultado é sempre o mesmo.
   - Uma combinação pode ter quantos itens forem necessários.
 - **R7.** Três opções para compra `DEVO_FAZER` sem cobertura:
   - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` que feche o valor.
@@ -104,10 +105,11 @@ Respostas:
 - **200, `NAO_CABE`:** `totalRestante`, `falta` e `motivo`, sem sugestões.
 - **400:** valor inválido ou categoria fora do conjunto. A mensagem aponta o campo.
 - **404:** `mesId` não existe.
+- **422:** grupo com mais de 20 itens ao calcular as sugestões. A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
 
 Cada item em `sugestoes` e em `listaCompleta` traz `id`, `nome`, `status` e, só para `EM_DISCUSSAO`, `decisorResponsavel` e `mensagem`.
 
-Todas as respostas 200 trazem `avisos`, uma lista de textos, vazia quando não há nada a avisar. Quando há dois ou mais itens com o mesmo nome no mês, `avisos` traz uma mensagem por nome repetido, citando o nome e os ids envolvidos. Nenhum item é removido nem escondido por causa disso.
+Todas as respostas 200 trazem `avisos`, uma lista de textos, vazia quando não há nada a avisar. Quando há dois ou mais itens com o mesmo nome no mês, `avisos` traz uma mensagem por nome repetido, citando os nomes e os ids envolvidos. A comparação de nomes ignora maiúsculas e espaços no início e no fim: "Jantar fora" e " jantar FORA " são nomes repetidos. Nenhum item é removido nem escondido por causa disso.
 
 ### Mensagens ao usuário
 
