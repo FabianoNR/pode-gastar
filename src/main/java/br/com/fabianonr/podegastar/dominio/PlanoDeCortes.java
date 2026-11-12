@@ -196,7 +196,7 @@ final class PlanoDeCortes {
             ? Avaliacao.MOTIVO_CABE_COM_CORTES
             : Avaliacao.MOTIVO_CABE_COM_CORTES
                 + "; mesmo cortando todos os itens elegíveis ainda faltariam "
-                + aindaFalta.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
+                + Dinheiro.formatar(aindaFalta);
     return Avaliacao.cabeComCortes(livre, totalRestante, falta, motivo, sugestoes, listaCompleta);
   }
 
