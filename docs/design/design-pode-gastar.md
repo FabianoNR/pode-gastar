@@ -1,7 +1,7 @@
 # Design: Pode Gastar, decisão de pode ou não pode
 
 Status: aprovado pelo Fabiano em 11/11/2026.
-Substitui qualquer entendimento anterior sobre o escopo de decisão. A spec correspondente é docs/spec.md (v6).
+Substitui qualquer entendimento anterior sobre o escopo de decisão. A spec correspondente é docs/spec.md (v7).
 
 ## Problema
 
@@ -35,7 +35,7 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 
 ### Sugestões de corte
 - Ordem: primeiro os itens EM_DISCUSSAO, de qualquer categoria. Dentro deles, categoria (seria legal, depois quero, depois devo) e só depois intensidade (menor primeiro). Depois, os itens PENDENTE conforme a categoria da compra.
-- Compra seria legal: só itens seria legal. Nunca sugere trocar por quero ou devo. Se não bastar, a resposta é não, com motivo.
+- Compra seria legal: entram itens seria legal e itens em discussão, de qualquer categoria; quero e devo pendentes ou parciais ficam de fora. Se não bastar, a resposta é não, com motivo.
 - Compra quero ou devo: primeiro seria legal, depois quero.
 - Devo PENDENTE: só como último recurso, em três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
 - Se nenhuma opção cobrir, mostra a lista completa e o quanto ainda falta.
@@ -54,7 +54,7 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Banco de dados e repositório real: depois.
 - O mês fica guardado no servidor. A consulta é GET /meses/{mesId}/avaliacao, com valor e categoria. O nome não entra na consulta.
 - Front web responsivo em Vue + Vite, em repositório separado da API. Mobile fica para depois, usando a mesma API.
-- Testes de arquitetura (ArchUnit) são desejáveis, mas são dependência nova, e precisam de autorização.
+- Testes de arquitetura (ArchUnit) são desejáveis, mas são dependência nova, e foram autorizados em 11/11/2026.
 
 ## Acréscimos da v7 (12/11/2026)
 
