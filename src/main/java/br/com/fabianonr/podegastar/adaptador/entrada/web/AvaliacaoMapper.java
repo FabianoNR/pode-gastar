@@ -53,7 +53,7 @@ final class AvaliacaoMapper {
   }
 
   private static ItemResponse item(Item i) {
-    return new ItemResponse(i.nome(), i.status().name(), i.decisorResponsavel());
+    return new ItemResponse(i.id(), i.nome(), i.status().name(), i.decisorResponsavel());
   }
 
   private static String nome(Decisao decisao) {

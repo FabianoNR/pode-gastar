@@ -3,6 +3,7 @@ package br.com.fabianonr.podegastar.dominio;
 import java.math.BigDecimal;
 
 public record Item(
+    String id,
     String nome,
     Categoria categoria,
     int intensidade,
@@ -11,6 +12,12 @@ public record Item(
     BigDecimal valorEstimado,
     BigDecimal valorRealizado,
     String decisorResponsavel) {
+
+  public Item {
+    if (id == null || id.isBlank()) {
+      throw new IllegalArgumentException("item sem id");
+    }
+  }
 
   /** O cartão de crédito nunca é sugerido para corte (design aprovado, R5). */
   public static final String NOME_CARTAO = "Cartão de crédito";

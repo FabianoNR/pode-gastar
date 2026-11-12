@@ -40,6 +40,7 @@ class LimiteDeItensHttpTest {
           IntStream.rangeClosed(1, 21)
               .mapToObj(numero ->
                   new Item(
+                      "item-" + numero,
                       "Item " + numero,
                       Categoria.SERIA_LEGAL,
                       1,

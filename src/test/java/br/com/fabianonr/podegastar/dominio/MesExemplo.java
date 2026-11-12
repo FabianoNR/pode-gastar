@@ -30,26 +30,39 @@ final class MesExemplo {
     return new BigDecimal(v);
   }
 
-  static Item pendente(String nome, Categoria categoria, int intensidade, String estimado) {
-    return new Item(nome, categoria, intensidade, true, PENDENTE, valor(estimado), null, null);
+  static Item pendente(
+      String id, String nome, Categoria categoria, int intensidade, String estimado) {
+    return new Item(id, nome, categoria, intensidade, true, PENDENTE, valor(estimado), null, null);
+  }
+
+  /** Item em discussão cujo id é o próprio nome, para testes que não precisam de id. */
+  static Item emDiscussao(
+      String nome, Categoria categoria, int intensidade, String estimado, String decisor) {
+    return emDiscussao(nome, nome, categoria, intensidade, estimado, decisor);
   }
 
   static Item emDiscussao(
-      String nome, Categoria categoria, int intensidade, String estimado, String decisor) {
+      String id,
+      String nome,
+      Categoria categoria,
+      int intensidade,
+      String estimado,
+      String decisor) {
     return new Item(
-        nome, categoria, intensidade, false, EM_DISCUSSAO, valor(estimado), null, decisor);
+        id, nome, categoria, intensidade, false, EM_DISCUSSAO, valor(estimado), null, decisor);
   }
 
   static Item viagem(StatusItem status, String realizado) {
-    return new Item(VIAGEM, QUERO_FAZER, 4, true, status, valor("300"), valor(realizado), null);
+    return new Item(
+        "item-3", VIAGEM, QUERO_FAZER, 4, true, status, valor("300"), valor(realizado), null);
   }
 
   static Item viagemPendente() {
-    return pendente(VIAGEM, QUERO_FAZER, 4, "300");
+    return pendente("item-3", VIAGEM, QUERO_FAZER, 4, "300");
   }
 
   static Item bolsa() {
-    return emDiscussao(BOLSA, QUERO_FAZER, 3, "90", "marido");
+    return emDiscussao("item-7", BOLSA, QUERO_FAZER, 3, "90", "marido");
   }
 
   /** Mês base, sem a bolsa: total restante 1600, livre 100. */
@@ -75,12 +88,12 @@ final class MesExemplo {
 
   private static List<Item> itensBase(Item viagem) {
     return Stream.of(
-            pendente(CARTAO, DEVO_FAZER, 5, "600"),
-            pendente(MANUTENCAO, DEVO_FAZER, 5, "200"),
+            pendente("item-1", CARTAO, DEVO_FAZER, 5, "600"),
+            pendente("item-2", MANUTENCAO, DEVO_FAZER, 5, "200"),
             viagem,
-            pendente(ITEM_CASA, QUERO_FAZER, 3, "200"),
-            pendente(JANTAR, SERIA_LEGAL, 2, "120"),
-            pendente(BOLA, SERIA_LEGAL, 2, "80"))
+            pendente("item-4", ITEM_CASA, QUERO_FAZER, 3, "200"),
+            pendente("item-5", JANTAR, SERIA_LEGAL, 2, "120"),
+            pendente("item-6", BOLA, SERIA_LEGAL, 2, "80"))
         .toList();
   }
 

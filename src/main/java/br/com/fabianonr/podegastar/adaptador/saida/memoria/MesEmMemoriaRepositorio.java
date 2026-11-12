@@ -33,16 +33,25 @@ public class MesEmMemoriaRepositorio implements MesRepositorio {
         new BigDecimal("3400"),
         new BigDecimal("1000"),
         List.of(
-            pendente(Item.NOME_CARTAO, DEVO_FAZER, 5, "600"),
-            pendente("Manutenção do carro", DEVO_FAZER, 5, "200"),
-            pendente("Viagem de fim de semana", QUERO_FAZER, 4, "300"),
-            pendente("Item para casa", QUERO_FAZER, 3, "200"),
-            pendente("Jantar fora no mês", SERIA_LEGAL, 2, "120"),
-            pendente("Bola de futebol", SERIA_LEGAL, 2, "80")));
+            pendente("item-1", Item.NOME_CARTAO, DEVO_FAZER, 5, "600"),
+            pendente("item-2", "Manutenção do carro", DEVO_FAZER, 5, "200"),
+            pendente("item-3", "Viagem de fim de semana", QUERO_FAZER, 4, "300"),
+            pendente("item-4", "Item para casa", QUERO_FAZER, 3, "200"),
+            pendente("item-5", "Jantar fora no mês", SERIA_LEGAL, 2, "120"),
+            pendente("item-6", "Bola de futebol", SERIA_LEGAL, 2, "80")));
   }
 
-  private static Item pendente(String nome, Categoria categoria, int intensidade, String valor) {
+  private static Item pendente(
+      String id, String nome, Categoria categoria, int intensidade, String valor) {
     return new Item(
-        nome, categoria, intensidade, true, StatusItem.PENDENTE, new BigDecimal(valor), null, null);
+        id,
+        nome,
+        categoria,
+        intensidade,
+        true,
+        StatusItem.PENDENTE,
+        new BigDecimal(valor),
+        null,
+        null);
   }
 }

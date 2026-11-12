@@ -1,7 +1,9 @@
 package br.com.fabianonr.podegastar.dominio;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public record Mes(
@@ -9,6 +11,7 @@ public record Mes(
 
   public Mes {
     itens = List.copyOf(itens);
+    exigirIdsUnicos(itens);
   }
 
   /** Renda, menos custo fixo, menos investimento. */
@@ -38,6 +41,15 @@ public record Mes(
       return Avaliacao.naoCabe(livre, total, valor.subtract(total), Avaliacao.MOTIVO_NAO_CABE);
     }
     return PlanoDeCortes.montar(itens, compra, livre, total, valor.subtract(livre));
+  }
+
+  private static void exigirIdsUnicos(List<Item> itens) {
+    Set<String> idsVistos = new HashSet<>();
+    for (Item item : itens) {
+      if (!idsVistos.add(item.id())) {
+        throw new IllegalArgumentException("id de item repetido no mês: " + item.id());
+      }
+    }
   }
 
   private BigDecimal somar(Function<Item, BigDecimal> valor) {
