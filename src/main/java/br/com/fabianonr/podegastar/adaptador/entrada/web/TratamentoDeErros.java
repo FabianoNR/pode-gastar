@@ -1,6 +1,7 @@
 package br.com.fabianonr.podegastar.adaptador.entrada.web;
 
 import br.com.fabianonr.podegastar.aplicacao.MesNaoEncontradoException;
+import br.com.fabianonr.podegastar.dominio.ItensDemaisParaCombinarException;
 import br.com.fabianonr.podegastar.dominio.ValorInvalidoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,12 @@ class TratamentoDeErros {
   ResponseEntity<ErroResponse> parametroAusente(MissingServletRequestParameterException e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(new ErroResponse(e.getParameterName(), e.getParameterName() + " é obrigatório"));
+  }
+
+  @ExceptionHandler(ItensDemaisParaCombinarException.class)
+  ResponseEntity<ErroResponse> itensDemais(ItensDemaisParaCombinarException e) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(new ErroResponse(null, e.getMessage()));
   }
 
   @ExceptionHandler(MesNaoEncontradoException.class)

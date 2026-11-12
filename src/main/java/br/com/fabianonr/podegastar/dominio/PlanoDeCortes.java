@@ -209,7 +209,7 @@ final class PlanoDeCortes {
   static Optional<List<Item>> melhorCombinacao(List<Item> grupo, BigDecimal alvo) {
     int n = grupo.size();
     if (n > MAXIMO_ITENS_POR_GRUPO) {
-      throw new IllegalStateException("itens demais para combinar: " + n);
+      throw new ItensDemaisParaCombinarException(MAXIMO_ITENS_POR_GRUPO);
     }
     List<Item> melhor = null;
     for (int mascara = 1; mascara < (1 << n); mascara++) {
