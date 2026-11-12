@@ -56,6 +56,33 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Front web responsivo em Vue + Vite, em repositório separado da API. Mobile fica para depois, usando a mesma API.
 - Testes de arquitetura (ArchUnit) são desejáveis, mas são dependência nova, e precisam de autorização.
 
+## Acréscimos da v7 (12/11/2026)
+
+Entendimento que sustenta a spec v7. Não repete a spec: registra o que ficou decidido sobre o modelo e sobre quem faz o quê.
+
+### Identidade do item
+- Cada item tem um id interno, único dentro do mês.
+- O nome serve só para exibição.
+- Itens com o mesmo nome são itens diferentes.
+
+### Nomes repetidos
+- Quando há nomes repetidos no mês, a resposta da avaliação traz avisos.
+- Nenhum item é removido ou escondido por causa disso.
+- A comparação de nomes ignora maiúsculas e espaços no início e no fim.
+
+### Quem monta as mensagens
+- Os textos de negócio (motivo, avisos e a mensagem de item em discussão) são montados pelo serviço de aplicação e vêm prontos na resposta.
+- A tela só exibe.
+- Os erros de formato da requisição (valor inválido, campo obrigatório) continuam no adaptador web.
+
+### Ordem das combinações
+- Menor soma de intensidades.
+- Em empate, menor soma de valores.
+- Em empate, o id.
+
+### Compra seria legal
+- Só entram no cálculo os itens seria legal e os itens em discussão.
+
 ## Fora de escopo nesta fase
 - Grupo, identificação de usuário, papéis e permissões.
 - Fluxo de solicitação, avaliação, aprovação e reprovação de itens.
