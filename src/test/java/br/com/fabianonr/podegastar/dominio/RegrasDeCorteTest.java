@@ -61,4 +61,21 @@ class RegrasDeCorteTest {
         .containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
     assertThat(a.motivo()).contains("ainda faltariam 600.00");
   }
+
+  @Test
+  @DisplayName(
+      "Item parcial já gasto além do previsto continua comprometido, mas não aparece na sugestão de corte")
+  void itemParcialGastoAlemDoPrevistoNaoApareceNaSugestaoDeCorte() {
+    // Viagem estimada em 300 e já gasta em 350: reserva 350 e cortar não libera nada.
+    Mes mes = comViagem(viagem(StatusItem.PARCIAL, "350"));
+    assertThat(mes.livre()).isEqualByComparingTo("50");
+
+    // falta 950; os itens que liberam valor somam 400, então sai a lista completa.
+    Avaliacao avaliacao = mes.avaliar(new Compra(valor("1000.00"), Categoria.QUERO_FAZER));
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
+        .containsExactlyInAnyOrder(JANTAR, BOLA, ITEM_CASA);
+    assertThat(avaliacao.motivo()).contains("ainda faltariam 550.00");
+  }
 }

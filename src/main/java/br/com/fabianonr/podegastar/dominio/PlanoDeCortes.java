@@ -103,11 +103,13 @@ final class PlanoDeCortes {
     return grupos;
   }
 
+  /** Item que não libera valor ao ser cortado (PARCIAL já gasto além do previsto) fica de fora. */
   private List<Item> candidatos(Categoria categoria) {
     return itens.stream()
         .filter(i -> i.categoria() == categoria)
         .filter(i -> i.status() == StatusItem.PENDENTE || i.status() == StatusItem.PARCIAL)
         .filter(Item::elegivelParaCorte)
+        .filter(item -> item.valorDeCorte().signum() > 0)
         .sorted(PRIORIDADE)
         .toList();
   }
