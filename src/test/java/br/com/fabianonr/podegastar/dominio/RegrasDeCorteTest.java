@@ -23,43 +23,44 @@ class RegrasDeCorteTest {
 
   @Test
   @DisplayName(
-      "R6: compra SERIA_LEGAL que os SERIA_LEGAL não cobrem é NAO_CABE, sem trocar por QUERO")
-  void seriaLegalSemCoberturaNaoCabe() {
+      "Compra SERIA_LEGAL que os SERIA_LEGAL não cobrem é NAO_CABE, sem trocar por QUERO (R6)")
+  void compraSeriaLegalSemCoberturaDeSeriaLegalNaoCabe() {
     // livre 100, falta 900; os SERIA_LEGAL cobrem só 200.
-    Avaliacao a = avaliar("1000.00", Categoria.SERIA_LEGAL);
+    Avaliacao avaliacao = avaliar("1000.00", Categoria.SERIA_LEGAL);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.NAO_CABE);
-    assertThat(a.motivo()).isEqualTo(Motivo.FALTAM_ITENS_SERIA_LEGAL);
-    assertThat(a.sugestoes()).isEmpty();
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.NAO_CABE);
+    assertThat(avaliacao.motivo()).isEqualTo(Motivo.FALTAM_ITENS_SERIA_LEGAL);
+    assertThat(avaliacao.sugestoes()).isEmpty();
   }
 
   @Test
-  @DisplayName("R7 opção 1: todos SERIA_LEGAL e QUERO_FAZER mais um DEVO_FAZER que fecha o valor")
-  void devoComOpcao1() {
+  @DisplayName("Opção 1: todos SERIA_LEGAL e QUERO_FAZER mais um DEVO_FAZER que fecha o valor (R7)")
+  void compraDevoFazerSemCoberturaUsaOpcaoComUmDevoFazerQueFechaOValor() {
     // falta 900; SERIA + QUERO cobrem 700; a manutenção (200) fecha. O cartão nunca entra.
-    Avaliacao a = avaliar("1000.00", Categoria.DEVO_FAZER);
+    Avaliacao avaliacao = avaliar("1000.00", Categoria.DEVO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("900");
-    assertThat(a.sugestoes()).hasSize(1);
-    Sugestao s = a.sugestoes().get(0);
-    assertThat(s.opcao()).isEqualTo(Opcao.OPCAO_1);
-    assertThat(nomes(s)).containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
-    assertThat(s.cobre()).isEqualByComparingTo("900");
-    assertThat(a.listaCompleta()).isEmpty();
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("900");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(sugestao.opcao()).isEqualTo(Opcao.OPCAO_1);
+    assertThat(nomes(sugestao))
+        .containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("900");
+    assertThat(avaliacao.listaCompleta()).isEmpty();
   }
 
   @Test
-  @DisplayName("R7: sem nenhuma opção que cubra, lista completa de elegíveis e quanto ainda falta")
-  void devoSemNenhumaOpcao() {
+  @DisplayName("Sem nenhuma opção que cubra, lista completa de elegíveis e quanto ainda falta (R7)")
+  void compraDevoFazerSemOpcaoQueCubraTrazListaCompletaEQuantoAindaFaltaria() {
     // falta 1500; elegíveis (sem o cartão) somam 900.
-    Avaliacao a = avaliar("1600.00", Categoria.DEVO_FAZER);
+    Avaliacao avaliacao = avaliar("1600.00", Categoria.DEVO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.sugestoes()).isEmpty();
-    assertThat(a.listaCompleta().stream().map(Item::nome))
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.sugestoes()).isEmpty();
+    assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
         .containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
-    assertThat(a.aindaFaltaria()).isEqualByComparingTo("600");
+    assertThat(avaliacao.aindaFaltaria()).isEqualByComparingTo("600");
   }
 
   @Test
