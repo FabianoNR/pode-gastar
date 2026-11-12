@@ -14,25 +14,16 @@ final class AvaliacaoMapper {
 
   static AvaliacaoResponse paraResposta(ResultadoDaAvaliacao resultado) {
     Avaliacao avaliacao = resultado.avaliacao();
-    String decisao = avaliacao.decisao().name();
     return switch (avaliacao.decisao()) {
       case APROVADO ->
-          new AvaliacaoResponse(
-              decisao,
-              null,
+          AvaliacaoResponse.aprovada(
               Dinheiro.formatar(avaliacao.livre()),
               Dinheiro.formatar(avaliacao.saldoRestante()),
-              null,
-              null,
-              null,
-              null,
               resultado.avisos());
       case CABE_COM_CORTES ->
-          new AvaliacaoResponse(
-              decisao,
+          AvaliacaoResponse.cabeComCortes(
               Dinheiro.formatar(avaliacao.totalRestante()),
               Dinheiro.formatar(avaliacao.livre()),
-              null,
               Dinheiro.formatar(avaliacao.falta()),
               resultado.motivo(),
               avaliacao.sugestoes().stream()
@@ -41,15 +32,10 @@ final class AvaliacaoMapper {
               avaliacao.listaCompleta().stream().map(item -> item(item, resultado)).toList(),
               resultado.avisos());
       case NAO_CABE ->
-          new AvaliacaoResponse(
-              decisao,
+          AvaliacaoResponse.naoCabe(
               Dinheiro.formatar(avaliacao.totalRestante()),
-              null,
-              null,
               Dinheiro.formatar(avaliacao.falta()),
               resultado.motivo(),
-              null,
-              null,
               resultado.avisos());
     };
   }

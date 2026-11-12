@@ -6,8 +6,8 @@ import br.com.fabianonr.podegastar.aplicacao.porta.saida.MesRepositorio;
 import br.com.fabianonr.podegastar.dominio.Avaliacao;
 import br.com.fabianonr.podegastar.dominio.Compra;
 import br.com.fabianonr.podegastar.dominio.Item;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AvaliarCompraService implements AvaliarCompra {
@@ -35,12 +35,17 @@ public class AvaliarCompraService implements AvaliarCompra {
   private static Map<String, String> mensagensDosItensEmDiscussao(Avaliacao avaliacao) {
     Stream<Item> itensSugeridos =
         avaliacao.sugestoes().stream().flatMap(sugestao -> sugestao.itens().stream());
-    return Stream.concat(itensSugeridos, avaliacao.listaCompleta().stream())
-        .filter(item -> MensagensDaAvaliacao.mensagemDoItem(item) != null)
-        .collect(
-            Collectors.toMap(
-                Item::id,
-                MensagensDaAvaliacao::mensagemDoItem,
-                (mesmaMensagem, repetida) -> mesmaMensagem));
+    Map<String, String> mensagensPorIdDoItem = new HashMap<>();
+    Stream.concat(itensSugeridos, avaliacao.listaCompleta().stream())
+        .forEach(item -> guardarMensagemDoItem(mensagensPorIdDoItem, item));
+    return mensagensPorIdDoItem;
+  }
+
+  /** Um item pode aparecer em mais de uma sugestão; a mensagem é a mesma, fica a primeira. */
+  private static void guardarMensagemDoItem(Map<String, String> mensagensPorIdDoItem, Item item) {
+    String mensagem = MensagensDaAvaliacao.mensagemDoItem(item);
+    if (mensagem != null) {
+      mensagensPorIdDoItem.putIfAbsent(item.id(), mensagem);
+    }
   }
 }
