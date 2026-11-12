@@ -88,7 +88,7 @@ class AvaliacaoMesBaseTest {
     assertThat(a.decisao()).isEqualTo(Decisao.NAO_CABE);
     assertThat(a.totalRestante()).isEqualByComparingTo("1600");
     assertThat(a.falta()).isEqualByComparingTo("100");
-    assertThat(a.motivo()).isEqualTo("compra excede o total que ainda sobra no mês");
+    assertThat(a.motivo()).isEqualTo(Motivo.COMPRA_EXCEDE_TOTAL_RESTANTE);
     assertThat(a.sugestoes()).isEmpty();
   }
 

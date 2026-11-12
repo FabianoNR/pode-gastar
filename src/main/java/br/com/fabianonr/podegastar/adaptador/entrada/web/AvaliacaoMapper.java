@@ -1,71 +1,72 @@
 package br.com.fabianonr.podegastar.adaptador.entrada.web;
 
+import br.com.fabianonr.podegastar.aplicacao.porta.entrada.ResultadoDaAvaliacao;
 import br.com.fabianonr.podegastar.dominio.Avaliacao;
-import br.com.fabianonr.podegastar.dominio.Decisao;
 import br.com.fabianonr.podegastar.dominio.Dinheiro;
 import br.com.fabianonr.podegastar.dominio.Item;
-import br.com.fabianonr.podegastar.dominio.NomeRepetido;
 import br.com.fabianonr.podegastar.dominio.Sugestao;
 import java.util.List;
 
-/** Traduz o domínio para o JSON do contrato (ADR 0003). */
+/** Traduz o resultado da aplicação para o JSON do contrato (ADR 0003). Não monta textos. */
 final class AvaliacaoMapper {
 
   private AvaliacaoMapper() {}
 
-  static AvaliacaoResponse paraResposta(Avaliacao a) {
-    return switch (a.decisao()) {
+  static AvaliacaoResponse paraResposta(ResultadoDaAvaliacao resultado) {
+    Avaliacao avaliacao = resultado.avaliacao();
+    String decisao = avaliacao.decisao().name();
+    return switch (avaliacao.decisao()) {
       case APROVADO ->
           new AvaliacaoResponse(
-              nome(a.decisao()),
+              decisao,
               null,
-              Dinheiro.formatar(a.livre()),
-              Dinheiro.formatar(a.saldoRestante()),
-              null,
-              null,
+              Dinheiro.formatar(avaliacao.livre()),
+              Dinheiro.formatar(avaliacao.saldoRestante()),
               null,
               null,
-              avisos(a));
+              null,
+              null,
+              resultado.avisos());
       case CABE_COM_CORTES ->
           new AvaliacaoResponse(
-              nome(a.decisao()),
-              Dinheiro.formatar(a.totalRestante()),
-              Dinheiro.formatar(a.livre()),
+              decisao,
+              Dinheiro.formatar(avaliacao.totalRestante()),
+              Dinheiro.formatar(avaliacao.livre()),
               null,
-              Dinheiro.formatar(a.falta()),
-              a.motivo(),
-              a.sugestoes().stream().map(AvaliacaoMapper::sugestao).toList(),
-              a.listaCompleta().stream().map(AvaliacaoMapper::item).toList(),
-              avisos(a));
+              Dinheiro.formatar(avaliacao.falta()),
+              resultado.motivo(),
+              avaliacao.sugestoes().stream()
+                  .map(sugestao -> sugestao(sugestao, resultado))
+                  .toList(),
+              avaliacao.listaCompleta().stream().map(item -> item(item, resultado)).toList(),
+              resultado.avisos());
       case NAO_CABE ->
           new AvaliacaoResponse(
-              nome(a.decisao()),
-              Dinheiro.formatar(a.totalRestante()),
+              decisao,
+              Dinheiro.formatar(avaliacao.totalRestante()),
               null,
               null,
-              Dinheiro.formatar(a.falta()),
-              a.motivo(),
+              Dinheiro.formatar(avaliacao.falta()),
+              resultado.motivo(),
               null,
               null,
-              avisos(a));
+              resultado.avisos());
     };
   }
 
-  /** Sempre presente; lista vazia quando não há nomes repetidos. */
-  private static List<String> avisos(Avaliacao a) {
-    return a.nomesRepetidos().stream().map(NomeRepetido::mensagem).toList();
+  private static SugestaoResponse sugestao(Sugestao sugestao, ResultadoDaAvaliacao resultado) {
+    List<ItemResponse> itens =
+        sugestao.itens().stream().map(item -> item(item, resultado)).toList();
+    return new SugestaoResponse(
+        sugestao.opcao().name(), itens, Dinheiro.formatar(sugestao.cobre()));
   }
 
-  private static SugestaoResponse sugestao(Sugestao s) {
-    List<ItemResponse> itens = s.itens().stream().map(AvaliacaoMapper::item).toList();
-    return new SugestaoResponse(s.opcao().name(), itens, Dinheiro.formatar(s.cobre()));
-  }
-
-  private static ItemResponse item(Item i) {
-    return new ItemResponse(i.id(), i.nome(), i.status().name(), i.decisorResponsavel());
-  }
-
-  private static String nome(Decisao decisao) {
-    return decisao.name();
+  private static ItemResponse item(Item item, ResultadoDaAvaliacao resultado) {
+    return new ItemResponse(
+        item.id(),
+        item.nome(),
+        item.status().name(),
+        item.decisorResponsavel(),
+        resultado.mensagemDoItem(item.id()));
   }
 }

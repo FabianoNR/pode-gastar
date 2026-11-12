@@ -29,7 +29,7 @@ class RegrasDeCorteTest {
     Avaliacao a = avaliar("1000.00", Categoria.SERIA_LEGAL);
 
     assertThat(a.decisao()).isEqualTo(Decisao.NAO_CABE);
-    assertThat(a.motivo()).isEqualTo("não há itens seria legal suficientes para cobrir a compra");
+    assertThat(a.motivo()).isEqualTo(Motivo.FALTAM_ITENS_SERIA_LEGAL);
     assertThat(a.sugestoes()).isEmpty();
   }
 
@@ -59,7 +59,7 @@ class RegrasDeCorteTest {
     assertThat(a.sugestoes()).isEmpty();
     assertThat(a.listaCompleta().stream().map(Item::nome))
         .containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
-    assertThat(a.motivo()).contains("ainda faltariam 600.00");
+    assertThat(a.aindaFaltaria()).isEqualByComparingTo("600");
   }
 
   @Test
@@ -76,6 +76,6 @@ class RegrasDeCorteTest {
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
         .containsExactlyInAnyOrder(JANTAR, BOLA, ITEM_CASA);
-    assertThat(avaliacao.motivo()).contains("ainda faltariam 550.00");
+    assertThat(avaliacao.aindaFaltaria()).isEqualByComparingTo("550");
   }
 }

@@ -116,11 +116,7 @@ final class PlanoDeCortes {
 
   private Avaliacao semCobertura(BigDecimal aindaFalta) {
     if (compra.categoria() == Categoria.SERIA_LEGAL) {
-      return Avaliacao.naoCabe(
-          livre,
-          totalRestante,
-          aindaFalta,
-          "não há itens seria legal suficientes para cobrir a compra");
+      return Avaliacao.naoCabe(livre, totalRestante, aindaFalta, Motivo.FALTAM_ITENS_SERIA_LEGAL);
     }
     if (compra.categoria() == Categoria.DEVO_FAZER) {
       List<Sugestao> opcoes = opcoesDeUltimoRecurso();
@@ -192,14 +188,9 @@ final class PlanoDeCortes {
   }
 
   private Avaliacao cabeComCortes(
-      List<Sugestao> sugestoes, List<Item> listaCompleta, BigDecimal aindaFalta) {
-    String motivo =
-        aindaFalta == null
-            ? Avaliacao.MOTIVO_CABE_COM_CORTES
-            : Avaliacao.MOTIVO_CABE_COM_CORTES
-                + "; mesmo cortando todos os itens elegíveis ainda faltariam "
-                + Dinheiro.formatar(aindaFalta);
-    return Avaliacao.cabeComCortes(livre, totalRestante, falta, motivo, sugestoes, listaCompleta);
+      List<Sugestao> sugestoes, List<Item> listaCompleta, BigDecimal aindaFaltaria) {
+    return Avaliacao.cabeComCortes(
+        livre, totalRestante, falta, sugestoes, listaCompleta, aindaFaltaria);
   }
 
   /**

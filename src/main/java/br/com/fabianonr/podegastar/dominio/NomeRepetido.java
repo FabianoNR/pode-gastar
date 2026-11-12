@@ -34,16 +34,6 @@ public record NomeRepetido(List<String> nomes, List<String> ids) {
         .toList();
   }
 
-  public String mensagem() {
-    String nomesEntreAspas =
-        nomes.stream().map(nome -> "\"" + nome + "\"").collect(Collectors.joining(", "));
-    return "Nome repetido neste mês: "
-        + nomesEntreAspas
-        + " (ids: "
-        + String.join(", ", ids)
-        + "). São itens diferentes.";
-  }
-
   private static NomeRepetido de(List<Item> itensComOMesmoNome) {
     List<Item> emOrdemDeId =
         itensComOMesmoNome.stream().sorted(Comparator.comparing(Item::id)).toList();

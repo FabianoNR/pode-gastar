@@ -3,20 +3,24 @@ package br.com.fabianonr.podegastar.dominio;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Resultado da avaliação de uma compra, só com dados. Os textos para o usuário são montados pela
+ * aplicação.
+ *
+ * @param aindaFaltaria quanto ainda faltaria mesmo cortando todos os itens elegíveis; só quando não
+ *     há combinação que cubra a falta e a resposta traz a lista completa
+ */
 public record Avaliacao(
     Decisao decisao,
     BigDecimal livre,
     BigDecimal saldoRestante,
     BigDecimal totalRestante,
     BigDecimal falta,
-    String motivo,
+    Motivo motivo,
+    BigDecimal aindaFaltaria,
     List<Sugestao> sugestoes,
     List<Item> listaCompleta,
     List<NomeRepetido> nomesRepetidos) {
-
-  public static final String MOTIVO_NAO_CABE = "compra excede o total que ainda sobra no mês";
-  public static final String MOTIVO_CABE_COM_CORTES =
-      "compra não cabe no livre; cabe no total restante com cortes";
 
   static Avaliacao aprovado(BigDecimal livre, BigDecimal totalRestante, BigDecimal saldoRestante) {
     return new Avaliacao(
@@ -26,13 +30,14 @@ public record Avaliacao(
         totalRestante,
         null,
         null,
+        null,
         List.of(),
         List.of(),
         List.of());
   }
 
   static Avaliacao naoCabe(
-      BigDecimal livre, BigDecimal totalRestante, BigDecimal falta, String motivo) {
+      BigDecimal livre, BigDecimal totalRestante, BigDecimal falta, Motivo motivo) {
     return new Avaliacao(
         Decisao.NAO_CABE,
         livre,
@@ -40,6 +45,7 @@ public record Avaliacao(
         totalRestante,
         falta,
         motivo,
+        null,
         List.of(),
         List.of(),
         List.of());
@@ -49,16 +55,17 @@ public record Avaliacao(
       BigDecimal livre,
       BigDecimal totalRestante,
       BigDecimal falta,
-      String motivo,
       List<Sugestao> sugestoes,
-      List<Item> listaCompleta) {
+      List<Item> listaCompleta,
+      BigDecimal aindaFaltaria) {
     return new Avaliacao(
         Decisao.CABE_COM_CORTES,
         livre,
         null,
         totalRestante,
         falta,
-        motivo,
+        Motivo.CABE_COM_CORTES,
+        aindaFaltaria,
         List.copyOf(sugestoes),
         List.copyOf(listaCompleta),
         List.of());
@@ -73,6 +80,7 @@ public record Avaliacao(
         totalRestante,
         falta,
         motivo,
+        aindaFaltaria,
         sugestoes,
         listaCompleta,
         List.copyOf(nomesRepetidosDoMes));

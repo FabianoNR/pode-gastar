@@ -48,7 +48,8 @@ public record Mes(
       return Avaliacao.aprovado(livre, total, livre.subtract(valor));
     }
     if (valor.compareTo(total) > 0) {
-      return Avaliacao.naoCabe(livre, total, valor.subtract(total), Avaliacao.MOTIVO_NAO_CABE);
+      return Avaliacao.naoCabe(
+          livre, total, valor.subtract(total), Motivo.COMPRA_EXCEDE_TOTAL_RESTANTE);
     }
     return PlanoDeCortes.montar(itens, compra, livre, total, valor.subtract(livre));
   }
