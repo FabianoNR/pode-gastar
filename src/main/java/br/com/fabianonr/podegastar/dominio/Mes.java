@@ -29,7 +29,17 @@ public record Mes(
     return orcamentoVariavel().subtract(somar(Item::jaSaiu));
   }
 
+  /** Decide a compra e acrescenta os nomes repetidos do mês, sem remover nenhum item. */
   public Avaliacao avaliar(Compra compra) {
+    return decidir(compra).comNomesRepetidos(nomesRepetidos());
+  }
+
+  /** Itens com o mesmo nome no mês, ignorando maiúsculas e espaços nas pontas. */
+  public List<NomeRepetido> nomesRepetidos() {
+    return NomeRepetido.encontrarEm(itens);
+  }
+
+  private Avaliacao decidir(Compra compra) {
     BigDecimal livre = livre();
     BigDecimal total = totalRestante();
     BigDecimal valor = compra.valor();

@@ -11,7 +11,8 @@ public record Avaliacao(
     BigDecimal falta,
     String motivo,
     List<Sugestao> sugestoes,
-    List<Item> listaCompleta) {
+    List<Item> listaCompleta,
+    List<NomeRepetido> nomesRepetidos) {
 
   public static final String MOTIVO_NAO_CABE = "compra excede o total que ainda sobra no mês";
   public static final String MOTIVO_CABE_COM_CORTES =
@@ -19,13 +20,29 @@ public record Avaliacao(
 
   static Avaliacao aprovado(BigDecimal livre, BigDecimal totalRestante, BigDecimal saldoRestante) {
     return new Avaliacao(
-        Decisao.APROVADO, livre, saldoRestante, totalRestante, null, null, List.of(), List.of());
+        Decisao.APROVADO,
+        livre,
+        saldoRestante,
+        totalRestante,
+        null,
+        null,
+        List.of(),
+        List.of(),
+        List.of());
   }
 
   static Avaliacao naoCabe(
       BigDecimal livre, BigDecimal totalRestante, BigDecimal falta, String motivo) {
     return new Avaliacao(
-        Decisao.NAO_CABE, livre, null, totalRestante, falta, motivo, List.of(), List.of());
+        Decisao.NAO_CABE,
+        livre,
+        null,
+        totalRestante,
+        falta,
+        motivo,
+        List.of(),
+        List.of(),
+        List.of());
   }
 
   static Avaliacao cabeComCortes(
@@ -43,6 +60,21 @@ public record Avaliacao(
         falta,
         motivo,
         List.copyOf(sugestoes),
-        List.copyOf(listaCompleta));
+        List.copyOf(listaCompleta),
+        List.of());
+  }
+
+  /** A mesma avaliação, com os nomes repetidos do mês. */
+  Avaliacao comNomesRepetidos(List<NomeRepetido> nomesRepetidosDoMes) {
+    return new Avaliacao(
+        decisao,
+        livre,
+        saldoRestante,
+        totalRestante,
+        falta,
+        motivo,
+        sugestoes,
+        listaCompleta,
+        List.copyOf(nomesRepetidosDoMes));
   }
 }

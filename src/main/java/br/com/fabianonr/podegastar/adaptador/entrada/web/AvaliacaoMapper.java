@@ -4,6 +4,7 @@ import br.com.fabianonr.podegastar.dominio.Avaliacao;
 import br.com.fabianonr.podegastar.dominio.Decisao;
 import br.com.fabianonr.podegastar.dominio.Dinheiro;
 import br.com.fabianonr.podegastar.dominio.Item;
+import br.com.fabianonr.podegastar.dominio.NomeRepetido;
 import br.com.fabianonr.podegastar.dominio.Sugestao;
 import java.util.List;
 
@@ -23,7 +24,8 @@ final class AvaliacaoMapper {
               null,
               null,
               null,
-              null);
+              null,
+              avisos(a));
       case CABE_COM_CORTES ->
           new AvaliacaoResponse(
               nome(a.decisao()),
@@ -33,7 +35,8 @@ final class AvaliacaoMapper {
               Dinheiro.formatar(a.falta()),
               a.motivo(),
               a.sugestoes().stream().map(AvaliacaoMapper::sugestao).toList(),
-              a.listaCompleta().stream().map(AvaliacaoMapper::item).toList());
+              a.listaCompleta().stream().map(AvaliacaoMapper::item).toList(),
+              avisos(a));
       case NAO_CABE ->
           new AvaliacaoResponse(
               nome(a.decisao()),
@@ -43,8 +46,14 @@ final class AvaliacaoMapper {
               Dinheiro.formatar(a.falta()),
               a.motivo(),
               null,
-              null);
+              null,
+              avisos(a));
     };
+  }
+
+  /** Sempre presente; lista vazia quando não há nomes repetidos. */
+  private static List<String> avisos(Avaliacao a) {
+    return a.nomesRepetidos().stream().map(NomeRepetido::mensagem).toList();
   }
 
   private static SugestaoResponse sugestao(Sugestao s) {

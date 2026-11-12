@@ -13,4 +13,5 @@ public record AvaliacaoResponse(
     String falta,
     String motivo,
     List<SugestaoResponse> sugestoes,
-    List<ItemResponse> listaCompleta) {}
+    List<ItemResponse> listaCompleta,
+    List<String> avisos) {}
