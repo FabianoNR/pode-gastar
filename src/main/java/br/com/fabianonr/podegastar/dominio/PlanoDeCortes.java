@@ -21,7 +21,7 @@ final class PlanoDeCortes {
 
   /** Categoria pesa antes da intensidade: seria legal, depois quero, depois devo. */
   private static final Comparator<Item> PRIORIDADE =
-      Comparator.comparingInt((Item i) -> posicao(i.categoria()))
+      Comparator.comparingInt((Item item) -> posicao(item.categoria()))
           .thenComparingInt(Item::intensidade)
           .thenComparing(Item::id);
 
@@ -45,7 +45,7 @@ final class PlanoDeCortes {
     this.falta = falta;
     this.emDiscussao =
         itens.stream()
-            .filter(i -> i.status() == StatusItem.EM_DISCUSSAO && i.elegivelParaCorte())
+            .filter(item -> item.status() == StatusItem.EM_DISCUSSAO && item.elegivelParaCorte())
             .sorted(PRIORIDADE)
             .toList();
   }
@@ -106,8 +106,8 @@ final class PlanoDeCortes {
   /** Item que não libera valor ao ser cortado (PARCIAL já gasto além do previsto) fica de fora. */
   private List<Item> candidatos(Categoria categoria) {
     return itens.stream()
-        .filter(i -> i.categoria() == categoria)
-        .filter(i -> i.status() == StatusItem.PENDENTE || i.status() == StatusItem.PARCIAL)
+        .filter(item -> item.categoria() == categoria)
+        .filter(item -> item.status() == StatusItem.PENDENTE || item.status() == StatusItem.PARCIAL)
         .filter(Item::elegivelParaCorte)
         .filter(item -> item.valorDeCorte().signum() > 0)
         .sorted(PRIORIDADE)
@@ -149,16 +149,18 @@ final class PlanoDeCortes {
 
     // Opção 1: todos os seria legal, todos os quero e um devo que feche o valor.
     umDevoQueCubra(devo, aposQuero)
-        .ifPresent(
-            d -> guardar(opcoes, Opcao.OPCAO_1, juntar(emDiscussao, seria, quero, List.of(d))));
+        .ifPresent(itemDevo ->
+            guardar(opcoes, Opcao.OPCAO_1, juntar(emDiscussao, seria, quero, List.of(itemDevo))));
 
     // Opção 2: todos os seria legal e a combinação de quero com devo de menor intensidade.
     melhorCombinacao(juntar(quero, devo), aposSeria)
-        .ifPresent(c -> guardar(opcoes, Opcao.OPCAO_2, juntar(emDiscussao, seria, c)));
+        .ifPresent(
+            combinacao -> guardar(opcoes, Opcao.OPCAO_2, juntar(emDiscussao, seria, combinacao)));
 
     // Opção 3: todos os seria legal e um devo, por valor e intensidade baixa, se cobrir a falta.
     umDevoQueCubra(devo, aposSeria)
-        .ifPresent(d -> guardar(opcoes, Opcao.OPCAO_3, juntar(emDiscussao, seria, List.of(d))));
+        .ifPresent(itemDevo ->
+            guardar(opcoes, Opcao.OPCAO_3, juntar(emDiscussao, seria, List.of(itemDevo))));
 
     return List.copyOf(opcoes.values());
   }
@@ -171,7 +173,7 @@ final class PlanoDeCortes {
 
   private static Optional<Item> umDevoQueCubra(List<Item> devo, BigDecimal alvo) {
     return devo.stream()
-        .filter(i -> i.valorDeCorte().compareTo(alvo) >= 0)
+        .filter(item -> item.valorDeCorte().compareTo(alvo) >= 0)
         .min(
             Comparator.comparing(Item::valorDeCorte)
                 .thenComparingInt(Item::intensidade)
@@ -198,14 +200,14 @@ final class PlanoDeCortes {
    * de valores, depois menor id (R6). Combinação pode ter quantos itens forem necessários.
    */
   static Optional<List<Item>> melhorCombinacao(List<Item> grupo, BigDecimal alvo) {
-    int n = grupo.size();
-    if (n > MAXIMO_ITENS_POR_GRUPO) {
+    int quantidadeDeItens = grupo.size();
+    if (quantidadeDeItens > MAXIMO_ITENS_POR_GRUPO) {
       throw new ItensDemaisParaCombinarException(MAXIMO_ITENS_POR_GRUPO);
     }
     List<Item> melhor = null;
-    for (int mascara = 1; mascara < (1 << n); mascara++) {
+    for (int mascara = 1; mascara < (1 << quantidadeDeItens); mascara++) {
       List<Item> combinacao = new ArrayList<>();
-      for (int i = 0; i < n; i++) {
+      for (int i = 0; i < quantidadeDeItens; i++) {
         if ((mascara & (1 << i)) != 0) {
           combinacao.add(grupo.get(i));
         }
@@ -219,7 +221,8 @@ final class PlanoDeCortes {
   }
 
   private static final Comparator<List<Item>> COMBINACAO =
-      Comparator.<List<Item>>comparingInt(c -> c.stream().mapToInt(Item::intensidade).sum())
+      Comparator.<List<Item>>comparingInt(
+              combinacao -> combinacao.stream().mapToInt(Item::intensidade).sum())
           .thenComparing(PlanoDeCortes::somaDeCortes)
           .thenComparing(PlanoDeCortes::compararPeloMenorId);
 
