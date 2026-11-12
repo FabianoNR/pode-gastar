@@ -1,6 +1,17 @@
-# Spec: Pode Gastar (v6)
+# Spec: Pode Gastar (v7)
 
-Status: aprovada e mesclada na main pela PR #1. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Substitui a v5. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v7 em revisão, ainda não aprovada nem mesclada na main. Substitui a v6. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+
+## Histórico
+
+- **v7 (2026-11-12):**
+  - R6: as combinações passam a ser ordenadas por menor soma de intensidades, depois por menor soma de valores, depois por ordem alfabética dos nomes.
+  - R11 (nova): em compra `SERIA_LEGAL`, só entram nas sugestões itens `SERIA_LEGAL` e `EM_DISCUSSAO`.
+  - O item ganha `id`, identificador interno único dentro do mês. O nome serve só para exibição, e itens com o mesmo nome continuam sendo itens diferentes.
+  - A resposta da avaliação ganha `avisos`, com uma mensagem por nome repetido no mês.
+  - Os textos exibidos ao usuário vêm prontos do serviço de aplicação; a mensagem de `EM_DISCUSSAO` (R8) vira o campo `mensagem` do item.
+  - Pendência registrada: o cartão de crédito ainda é reconhecido pelo nome.
+- **v6:** aprovada e mesclada na main pela PR #1. Escopo de decisão fechado. Substituiu a v5.
 
 ## Problema
 
@@ -14,7 +25,8 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
 - **Orçamento variável:** renda, menos custo fixo, menos investimento.
 - **Mês:** conjunto de renda, custo fixo, investimento e custos variáveis. Fica guardado no servidor.
 - **Custo variável:** gasto que não é fixo nem investimento. Cada item tem:
-  - nome;
+  - id: identificador interno do item, único dentro do mês;
+  - nome: usado só para exibição;
   - categoria: `DEVO_FAZER`, `QUERO_FAZER` ou `SERIA_LEGAL`;
   - intensidade: inteiro de 1 a 5;
   - planejado: sim ou não;
@@ -22,6 +34,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - valor realizado: o que já foi gasto, quando houver gasto;
   - status: `PENDENTE`, `EM_DISCUSSAO`, `PARCIAL` ou `REALIZADO`;
   - decisor responsável: só para `EM_DISCUSSAO`.
+  - A identidade do item é o `id`. Dois itens com o mesmo nome continuam sendo itens diferentes: nunca se fundem nem se escondem por causa do nome.
 - **Compra:** simulação de um gasto novo, com valor e categoria. Não vira item do mês.
 
 ### Status dos itens
@@ -56,18 +69,23 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
 - **R6.** Ordem das sugestões:
   1. Itens `EM_DISCUSSAO`, de qualquer categoria. Dentro deles, a ordem é pela categoria (seria legal, depois quero, depois devo) e só depois pela intensidade (menor primeiro).
   2. Depois, conforme a categoria da compra:
-     - Compra `SERIA_LEGAL`: só `SERIA_LEGAL` `PENDENTE` elegíveis. Nenhum `QUERO_FAZER` ou `DEVO_FAZER` `PENDENTE` é sugerido como troca. Se não bastarem, `NAO_CABE`, com motivo "não há itens seria legal suficientes para cobrir a compra".
+     - Compra `SERIA_LEGAL`: só `SERIA_LEGAL` `PENDENTE` elegíveis. Nenhum `QUERO_FAZER` ou `DEVO_FAZER` `PENDENTE` é sugerido como troca. Se não bastarem, `NAO_CABE`, com motivo "não há itens seria legal suficientes para cobrir a compra". Ver R11.
      - Compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro `SERIA_LEGAL` `PENDENTE`; se não bastarem, `QUERO_FAZER` `PENDENTE`.
      - Compra `DEVO_FAZER` não coberta por todos os `SERIA_LEGAL` mais todos os `QUERO_FAZER`: aplica-se R7.
-  - Dentro de cada grupo, as combinações são ordenadas por menor intensidade e, depois, por menor valor que cubra a falta. Uma combinação pode ter quantos itens forem necessários.
+  - Dentro de cada grupo, as combinações que cobrem a falta são ordenadas, nesta ordem:
+    1. menor soma das intensidades dos itens da combinação;
+    2. em empate, menor soma dos valores dos itens;
+    3. em empate, ordem alfabética dos nomes, só para o resultado ser sempre o mesmo.
+  - Uma combinação pode ter quantos itens forem necessários.
 - **R7.** Três opções para compra `DEVO_FAZER` sem cobertura:
   - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` que feche o valor.
   - **Opção 2:** todos os `SERIA_LEGAL` e combinações de cortes (`QUERO_FAZER` com `DEVO_FAZER` `PENDENTE`) que somem o valor restante, começando pelos de menor intensidade.
   - **Opção 3:** todos os `SERIA_LEGAL` e um `DEVO_FAZER` `PENDENTE`, escolhido por valor e intensidade baixa, se cobrir a falta.
   - Se nenhuma opção cobrir a falta, a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria.
-- **R8.** Item `EM_DISCUSSAO` na sugestão traz o decisor responsável: "aguardando decisão de {decisor responsável}".
+- **R8.** Item `EM_DISCUSSAO` na sugestão traz o decisor responsável e o campo `mensagem`, com o texto "aguardando decisão de {decisor responsável}". O serviço de aplicação monta a mensagem (ver "Mensagens ao usuário").
 - **R9.** Investimento: `APLICADO` é imutável. `PLANEJADO` pode ser editado, mas a edição fica fora desta fase.
 - **R10.** A decisão só mostra o que sairia. Quem executa o corte fica fora desta fase.
+- **R11.** Compra `SERIA_LEGAL`: só entram nas sugestões itens `SERIA_LEGAL` elegíveis (R5) e itens `EM_DISCUSSAO`, de qualquer categoria, como em R6. Itens `QUERO_FAZER` e `DEVO_FAZER` em qualquer outro status (`PENDENTE` ou `PARCIAL`) nunca entram nesse cálculo, nem quando os demais não cobrem a compra. Nesse caso a decisão é `NAO_CABE`, com o motivo da R6.
 
 ## Contrato da API (rascunho)
 
@@ -87,7 +105,17 @@ Respostas:
 - **400:** valor inválido ou categoria fora do conjunto. A mensagem aponta o campo.
 - **404:** `mesId` não existe.
 
-Exemplo de resposta para `CABE_COM_CORTES`:
+Cada item em `sugestoes` e em `listaCompleta` traz `id`, `nome`, `status` e, só para `EM_DISCUSSAO`, `decisorResponsavel` e `mensagem`.
+
+Todas as respostas 200 trazem `avisos`, uma lista de textos, vazia quando não há nada a avisar. Quando há dois ou mais itens com o mesmo nome no mês, `avisos` traz uma mensagem por nome repetido, citando o nome e os ids envolvidos. Nenhum item é removido nem escondido por causa disso.
+
+### Mensagens ao usuário
+
+Os textos exibidos ao usuário (o `motivo` da decisão, os `avisos` e a `mensagem` de item `EM_DISCUSSAO`) são montados pelo serviço de aplicação e vêm prontos na resposta. A tela só exibe.
+
+Os erros de formato da requisição (valor inválido, campo obrigatório, categoria fora do conjunto) continuam sendo respondidos pelo adaptador web, com o 400 e o campo apontado.
+
+Exemplo de resposta para `CABE_COM_CORTES` (os ids do exemplo são ilustrativos):
 
 ```json
 {
@@ -100,13 +128,33 @@ Exemplo de resposta para `CABE_COM_CORTES`:
     {
       "opcao": "PADRAO",
       "itens": [
-        { "nome": "Bolsa", "status": "EM_DISCUSSAO", "decisorResponsavel": "marido" },
-        { "nome": "Bola de futebol", "status": "PENDENTE" }
+        {
+          "id": "item-7",
+          "nome": "Bolsa",
+          "status": "EM_DISCUSSAO",
+          "decisorResponsavel": "marido",
+          "mensagem": "aguardando decisão de marido"
+        },
+        { "id": "item-6", "nome": "Bola de futebol", "status": "PENDENTE" }
       ],
       "cobre": "170.00"
     }
   ],
-  "listaCompleta": []
+  "listaCompleta": [],
+  "avisos": []
+}
+```
+
+Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
+
+```json
+{
+  "decisao": "APROVADO",
+  "livre": "100.00",
+  "saldoRestante": "20.00",
+  "avisos": [
+    "Nome repetido neste mês: \"Jantar fora\" (ids: item-5, item-9). São itens diferentes."
+  ]
 }
 ```
 
@@ -177,3 +225,5 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 ## Perguntas em aberto
 
 Nenhuma para o escopo de decisão. Como o `mesId` é obtido, por usuário ou por grupo, fica para a funcionalidade de grupo.
+
+Pendência conhecida: o cartão de crédito (R5, CA11) ainda é reconhecido pelo nome. Enquanto isso, qualquer item com o nome "Cartão de crédito" é tratado como o cartão. A troca para um marcador próprio do item fica para depois.
