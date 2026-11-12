@@ -41,6 +41,14 @@ Esses comandos passam a existir depois do scaffold do projeto, que é o primeiro
 - Não adicione dependência nova sem perguntar.
 - Não altere a spec sem avisar. Mudança de spec vai em PR próprio, separado da implementação.
 
+## Qualidade de código
+
+Clean Code e SOLID são critério obrigatório para todo código de produção e de teste. A decisão está em `docs/decisions/0008-qualidade-de-codigo.md`.
+
+- Use nomes descritivos para classes, métodos, variáveis e testes. Variável de uma letra só em laço curto de índice.
+- Identificadores de regra de negócio (CA1, CB2 etc.) não aparecem em nome de classe, método ou variável. Eles ficam no `@DisplayName` do teste, entre parênteses, no final do texto. Exemplo: `@DisplayName("Decisão é negada quando o saldo não cobre a compra (CA8)")`.
+- O domínio não usa Spring, JPA nem adaptadores (ADR 0003). Hoje a revisão confere isso; um teste de ArchUnit que impõe a regra entra em fatia própria.
+
 ## Proibido
 
 - Ler ou escrever `.env`, credenciais e chaves.
