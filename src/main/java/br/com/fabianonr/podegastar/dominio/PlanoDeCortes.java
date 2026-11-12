@@ -23,7 +23,7 @@ final class PlanoDeCortes {
   private static final Comparator<Item> PRIORIDADE =
       Comparator.comparingInt((Item i) -> posicao(i.categoria()))
           .thenComparingInt(Item::intensidade)
-          .thenComparing(Item::nome);
+          .thenComparing(Item::id);
 
   private final List<Item> itens;
   private final Compra compra;
@@ -167,10 +167,10 @@ final class PlanoDeCortes {
     return List.copyOf(opcoes.values());
   }
 
-  /** Opções com os mesmos itens são a mesma sugestão; fica a primeira. */
+  /** Opções com os mesmos itens (mesmos ids) são a mesma sugestão; fica a primeira. */
   private static void guardar(Map<Set<String>, Sugestao> opcoes, Opcao opcao, List<Item> itens) {
-    Set<String> chave = itens.stream().map(Item::nome).collect(Collectors.toSet());
-    opcoes.putIfAbsent(chave, Sugestao.de(opcao, itens));
+    Set<String> idsDaOpcao = itens.stream().map(Item::id).collect(Collectors.toSet());
+    opcoes.putIfAbsent(idsDaOpcao, Sugestao.de(opcao, itens));
   }
 
   private static Optional<Item> umDevoQueCubra(List<Item> devo, BigDecimal alvo) {
@@ -179,7 +179,7 @@ final class PlanoDeCortes {
         .min(
             Comparator.comparing(Item::valorDeCorte)
                 .thenComparingInt(Item::intensidade)
-                .thenComparing(Item::nome));
+                .thenComparing(Item::id));
   }
 
   @SafeVarargs
@@ -203,8 +203,8 @@ final class PlanoDeCortes {
   }
 
   /**
-   * Entre as combinações do grupo que cobrem o alvo, a de menor intensidade e, depois, a de menor
-   * valor. Combinação pode ter quantos itens forem necessários.
+   * Entre as combinações do grupo que cobrem o alvo: menor soma de intensidades, depois menor soma
+   * de valores, depois menor id (R6). Combinação pode ter quantos itens forem necessários.
    */
   static Optional<List<Item>> melhorCombinacao(List<Item> grupo, BigDecimal alvo) {
     int n = grupo.size();
@@ -230,7 +230,25 @@ final class PlanoDeCortes {
   private static final Comparator<List<Item>> COMBINACAO =
       Comparator.<List<Item>>comparingInt(c -> c.stream().mapToInt(Item::intensidade).sum())
           .thenComparing(PlanoDeCortes::somaDeCortes)
-          .thenComparing(c -> c.stream().map(Item::nome).toList().toString());
+          .thenComparing(PlanoDeCortes::compararPeloMenorId);
+
+  /** Compara os ids de cada combinação, em ordem alfabética, até o primeiro diferente. */
+  private static int compararPeloMenorId(List<Item> primeira, List<Item> segunda) {
+    List<String> idsDaPrimeira = idsEmOrdemAlfabetica(primeira);
+    List<String> idsDaSegunda = idsEmOrdemAlfabetica(segunda);
+    int quantidadeComum = Math.min(idsDaPrimeira.size(), idsDaSegunda.size());
+    for (int i = 0; i < quantidadeComum; i++) {
+      int comparacao = idsDaPrimeira.get(i).compareTo(idsDaSegunda.get(i));
+      if (comparacao != 0) {
+        return comparacao;
+      }
+    }
+    return Integer.compare(idsDaPrimeira.size(), idsDaSegunda.size());
+  }
+
+  private static List<String> idsEmOrdemAlfabetica(List<Item> combinacao) {
+    return combinacao.stream().map(Item::id).sorted().toList();
+  }
 
   private static int posicao(Categoria categoria) {
     return switch (categoria) {
