@@ -26,8 +26,8 @@ final class MesExemplo {
 
   private MesExemplo() {}
 
-  static BigDecimal valor(String v) {
-    return new BigDecimal(v);
+  static BigDecimal valor(String texto) {
+    return new BigDecimal(texto);
   }
 
   static Item pendente(

@@ -28,7 +28,7 @@ class ContratoAvaliacaoTest {
 
   @Test
   @DisplayName("200 APROVADO traz livre e saldoRestante, sem sugestões")
-  void aprovado() throws Exception {
+  void aprovadoTrazLivreESaldoRestanteSemSugestoes() throws Exception {
     avaliar("80.00", "QUERO_FAZER")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("APROVADO"))
@@ -40,7 +40,7 @@ class ContratoAvaliacaoTest {
   @Test
   @DisplayName(
       "200 CABE_COM_CORTES traz totalRestante, livre, falta, motivo, sugestoes e listaCompleta")
-  void cabeComCortes() throws Exception {
+  void cabeComCortesTrazSugestoesEListaCompleta() throws Exception {
     avaliar("150.00", "SERIA_LEGAL")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("CABE_COM_CORTES"))
@@ -58,7 +58,7 @@ class ContratoAvaliacaoTest {
 
   @Test
   @DisplayName("200 NAO_CABE traz totalRestante, falta e motivo, sem sugestões")
-  void naoCabe() throws Exception {
+  void naoCabeTrazTotalRestanteFaltaEMotivoSemSugestoes() throws Exception {
     avaliar("1700.00", "QUERO_FAZER")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("NAO_CABE"))
@@ -70,7 +70,7 @@ class ContratoAvaliacaoTest {
 
   @Test
   @DisplayName("400 para categoria fora do conjunto, com a mensagem apontando o campo")
-  void categoriaInvalida() throws Exception {
+  void categoriaInvalidaRetorna400ApontandoOCampo() throws Exception {
     avaliar("80.00", "NAO_EXISTE")
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.campo").value("categoria"));
@@ -78,7 +78,7 @@ class ContratoAvaliacaoTest {
 
   @Test
   @DisplayName("400 para valor com mais de duas casas decimais, apontando o campo")
-  void valorComTresCasas() throws Exception {
+  void valorComTresCasasRetorna400ApontandoOCampo() throws Exception {
     avaliar("80.123", "QUERO_FAZER")
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.campo").value("valor"));
@@ -86,7 +86,7 @@ class ContratoAvaliacaoTest {
 
   @Test
   @DisplayName("400 para valor ausente ou não numérico, apontando o campo")
-  void valorNaoNumerico() throws Exception {
+  void valorNaoNumericoRetorna400ApontandoOCampo() throws Exception {
     avaliar("abc", "QUERO_FAZER")
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.campo").value("valor"));

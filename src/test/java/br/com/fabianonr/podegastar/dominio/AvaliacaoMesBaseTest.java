@@ -19,119 +19,122 @@ class AvaliacaoMesBaseTest {
   }
 
   private static List<String> nomesSugeridos(Avaliacao avaliacao) {
-    return avaliacao.sugestoes().stream().flatMap(s -> s.itens().stream()).map(Item::nome).toList();
+    return avaliacao.sugestoes().stream()
+        .flatMap(sugestao -> sugestao.itens().stream())
+        .map(Item::nome)
+        .toList();
   }
 
   @Test
-  @DisplayName("CA1: 80 QUERO_FAZER é APROVADO, saldo restante 20, sem sugestão")
-  void ca1() {
-    Avaliacao a = avaliar(base(), "80.00", Categoria.QUERO_FAZER);
+  @DisplayName("80 QUERO_FAZER é APROVADO, saldo restante 20, sem sugestão (CA1)")
+  void compraQueCabeNoLivreEhAprovadaSemSugestao() {
+    Avaliacao avaliacao = avaliar(base(), "80.00", Categoria.QUERO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.APROVADO);
-    assertThat(a.livre()).isEqualByComparingTo("100");
-    assertThat(a.saldoRestante()).isEqualByComparingTo("20");
-    assertThat(a.sugestoes()).isEmpty();
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.APROVADO);
+    assertThat(avaliacao.livre()).isEqualByComparingTo("100");
+    assertThat(avaliacao.saldoRestante()).isEqualByComparingTo("20");
+    assertThat(avaliacao.sugestoes()).isEmpty();
   }
 
   @Test
-  @DisplayName("CA2: 300 QUERO_FAZER cabe com cortes, falta 200, sugere jantar e bola (200)")
-  void ca2() {
-    Avaliacao a = avaliar(base(), "300.00", Categoria.QUERO_FAZER);
+  @DisplayName("300 QUERO_FAZER cabe com cortes, falta 200, sugere jantar e bola (200) (CA2)")
+  void compraQueroFazerAcimaDoLivreSugereCortarSeriaLegal() {
+    Avaliacao avaliacao = avaliar(base(), "300.00", Categoria.QUERO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("200");
-    assertThat(a.sugestoes()).hasSize(1);
-    assertThat(nomes(a.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
-    assertThat(a.sugestoes().get(0).cobre()).isEqualByComparingTo("200");
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("200");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
+    assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("200");
   }
 
   @Test
-  @DisplayName("CA3: 150 SERIA_LEGAL cabe com cortes, falta 50, sugere a bola de futebol")
-  void ca3() {
-    Avaliacao a = avaliar(base(), "150.00", Categoria.SERIA_LEGAL);
+  @DisplayName("150 SERIA_LEGAL cabe com cortes, falta 50, sugere a bola de futebol (CA3)")
+  void compraSeriaLegalAcimaDoLivreSugereOItemSeriaLegalDeMenorIntensidade() {
+    Avaliacao avaliacao = avaliar(base(), "150.00", Categoria.SERIA_LEGAL);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("50");
-    assertThat(nomes(a.sugestoes().get(0))).containsExactly(BOLA);
-    assertThat(a.sugestoes().get(0).cobre()).isEqualByComparingTo("80");
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("50");
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLA);
+    assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("80");
   }
 
   @Test
-  @DisplayName("CA4: 250 DEVO_FAZER cabe com cortes, falta 150, sugere jantar e bola")
-  void ca4() {
-    Avaliacao a = avaliar(base(), "250.00", Categoria.DEVO_FAZER);
+  @DisplayName("250 DEVO_FAZER cabe com cortes, falta 150, sugere jantar e bola (CA4)")
+  void compraDevoFazerAcimaDoLivreSugereCortarSeriaLegalPrimeiro() {
+    Avaliacao avaliacao = avaliar(base(), "250.00", Categoria.DEVO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("150");
-    assertThat(nomes(a.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("150");
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
   }
 
   @Test
-  @DisplayName("CA5: 800 DEVO_FAZER, falta 700; opção 1 fecha exato com SERIA_LEGAL e QUERO_FAZER")
-  void ca5() {
-    Avaliacao a = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
+  @DisplayName("800 DEVO_FAZER, falta 700; opção 1 fecha exato com SERIA_LEGAL e QUERO_FAZER (CA5)")
+  void compraDevoFazerGrandeTemOpcaoQueFechaExatoComSeriaLegalEQueroFazer() {
+    Avaliacao avaliacao = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("700");
-    assertThat(a.sugestoes())
-        .anySatisfy(s -> {
-          assertThat(nomes(s)).containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA);
-          assertThat(s.cobre()).isEqualByComparingTo("700");
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("700");
+    assertThat(avaliacao.sugestoes())
+        .anySatisfy(sugestao -> {
+          assertThat(nomes(sugestao)).containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA);
+          assertThat(sugestao.cobre()).isEqualByComparingTo("700");
         });
   }
 
   @Test
-  @DisplayName("CA6: 1700 QUERO_FAZER é NAO_CABE, falta 100, sem sugestões")
-  void ca6() {
-    Avaliacao a = avaliar(base(), "1700.00", Categoria.QUERO_FAZER);
+  @DisplayName("1700 QUERO_FAZER é NAO_CABE, falta 100, sem sugestões (CA6)")
+  void compraAcimaDoTotalRestanteNaoCabe() {
+    Avaliacao avaliacao = avaliar(base(), "1700.00", Categoria.QUERO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.NAO_CABE);
-    assertThat(a.totalRestante()).isEqualByComparingTo("1600");
-    assertThat(a.falta()).isEqualByComparingTo("100");
-    assertThat(a.motivo()).isEqualTo(Motivo.COMPRA_EXCEDE_TOTAL_RESTANTE);
-    assertThat(a.sugestoes()).isEmpty();
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.NAO_CABE);
+    assertThat(avaliacao.totalRestante()).isEqualByComparingTo("1600");
+    assertThat(avaliacao.falta()).isEqualByComparingTo("100");
+    assertThat(avaliacao.motivo()).isEqualTo(Motivo.COMPRA_EXCEDE_TOTAL_RESTANTE);
+    assertThat(avaliacao.sugestoes()).isEmpty();
   }
 
   @Test
   @DisplayName(
-      "CA7: viagem PARCIAL (realizado 150): total restante 1450, livre 100; 100 QUERO aprova com saldo 0")
-  void ca7() {
+      "Viagem PARCIAL (realizado 150): total restante 1450, livre 100; 100 QUERO aprova com saldo 0 (CA7)")
+  void itemParcialReduzTotalRestanteEMantemComprometidoOEstimado() {
     Mes mes = comViagem(viagem(StatusItem.PARCIAL, "150"));
 
     assertThat(mes.totalRestante()).isEqualByComparingTo("1450");
     assertThat(mes.livre()).isEqualByComparingTo("100");
 
-    Avaliacao a = avaliar(mes, "100.00", Categoria.QUERO_FAZER);
-    assertThat(a.decisao()).isEqualTo(Decisao.APROVADO);
-    assertThat(a.saldoRestante()).isEqualByComparingTo("0");
+    Avaliacao avaliacao = avaliar(mes, "100.00", Categoria.QUERO_FAZER);
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.APROVADO);
+    assertThat(avaliacao.saldoRestante()).isEqualByComparingTo("0");
   }
 
   @Test
   @DisplayName(
-      "CA8: viagem REALIZADO (250): total restante 1350, livre 150; 150 QUERO aprova com saldo 0")
-  void ca8() {
+      "Viagem REALIZADO (250): total restante 1350, livre 150; 150 QUERO aprova com saldo 0 (CA8)")
+  void itemRealizadoComprometeSoOValorRealizado() {
     Mes mes = comViagem(viagem(StatusItem.REALIZADO, "250"));
 
     assertThat(mes.totalRestante()).isEqualByComparingTo("1350");
     assertThat(mes.livre()).isEqualByComparingTo("150");
 
-    Avaliacao a = avaliar(mes, "150.00", Categoria.QUERO_FAZER);
-    assertThat(a.decisao()).isEqualTo(Decisao.APROVADO);
-    assertThat(a.saldoRestante()).isEqualByComparingTo("0");
+    Avaliacao avaliacao = avaliar(mes, "150.00", Categoria.QUERO_FAZER);
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.APROVADO);
+    assertThat(avaliacao.saldoRestante()).isEqualByComparingTo("0");
   }
 
   @Test
   @DisplayName(
-      "CA9: caso CA8 com 200 QUERO: falta 50, sugere a bola; a viagem realizada nunca aparece")
-  void ca9() {
-    Avaliacao a =
+      "Viagem REALIZADO (250) e 200 QUERO: falta 50, sugere a bola; a viagem realizada nunca aparece (CA9)")
+  void itemRealizadoNuncaApareceNaSugestaoNemNaListaCompleta() {
+    Avaliacao avaliacao =
         avaliar(comViagem(viagem(StatusItem.REALIZADO, "250")), "200.00", Categoria.QUERO_FAZER);
 
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("50");
-    assertThat(nomes(a.sugestoes().get(0))).containsExactly(BOLA);
-    assertThat(nomesSugeridos(a)).doesNotContain(VIAGEM);
-    assertThat(a.listaCompleta().stream().map(Item::nome)).doesNotContain(VIAGEM);
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("50");
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLA);
+    assertThat(nomesSugeridos(avaliacao)).doesNotContain(VIAGEM);
+    assertThat(avaliacao.listaCompleta().stream().map(Item::nome)).doesNotContain(VIAGEM);
   }
 
   /**
@@ -142,19 +145,19 @@ class AvaliacaoMesBaseTest {
    */
   @Test
   @DisplayName(
-      "CA10: viagem PARCIAL (150) e 200 QUERO com livre insuficiente: cabe com cortes, falta 100")
-  void ca10() {
+      "Viagem PARCIAL (150) e 200 QUERO com livre insuficiente: cabe com cortes, falta 100 (CA10)")
+  void compraAcimaDoLivreComItemParcialCabeComCortes() {
     Mes mes = comViagem(viagem(StatusItem.PARCIAL, "150"));
-    Avaliacao a = avaliar(mes, "200.00", Categoria.QUERO_FAZER);
+    Avaliacao avaliacao = avaliar(mes, "200.00", Categoria.QUERO_FAZER);
 
     assertThat(mes.totalRestante()).isEqualByComparingTo("1450");
-    assertThat(a.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(a.falta()).isEqualByComparingTo("100");
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("100");
   }
 
   @Test
-  @DisplayName("CA11: o cartão de crédito nunca aparece como sugestão de corte")
-  void ca11() {
+  @DisplayName("O cartão de crédito nunca aparece como sugestão de corte (CA11)")
+  void cartaoDeCreditoNuncaApareceComoSugestaoDeCorte() {
     Avaliacao comOpcoes = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
     // 1600 não é coberto por nenhuma combinação elegível: sai a lista completa.
     Avaliacao semCobertura = avaliar(base(), "1600.00", Categoria.DEVO_FAZER);

@@ -25,10 +25,10 @@ class ApiHttpTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @ParameterizedTest(name = "CA12: valor={0} retorna 400")
+  @ParameterizedTest(name = "valor={0} retorna 400 (CA12)")
   @ValueSource(strings = {"0", "0.00", "-10.00"})
-  @DisplayName("CA12: valor zero ou negativo retorna 400")
-  void ca12ValorZeroOuNegativo(String valor) throws Exception {
+  @DisplayName("Valor zero ou negativo retorna 400 (CA12)")
+  void valorZeroOuNegativoRetorna400(String valor) throws Exception {
     mockMvc
         .perform(
             get("/meses/{mesId}/avaliacao", MES_ID)
@@ -39,7 +39,7 @@ class ApiHttpTest {
 
   @Test
   @DisplayName("404: mesId inexistente retorna 404")
-  void mesIdInexistente() throws Exception {
+  void mesIdInexistenteRetorna404() throws Exception {
     mockMvc
         .perform(
             get("/meses/{mesId}/avaliacao", "nao-existe")
@@ -49,8 +49,8 @@ class ApiHttpTest {
   }
 
   @Test
-  @DisplayName("CA13: GET /health retorna 200 com {\"status\": \"UP\"}")
-  void ca13Health() throws Exception {
+  @DisplayName("GET /health retorna 200 com {\"status\": \"UP\"} (CA13)")
+  void healthRetornaStatusUp() throws Exception {
     mockMvc
         .perform(get("/health"))
         .andExpect(status().isOk())
