@@ -1,0 +1,78 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'SHA completo (40 caracteres) do commit cuja imagem deve voltar ao ar'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/fabianonr/pode-gastar
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    env:
+      TARGET_SHA: ${{ inputs.sha }}
+    steps:
+      - name: Validar o SHA
+        run: |
+          if ! echo "$TARGET_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::sha deve ter 40 caracteres hexadecimais minúsculos."
+            exit 1
+          fi
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verificar que a imagem existe
+        run: |
+          if ! docker buildx imagetools inspect "${IMAGE}:${TARGET_SHA}" > /dev/null; then
+            echo "::error::Imagem ${IMAGE}:${TARGET_SHA} não encontrada no GHCR."
+            exit 1
+          fi
+
+      - name: Mover a tag main para a imagem do SHA
+        run: docker buildx imagetools create -t "${IMAGE}:main" "${IMAGE}:${TARGET_SHA}"
+
+      - name: Disparar o deploy hook do Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::Segredo RENDER_DEPLOY_HOOK_URL vazio."
+            exit 1
+          fi
+          curl --fail --silent --show-error --output /dev/null \
+            --request POST --get \
+            --data-urlencode "imgURL=${IMAGE}:${TARGET_SHA}" \
+            "$RENDER_DEPLOY_HOOK_URL"
+          echo "Deploy disparado para ${IMAGE}:${TARGET_SHA}."
+
+      - name: Consultar /health até responder UP
+        run: |
+          url="https://pode-gastar-api.onrender.com/health"
+          for attempt in $(seq 1 20); do
+            body=$(curl --silent --max-time 60 --write-out '\n%{http_code}' "$url" || true)
+            status=$(echo "$body" | tail -n 1)
+            if [ "$status" = "200" ] && echo "$body" | grep -q '"UP"'; then
+              echo "Tentativa ${attempt}: /health respondeu 200 com UP."
+              exit 0
+            fi
+            echo "Tentativa ${attempt}/20: status '${status}'. Nova tentativa em 30s."
+            sleep 30
+          done
+          echo "::error::/health não respondeu 200 com UP em 20 tentativas."
+          exit 1

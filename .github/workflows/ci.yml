@@ -19,3 +19,74 @@ jobs:
           cache: maven
 
       - run: ./mvnw verify
+
+  publish:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/fabianonr/pode-gastar:${{ github.sha }}
+            ghcr.io/fabianonr/pode-gastar:main
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    outputs:
+      deployed: ${{ steps.hook.outputs.deployed }}
+    steps:
+      - id: hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE_URL: ghcr.io/fabianonr/pode-gastar:${{ github.sha }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::warning::Segredo RENDER_DEPLOY_HOOK_URL vazio: deploy pulado."
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl --fail --silent --show-error --output /dev/null \
+            --request POST --get \
+            --data-urlencode "imgURL=${IMAGE_URL}" \
+            "$RENDER_DEPLOY_HOOK_URL"
+          echo "Deploy disparado para ${IMAGE_URL}."
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+
+  smoke-test:
+    needs: deploy
+    if: needs.deploy.outputs.deployed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar /health até responder UP
+        run: |
+          url="https://pode-gastar-api.onrender.com/health"
+          for attempt in $(seq 1 20); do
+            body=$(curl --silent --max-time 60 --write-out '\n%{http_code}' "$url" || true)
+            status=$(echo "$body" | tail -n 1)
+            if [ "$status" = "200" ] && echo "$body" | grep -q '"UP"'; then
+              echo "Tentativa ${attempt}: /health respondeu 200 com UP."
+              exit 0
+            fi
+            echo "Tentativa ${attempt}/20: status '${status}'. Nova tentativa em 30s."
+            sleep 30
+          done
+          echo "::error::/health não respondeu 200 com UP em 20 tentativas."
+          exit 1
