@@ -39,7 +39,7 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Compra quero ou devo: primeiro seria legal, depois quero.
 - Devo PENDENTE: só como último recurso, em três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
 - Se nenhuma opção cobrir, mostra a lista completa e o quanto ainda falta.
-- Compra quero que seria legal e quero não cobrem: não usa as três opções e nunca corta devo pendente. Mostra a lista completa (em discussão, seria legal e quero) e o quanto ainda falta, com o mesmo motivo (decisão de 16/11/2026).
+- Compra quero que seria legal e quero não cobrem: não usa as três opções. Só nesse caso, devo pendente entra como último recurso, na lista completa. Mostra a lista completa (primeiro em discussão; depois seria legal, quero e devo pendente, por categoria e, dentro dela, menor intensidade primeiro; o cartão nunca) e o quanto ainda falta, com o mesmo motivo (decisões de 16/11/2026).
 - Itens REALIZADOS nunca são sugeridos. O cartão nunca é sugerido.
 - Item PARCIAL pode ser cortado: o corte cancela só o restante, e o item vira REALIZADO com o valor já gasto.
 - Itens EM_DISCUSSAO trazem o decisor responsável, na mensagem "aguardando decisão de…".
