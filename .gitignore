@@ -2,3 +2,12 @@ target/
 .idea/
 *.iml
 .vscode/
+
+# Segredos e configuração local: nunca versionar
+.env
+.env.*
+*.pem
+*.key
+*.p12
+id_rsa*
+.claude/settings.local.json
