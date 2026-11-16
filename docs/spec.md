@@ -72,13 +72,13 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   2. Depois, conforme a categoria da compra:
      - Compra `SERIA_LEGAL`: só `SERIA_LEGAL` `PENDENTE` elegíveis. Nenhum `QUERO_FAZER` ou `DEVO_FAZER` `PENDENTE` é sugerido como troca. Se não bastarem, `NAO_CABE`, com motivo "não há itens seria legal suficientes para cobrir a compra". Ver R11.
      - Compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro `SERIA_LEGAL` `PENDENTE`; se não bastarem, `QUERO_FAZER` `PENDENTE`.
-     - Compra `QUERO_FAZER` ou `DEVO_FAZER` não coberta por todos os `SERIA_LEGAL` mais todos os `QUERO_FAZER`: aplica-se R7.
+     - Compra `DEVO_FAZER` não coberta por todos os `SERIA_LEGAL` mais todos os `QUERO_FAZER`: aplica-se R7.
   - Dentro de cada grupo, as combinações que cobrem a falta são ordenadas, nesta ordem:
     1. menor soma das intensidades dos itens da combinação;
     2. em empate, menor soma dos valores dos itens;
     3. em empate, menor id, na ordem alfabética dos ids. O id é único no mês, então o resultado é sempre o mesmo.
   - Uma combinação pode ter quantos itens forem necessários.
-- **R7.** Três opções para compra `QUERO_FAZER` ou `DEVO_FAZER` sem cobertura. As duas categorias de compra seguem as mesmas regras de corte e têm a mesma resposta:
+- **R7.** Três opções para compra `DEVO_FAZER` sem cobertura:
   - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` que feche o valor.
   - **Opção 2:** todos os `SERIA_LEGAL` e combinações de cortes (`QUERO_FAZER` com `DEVO_FAZER` `PENDENTE`) que somem o valor restante, começando pelos de menor intensidade.
   - **Opção 3:** todos os `SERIA_LEGAL` e um `DEVO_FAZER` `PENDENTE`, escolhido por valor e intensidade baixa, se cobrir a falta.
