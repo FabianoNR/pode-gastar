@@ -77,7 +77,7 @@ jobs:
     steps:
       - name: Consultar /health até responder UP
         run: |
-          url="${{ vars.SERVICE_URL }}/health"
+          url="${{ secrets.SERVICE_URL }}/health"
           for attempt in $(seq 1 20); do
             body=$(curl --silent --max-time 60 --write-out '\n%{http_code}' "$url" || true)
             status=$(echo "$body" | tail -n 1)
