@@ -1,6 +1,6 @@
 # Spec: Pode Gastar (v7)
 
-Status: v7 em revisão, ainda não aprovada nem mesclada na main. Substitui a v6. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: aprovada e mesclada na main pela PR #10. Substitui a v6. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
@@ -82,7 +82,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` que feche o valor.
   - **Opção 2:** todos os `SERIA_LEGAL` e combinações de cortes (`QUERO_FAZER` com `DEVO_FAZER` `PENDENTE`) que somem o valor restante, começando pelos de menor intensidade.
   - **Opção 3:** todos os `SERIA_LEGAL` e um `DEVO_FAZER` `PENDENTE`, escolhido por valor e intensidade baixa, se cobrir a falta.
-  - Se nenhuma opção cobrir a falta, a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria.
+  - Se nenhuma opção cobrir a falta, a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria. Motivo: "compra não cabe no livre; cabe no total restante com cortes; mesmo cortando todos os itens elegíveis ainda faltariam {valor que ainda faltaria}".
 - **R8.** Item `EM_DISCUSSAO` na sugestão traz o decisor responsável e o campo `mensagem`, com o texto "aguardando decisão de {decisor responsável}". O serviço de aplicação monta a mensagem (ver "Mensagens ao usuário").
 - **R9.** Investimento: `APLICADO` é imutável. `PLANEJADO` pode ser editado, mas a edição fica fora desta fase.
 - **R10.** A decisão só mostra o que sairia. Quem executa o corte fica fora desta fase.
