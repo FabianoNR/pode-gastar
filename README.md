@@ -31,9 +31,9 @@ Todo merge na `main` passa pelo pipeline do GitHub Actions (`.github/workflows/c
 1. **verify**: roda `./mvnw verify` (testes, formatação e cobertura).
 2. **publish**: se o `verify` passou, gera a imagem Docker e publica no GHCR (`ghcr.io/fabianonr/pode-gastar`) com duas tags: o SHA do commit e `main`.
 3. **deploy**: chama o deploy hook do Render apontando para a imagem do SHA. O Render baixa a imagem e troca a versão no ar.
-4. **smoke-test**: consulta o `/health` do serviço no Render até 20 vezes, a cada 30 segundos, esperando `200` com `"UP"`. O serviço roda no Render; a URL fica na variável `SERVICE_URL` do repositório.
+4. **smoke-test**: consulta o `/health` do serviço no Render até 20 vezes, a cada 30 segundos, esperando `200` com `"UP"`. O serviço roda no Render; a URL fica no segredo `SERVICE_URL` do repositório.
 
-O deploy é automático. Ele exige o segredo `RENDER_DEPLOY_HOOK_URL` no GitHub (Settings > Secrets and variables > Actions). Sem o segredo, a imagem é publicada, mas o job `deploy` pula com um aviso. O smoke test exige a variável `SERVICE_URL` (Settings > Secrets and variables > Actions > Variables).
+O deploy é automático. Ele exige o segredo `RENDER_DEPLOY_HOOK_URL` no GitHub (Settings > Secrets and variables > Actions). Sem o segredo, a imagem é publicada, mas o job `deploy` pula com um aviso. O smoke test exige o segredo `SERVICE_URL` (Settings > Secrets and variables > Actions > Secrets).
 
 Só existem imagens para commits publicados depois da PR #15 (commit `06943bd`). Commits anteriores não têm imagem no GHCR, então não servem para rollback.
 
