@@ -17,7 +17,11 @@ import java.util.stream.Collectors;
  */
 final class PlanoDeCortes {
 
-  /** Limite da busca de combinações (2^n); o mês de uma pessoa tem poucos itens por grupo. */
+  /**
+   * Limite da busca de combinações (2^n) nos grupos SERIA_LEGAL e QUERO_FAZER e na opção 2. Os
+   * itens em discussão e o DEVO_FAZER da compra QUERO_FAZER não têm limite (decisão de 17/11/2026,
+   * PR #20).
+   */
   private static final int MAXIMO_ITENS_POR_GRUPO = 20;
 
   /**
@@ -90,7 +94,7 @@ final class PlanoDeCortes {
   }
 
   private Avaliacao avaliar() {
-    List<List<Item>> grupos = gruposDaCompra();
+    List<GrupoDeCorte> grupos = gruposDaCompra();
     return regraDeCorte(grupos)
         .map(itensCortados ->
             cabeComCortes(List.of(Sugestao.de(Opcao.PADRAO, itensCortados)), List.of(), null))
@@ -98,12 +102,19 @@ final class PlanoDeCortes {
   }
 
   /** Grupos de corte da compra, do menos importante para o mais importante (R6). */
-  private List<List<Item>> gruposDaCompra() {
+  private List<GrupoDeCorte> gruposDaCompra() {
+    GrupoDeCorte grupoEmDiscussao = GrupoDeCorte.semLimite(emDiscussao);
+    GrupoDeCorte grupoSeriaLegal = GrupoDeCorte.comLimite(candidatosSeriaLegal);
+    GrupoDeCorte grupoQueroFazer = GrupoDeCorte.comLimite(candidatosQueroFazer);
     return switch (compra.categoria()) {
-      case SERIA_LEGAL -> List.of(emDiscussao, candidatosSeriaLegal);
+      case SERIA_LEGAL -> List.of(grupoEmDiscussao, grupoSeriaLegal);
       case QUERO_FAZER ->
-          List.of(emDiscussao, candidatosSeriaLegal, candidatosQueroFazer, candidatosDevoFazer);
-      case DEVO_FAZER -> List.of(emDiscussao, candidatosSeriaLegal, candidatosQueroFazer);
+          List.of(
+              grupoEmDiscussao,
+              grupoSeriaLegal,
+              grupoQueroFazer,
+              GrupoDeCorte.semLimite(candidatosDevoFazer));
+      case DEVO_FAZER -> List.of(grupoEmDiscussao, grupoSeriaLegal, grupoQueroFazer);
     };
   }
 
@@ -111,8 +122,8 @@ final class PlanoDeCortes {
    * Regra de corte (R6): corta primeiro o menos importante; do mais importante, só o mínimo que
    * faltar. Vazio quando nem todos os grupos juntos cobrem a falta.
    */
-  private Optional<List<Item>> regraDeCorte(List<List<Item>> grupos) {
-    if (somaDeCortes(juntar(grupos)).compareTo(falta) < 0) {
+  private Optional<List<Item>> regraDeCorte(List<GrupoDeCorte> grupos) {
+    if (somaDeCortes(itensDos(grupos)).compareTo(falta) < 0) {
       return Optional.empty();
     }
     List<List<Item>> cortesPorGrupo =
@@ -120,12 +131,15 @@ final class PlanoDeCortes {
     BigDecimal faltaQueResta = falta;
     for (int posicaoDoGrupo = grupos.size() - 1; posicaoDoGrupo >= 0; posicaoDoGrupo--) {
       BigDecimal cobertoPelosMenosImportantes =
-          somaDeCortes(juntar(grupos.subList(0, posicaoDoGrupo)));
+          somaDeCortes(itensDos(grupos.subList(0, posicaoDoGrupo)));
       BigDecimal necessarioDoGrupo = faltaQueResta.subtract(cobertoPelosMenosImportantes);
       if (necessarioDoGrupo.signum() > 0) {
+        GrupoDeCorte grupo = grupos.get(posicaoDoGrupo);
+        if (grupo.temLimiteDeItens()) {
+          exigirLimiteDeItens(grupo.itens());
+        }
         List<Item> cortesDoGrupo =
-            melhorCombinacao(grupos.get(posicaoDoGrupo), necessarioDoGrupo, MENOR_CORTE)
-                .orElseThrow();
+            melhorCombinacao(grupo.itens(), necessarioDoGrupo, MENOR_CORTE).orElseThrow();
         cortesPorGrupo.set(posicaoDoGrupo, cortesDoGrupo);
         faltaQueResta = faltaQueResta.subtract(somaDeCortes(cortesDoGrupo));
       }
@@ -144,9 +158,9 @@ final class PlanoDeCortes {
         .toList();
   }
 
-  private Avaliacao semCobertura(List<List<Item>> grupos) {
+  private Avaliacao semCobertura(List<GrupoDeCorte> grupos) {
     if (compra.categoria() == Categoria.SERIA_LEGAL) {
-      BigDecimal aindaFaltaria = falta.subtract(somaDeCortes(juntar(grupos)));
+      BigDecimal aindaFaltaria = falta.subtract(somaDeCortes(itensDos(grupos)));
       return Avaliacao.naoCabe(
           livre, totalRestante, aindaFaltaria, Motivo.FALTAM_ITENS_SERIA_LEGAL);
     }
@@ -202,6 +216,7 @@ final class PlanoDeCortes {
   /** Opção 2: a combinação de quero com devo de menor soma de intensidades. */
   private void guardarOpcaoDois(Map<Set<String>, Sugestao> opcoes, BigDecimal faltaAposSeriaLegal) {
     List<Item> queroEDevo = juntar(List.of(candidatosQueroFazer, candidatosDevoFazer));
+    exigirLimiteDeItens(queroEDevo);
     melhorCombinacao(queroEDevo, faltaAposSeriaLegal, MENOR_INTENSIDADE)
         .ifPresent(combinacao ->
             guardar(
@@ -232,6 +247,10 @@ final class PlanoDeCortes {
         .min(DEVO_FAZER_PREFERIDO);
   }
 
+  private static List<Item> itensDos(List<GrupoDeCorte> grupos) {
+    return juntar(grupos.stream().map(GrupoDeCorte::itens).toList());
+  }
+
   private static List<Item> juntar(List<List<Item>> listas) {
     List<Item> todos = new ArrayList<>();
     listas.forEach(todos::addAll);
@@ -244,18 +263,22 @@ final class PlanoDeCortes {
         livre, totalRestante, falta, sugestoes, listaCompleta, aindaFaltaria);
   }
 
+  private static void exigirLimiteDeItens(List<Item> itensCombinados) {
+    if (itensCombinados.size() > MAXIMO_ITENS_POR_GRUPO) {
+      throw new ItensDemaisParaCombinarException(MAXIMO_ITENS_POR_GRUPO);
+    }
+  }
+
   /**
    * Melhor combinação de itens que cobre o alvo, pelo critério informado. Uma combinação pode ter
-   * quantos itens forem necessários e mantém a ordem dos itens no grupo.
+   * quantos itens forem necessários e mantém a ordem dos itens no grupo. A busca testa todas as
+   * combinações (2^n), então o tempo dobra a cada item a mais no grupo.
    */
   private static Optional<List<Item>> melhorCombinacao(
       List<Item> grupo, BigDecimal alvo, Comparator<List<Item>> criterio) {
     int quantidadeDeItens = grupo.size();
-    if (quantidadeDeItens > MAXIMO_ITENS_POR_GRUPO) {
-      throw new ItensDemaisParaCombinarException(MAXIMO_ITENS_POR_GRUPO);
-    }
     List<Item> melhor = null;
-    for (int mascara = 1; mascara < (1 << quantidadeDeItens); mascara++) {
+    for (long mascara = 1; mascara < (1L << quantidadeDeItens); mascara++) {
       List<Item> combinacao = combinacaoDaMascara(grupo, mascara);
       if (somaDeCortes(combinacao).compareTo(alvo) >= 0
           && (melhor == null || criterio.compare(combinacao, melhor) < 0)) {
@@ -266,10 +289,10 @@ final class PlanoDeCortes {
   }
 
   /** Itens do grupo cujo bit está ligado na máscara. */
-  private static List<Item> combinacaoDaMascara(List<Item> grupo, int mascara) {
+  private static List<Item> combinacaoDaMascara(List<Item> grupo, long mascara) {
     List<Item> combinacao = new ArrayList<>();
     for (int i = 0; i < grupo.size(); i++) {
-      if ((mascara & (1 << i)) != 0) {
+      if ((mascara & (1L << i)) != 0) {
         combinacao.add(grupo.get(i));
       }
     }
@@ -280,13 +303,16 @@ final class PlanoDeCortes {
     return combinacao.stream().mapToInt(Item::intensidade).sum();
   }
 
-  /** Compara os ids de cada combinação, em ordem alfabética, até o primeiro diferente. */
+  /**
+   * Compara os ids de cada combinação, em ordem numérica natural (item-2 antes de item-10), até o
+   * primeiro diferente (ADR 0011).
+   */
   private static int compararPeloMenorId(List<Item> primeira, List<Item> segunda) {
-    List<String> idsDaPrimeira = idsEmOrdemAlfabetica(primeira);
-    List<String> idsDaSegunda = idsEmOrdemAlfabetica(segunda);
+    List<String> idsDaPrimeira = idsEmOrdemNatural(primeira);
+    List<String> idsDaSegunda = idsEmOrdemNatural(segunda);
     int quantidadeComum = Math.min(idsDaPrimeira.size(), idsDaSegunda.size());
     for (int i = 0; i < quantidadeComum; i++) {
-      int comparacao = idsDaPrimeira.get(i).compareTo(idsDaSegunda.get(i));
+      int comparacao = OrdemNaturalDeIds.compararIds(idsDaPrimeira.get(i), idsDaSegunda.get(i));
       if (comparacao != 0) {
         return comparacao;
       }
@@ -294,8 +320,20 @@ final class PlanoDeCortes {
     return Integer.compare(idsDaPrimeira.size(), idsDaSegunda.size());
   }
 
-  private static List<String> idsEmOrdemAlfabetica(List<Item> combinacao) {
-    return combinacao.stream().map(Item::id).sorted().toList();
+  private static List<String> idsEmOrdemNatural(List<Item> combinacao) {
+    return combinacao.stream().map(Item::id).sorted(OrdemNaturalDeIds::compararIds).toList();
+  }
+
+  /** Itens de um grupo de corte e se a busca de combinações nele respeita o limite de itens. */
+  private record GrupoDeCorte(List<Item> itens, boolean temLimiteDeItens) {
+
+    static GrupoDeCorte comLimite(List<Item> itens) {
+      return new GrupoDeCorte(itens, true);
+    }
+
+    static GrupoDeCorte semLimite(List<Item> itens) {
+      return new GrupoDeCorte(itens, false);
+    }
   }
 
   private static int posicao(Categoria categoria) {
