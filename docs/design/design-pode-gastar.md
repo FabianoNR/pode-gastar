@@ -35,7 +35,7 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 
 ### Sugestões de corte
 - Prioridade de corte, do menos importante para o mais importante: primeiro os itens EM_DISCUSSAO, de qualquer categoria (entre eles, categoria seria legal, depois quero, depois devo, e só depois intensidade, menor primeiro); depois seria legal; depois quero; depois devo. Em cada grupo entram itens PENDENTE ou PARCIAL.
-- Regra de corte: corta primeiro o menos importante; do mais importante, só o mínimo que faltar. Do grupo mais importante entra só a combinação de menor valor que cobre o que os grupos menos importantes, inteiros, não conseguem cobrir; depois o mesmo para o grupo anterior. Empate: menor soma de intensidades, depois menor id. Nenhum item entra sem ser necessário.
+- Regra de corte: corta primeiro o menos importante; do mais importante, só o mínimo que faltar. Do grupo mais importante entra só a combinação de menor valor que cobre o que os grupos menos importantes, inteiros, não conseguem cobrir; depois o mesmo para o grupo anterior. Empate: menor soma de intensidades, depois menor id, em ordem numérica natural (item-2 antes de item-10). Nenhum item entra sem ser necessário.
 - Compra seria legal: entram itens em discussão e itens seria legal; quero e devo pendentes ou parciais ficam de fora. Se não bastar, a resposta é não, com motivo, e a falta é o quanto ainda faltaria depois de cortar todos os elegíveis.
 - Compra quero: em discussão, seria legal, quero e, como último recurso, devo pendente ou parcial. Se cobre, uma sugestão. Se nem tudo junto cobre, mostra a lista completa e o quanto ainda falta.
 - Compra devo, passo a passo. Primeiro, a regra de corte só com os itens em discussão, seria legal e quero; se cobre, termina, com uma sugestão. Se não cobre, são três opções, e em todas entram todos os itens em discussão e todos os seria legal. (1) Mais todos os quero e um devo pendente ou parcial que feche o que falta. (2) Mais a combinação de quero com devo que fecha o que falta, de menor soma de intensidades. (3) Mais um devo pendente ou parcial que feche o que falta. Quando uma opção escolhe um devo, vale menor intensidade, depois menor valor, depois menor id. Opções com os mesmos itens valem uma só.
@@ -94,7 +94,7 @@ Decisões do Fabiano em 16/11/2026, sobre a v7. Sustentam a spec v8.
 - Corta primeiro o menos importante; do mais importante, só o mínimo que faltar.
 - Ordem de importância: em discussão, seria legal, quero, devo.
 - A conta vai do grupo mais importante para o menos importante: de cada grupo entra só a combinação de menor valor que cobre o que os grupos menos importantes, inteiros, não cobrem.
-- Empate: menor soma de intensidades, depois menor id.
+- Empate: menor soma de intensidades, depois menor id, em ordem numérica natural (item-2 antes de item-10).
 - Item pendente ou em discussão sai inteiro; item parcial libera só o restante (planejado menos realizado).
 - Substitui a ordem da v7 dentro do grupo (intensidade antes do valor): agora o valor vem antes, para cortar só o necessário.
 
@@ -122,7 +122,7 @@ Decisões do Fabiano em 16/11/2026, sobre a v7. Sustentam a spec v8.
 
 ### Mantidos
 - 6b: nenhuma opção cobre a falta; lista completa e quanto ainda falta, com o motivo atual.
-- Limite de 20 itens (6a): adiado. Continua valendo por grupo.
+- Limite de 20 itens (6a): vale para os itens em discussão (grupo 0) e para o devo da compra quero, que são checados antes de qualquer combinação, e para os demais grupos quando são combinados. Acima de 20, a resposta é 422.
 - Cartão de crédito reconhecido pelo nome: pendência registrada na spec.
 
 ## Fora de escopo nesta fase
