@@ -1,10 +1,11 @@
 # Spec: Pode Gastar (v8)
 
-Status: aguarda aprovação do Fabiano. A revisão de 17/11/2026 (ADR 0010, 0011 e 0012) está nesta PR. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) aguarda aprovação do Fabiano na PR `docs/health-commit-rollback`. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
-- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e esta PR (#21, `docs/spec-v8-decisoes`). Pendências em "Abertos".
+- **v8, revisão de operação de 2026-11-17:** `/health` passa a expor o commit; regras do deploy e do rollback (seção "Operação"); CA13 atualizado. Design: `docs/design/health-commit-rollback.md`. Decisão: ADR 0013. Fonte: esta PR (`docs/health-commit-rollback`).
+- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e PR #21 (`docs/spec-v8-decisoes`). Pendências em "Abertos".
 - **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
   - R6: regra de corte nova. Corta primeiro o menos importante (`EM_DISCUSSAO`, `SERIA_LEGAL`, `QUERO_FAZER`, `DEVO_FAZER`); do mais importante, só o mínimo que faltar. Dentro do grupo, a combinação passa a ser ordenada por menor soma de valores, depois menor soma de intensidades, depois menor id (na v7, a intensidade vinha antes do valor).
   - R6: `PARCIAL` entra nos grupos de corte, junto com `PENDENTE`, pelo cortável (planejado − realizado). `PARCIAL` que já gastou além do previsto não entra.
@@ -192,7 +193,25 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 }
 ```
 
-`GET /health`: 200 com `{"status": "UP"}`.
+`GET /health`: 200 com `{"status": "UP", "commit": "<sha>"}`. As regras do campo `commit` estão em "Operação".
+
+## Operação
+
+### `/health`
+
+- **O1.** A resposta é `{"status": "UP", "commit": "<sha>"}`.
+- **O2.** O valor de `commit` vem da variável de ambiente `RENDER_GIT_COMMIT`, que o Render disponibiliza no build e em tempo de execução.
+- **O3.** Se a variável não existir, por exemplo ao rodar localmente, `commit` vale `"desconhecido"`. A falta da variável não faz o endpoint falhar: a resposta continua 200 com `"status": "UP"`.
+
+### Deploy normal
+
+- **O4.** Depois de disparar o deploy hook, o smoke test consulta `/health` até o `commit` exposto ser igual ao SHA do commit publicado. Usa o mesmo intervalo e o mesmo tempo limite do rollback (O6). Se o prazo acabar antes disso, o smoke test falha.
+
+### Rollback
+
+- **O5.** O rollback recebe o SHA completo, com 40 caracteres, do commit que deve voltar ao ar. Ele chama `POST https://api.render.com/v1/services/{serviceId}/deploys` com `commitId` igual a esse SHA, autenticado pela chave da API do Render.
+- **O6.** Depois, consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. Se não chegar a esse SHA dentro do prazo, o rollback falha.
+- **O7.** Uma resposta 201 ou 202 da API só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O6 confirma o rollback.
 
 ## Mês de exemplo (estado no servidor)
 
@@ -233,7 +252,7 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA10.** Viagem `PARCIAL` com realizado de 150 e `valor=200.00&categoria=QUERO_FAZER` com livre insuficiente: a viagem é candidata a corte, cancelando só o restante de 150. Se for cortada, o item vira `REALIZADO` com valor 150. Reforço (v8): com a mesma viagem e `valor=600.00&categoria=QUERO_FAZER`, falta 500. Os `SERIA_LEGAL` (200) não bastam; a sugestão traz jantar fora, bola de futebol, item para casa e a viagem, que cobre 550. A viagem vira `REALIZADO` com 150.
 - **CA11.** O cartão de crédito nunca aparece como sugestão de corte.
 - **CA12.** `valor=0` ou negativo: 400.
-- **CA13.** `GET /health`: 200 com `{"status": "UP"}`.
+- **CA13.** `GET /health` com `RENDER_GIT_COMMIT` definida: 200 com `{"status": "UP", "commit": "<valor da variável>"}`. Sem a variável: 200 com `{"status": "UP", "commit": "desconhecido"}` (O1 a O3).
 - **CA14.** `valor=900.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 800, uma sugestão com jantar fora, item para casa, viagem e manutenção do carro, que somam 820. Os grupos menos importantes somam 700, então a manutenção do carro (200) é necessária. Depois dela e dos dois `QUERO_FAZER` (500), faltam 100, e o jantar fora (120) cobre sozinho. A bola de futebol fica de fora.
 - **CA15.** `valor=1100.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 1000, `sugestoes` vazia, `listaCompleta` com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, nessa ordem, e ainda faltariam 100.
 - **CA16.** `valor=500.00&categoria=SERIA_LEGAL`: `NAO_CABE`, motivo "não há itens seria legal suficientes para cobrir a compra", falta 200.
@@ -276,3 +295,4 @@ Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é o
 - **Cartão de crédito reconhecido pelo nome (R5, CA11).** Qualquer item com o nome "Cartão de crédito" é tratado como o cartão. A troca para um marcador próprio do item fica para depois.
 - **Comparação de ids.** A comparação de ids não cobre maiúsculas e minúsculas, ids com prefixo comum nem trechos misturados de número e texto. Esses casos seguem o comportamento atual do código.
 - **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
+- **Publicação no GHCR.** O serviço no Render é construído a partir do GitHub (ADR 0013), então a imagem publicada no GHCR pode não ser o que roda em produção. Confirmar em outra PR se essa publicação ainda é necessária.
