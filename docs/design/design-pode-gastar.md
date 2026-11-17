@@ -37,9 +37,9 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Ordem: primeiro os itens EM_DISCUSSAO, de qualquer categoria. Dentro deles, categoria (seria legal, depois quero, depois devo) e só depois intensidade (menor primeiro). Depois, os itens PENDENTE ou PARCIAL conforme a categoria da compra.
 - Compra seria legal: entram itens seria legal e itens em discussão, de qualquer categoria; quero e devo pendentes ou parciais ficam de fora. Se não bastar, a resposta é não, com motivo.
 - Compra quero: primeiro seria legal, depois quero; se ainda não bastar, devo pendente ou parcial, como terceiro grupo. Compra devo: primeiro seria legal, depois quero, e só então as opções de devo.
-- Compra devo sem cobertura: três opções, com devo pendente ou parcial (o corte do parcial cancela só o restante). (1) todos os seria legal, todos os quero e um devo pendente ou parcial que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por menor intensidade, depois menor valor, depois menor id.
+- Compra devo, passo a passo. Primeiro, tenta a combinação mínima só com os itens em discussão, seria legal e quero; se cobre, termina. Se não cobre, são três opções, e em todas entram todos os itens em discussão e todos os seria legal. (1) Mais todos os quero e um devo pendente ou parcial que feche o que falta. (2) Mais a combinação de quero com devo que fecha o que falta, de menor soma de intensidades. (3) Mais um devo pendente ou parcial que feche o que falta. Quando uma opção escolhe um devo, vale menor intensidade, depois menor valor, depois menor id. O corte do parcial cancela só o restante. Opções com os mesmos itens valem uma só.
 - Se nenhuma opção cobrir, mostra a lista completa e o quanto ainda falta.
-- Só o necessário (compra seria legal e quero): primeiro os itens em discussão, um a um, até cobrir. Depois, se o primeiro grupo com itens (seria legal, quero, devo) tem uma combinação que cobre sozinha a falta que resta, entra a melhor combinação. Se não tem, a sugestão é montada item a item, na ordem seria legal, quero e devo (devo só na compra quero), por menor intensidade e, no empate, menor id, parando assim que a soma cobre a falta. Item pendente sai inteiro; item parcial libera só o restante. A compra devo não usa essa regra: segue as opções.
+- Só o necessário, pela combinação mínima (compra seria legal e quero, e a primeira etapa da compra devo): a sugestão corta o menor valor total que cobre a falta. Os grupos são, nesta ordem, em discussão, seria legal, quero e devo (devo só na compra quero). Só entra o menor conjunto de grupos que, somados, cobrem a falta. Dentro dele vence a combinação de menor soma de cortes; no empate, a que corta mais dos grupos anteriores; depois a de menor soma de intensidades; depois a de menor id. Item pendente sai inteiro; item parcial libera só o restante.
 - Compra quero sem cobertura por seria legal e quero: não usa as três opções. O devo pendente ou parcial entra como terceiro grupo. Se os três grupos cobrem a falta, uma sugestão. Se nem assim cobrem, mostra a lista completa e o quanto ainda falta, com o mesmo motivo (decisões de 16/11/2026, ver Acréscimos).
 - Itens REALIZADOS nunca são sugeridos. O cartão nunca é sugerido.
 - Item PARCIAL pode ser cortado: o corte cancela só o restante, e o item vira REALIZADO com o valor já gasto. PARCIAL que já gastou além do previsto não entra, porque cortar não libera valor.
@@ -110,12 +110,18 @@ Decisões do Fabiano em 16/11/2026, sobre a v7. Sustentam a spec v8.
 - Quando uma das três opções escolhe entre devos, vale a mesma ordem dos demais itens: menor intensidade, depois menor valor, depois menor id.
 - Consequência: lista completa só aparece quando a soma de todos os itens elegíveis não cobre a falta, então o que ainda faltaria é sempre maior que zero.
 
-### Só o necessário (compra seria legal e quero)
-- Itens em discussão primeiro, um a um, até cobrir a falta.
-- Se o primeiro grupo com itens (seria legal, depois quero, depois devo) tem uma combinação que cobre sozinha a falta que resta, entra a melhor combinação.
-- Se não tem, a sugestão é montada item a item, na ordem seria legal, quero e devo (devo só na compra quero), por menor intensidade e, no empate, menor id. Para assim que a soma cobre a falta.
+### Combinação mínima (só o necessário)
+- Vale para a compra seria legal, para a compra quero e para a primeira etapa da compra devo.
+- A sugestão corta o menor valor total que cobre a falta, não item a item.
+- A ordem dos grupos (em discussão, seria legal, quero, devo) entra de dois jeitos: só entra o menor conjunto de grupos que, somados, cobre a falta; e, em empate de valor, vence a combinação que corta mais dos grupos anteriores.
+- Depois do empate de grupos: menor soma de intensidades, depois menor id.
 - Item pendente sai inteiro; item parcial libera só o restante.
-- A compra devo não usa essa regra: segue as opções.
+
+### Compra devo, passo a passo
+- Primeiro, a combinação mínima com os itens em discussão, seria legal e quero. Se cobre, termina.
+- Se não cobre, as opções 1, 2 e 3, nessa ordem; em todas entram todos os itens em discussão e todos os seria legal. A escolha de um devo usa menor intensidade, depois menor valor, depois menor id, inclusive na opção 3.
+- Opções com os mesmos itens valem uma só.
+- Se nenhuma opção cobre, vale a 6b.
 
 ### Mantidos
 - 6b: nenhuma opção cobre a falta; lista completa e quanto ainda falta, com o motivo atual.
