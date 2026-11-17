@@ -26,13 +26,38 @@ import org.springframework.test.web.servlet.MockMvc;
 class LimiteDeItensHttpTest {
 
   private static final String MES_COM_ITENS_DEMAIS = "mes-com-itens-demais";
+  private static final String MES_COM_64_EM_DISCUSSAO = "mes-com-64-em-discussao";
 
   @TestConfiguration
   static class MesComVinteEUmItens {
 
     @Bean
     AvaliarCompra avaliarCompra() {
-      return new AvaliarCompraService(mesId -> Optional.of(mesComVinteEUmItensSeriaLegal()));
+      return new AvaliarCompraService(mesId ->
+          Optional.of(
+              MES_COM_64_EM_DISCUSSAO.equals(mesId)
+                  ? mesComSessentaEQuatroItensEmDiscussao()
+                  : mesComVinteEUmItensSeriaLegal()));
+    }
+
+    private static Mes mesComSessentaEQuatroItensEmDiscussao() {
+      List<Item> itens =
+          IntStream.rangeClosed(1, 64)
+              .mapToObj(numero ->
+                  new Item(
+                      "item-" + numero,
+                      "Pedido " + numero,
+                      Categoria.SERIA_LEGAL,
+                      1,
+                      false,
+                      StatusItem.EM_DISCUSSAO,
+                      new BigDecimal("10"),
+                      null,
+                      "marido"))
+              .toList();
+      // Orçamento 1000, comprometido 640: livre 360, então uma compra de 400 exige cortes.
+      return new Mes(
+          MES_COM_64_EM_DISCUSSAO, new BigDecimal("1000"), BigDecimal.ZERO, BigDecimal.ZERO, itens);
     }
 
     private static Mes mesComVinteEUmItensSeriaLegal() {
@@ -66,6 +91,21 @@ class LimiteDeItensHttpTest {
             get("/meses/{mesId}/avaliacao", MES_COM_ITENS_DEMAIS)
                 .param("valor", "800.00")
                 .param("categoria", "SERIA_LEGAL"))
+        .andExpect(status().isUnprocessableEntity())
+        .andExpect(
+            jsonPath("$.mensagem")
+                .value(
+                    "itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"));
+  }
+
+  @Test
+  @DisplayName("64 itens em discussão respondem 422, nunca erro interno")
+  void sessentaEQuatroItensEmDiscussaoRespondem422() throws Exception {
+    mockMvc
+        .perform(
+            get("/meses/{mesId}/avaliacao", MES_COM_64_EM_DISCUSSAO)
+                .param("valor", "400.00")
+                .param("categoria", "QUERO_FAZER"))
         .andExpect(status().isUnprocessableEntity())
         .andExpect(
             jsonPath("$.mensagem")

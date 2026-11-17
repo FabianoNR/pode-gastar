@@ -174,11 +174,11 @@ class AvaliacaoMesBaseTest {
   @Test
   @DisplayName("O cartão de crédito nunca aparece como sugestão de corte (CA11)")
   void cartaoDeCreditoNuncaApareceComoSugestaoDeCorte() {
-    Avaliacao comOpcoes = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
+    Avaliacao cobertaPelaRegraDeCorte = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
     // 1600 não é coberto por nenhuma combinação elegível: sai a lista completa.
     Avaliacao semCobertura = avaliar(base(), "1600.00", Categoria.DEVO_FAZER);
 
-    assertThat(nomesSugeridos(comOpcoes)).doesNotContain(CARTAO);
+    assertThat(nomesSugeridos(cobertaPelaRegraDeCorte)).doesNotContain(CARTAO);
     assertThat(nomesSugeridos(semCobertura)).doesNotContain(CARTAO);
     assertThat(semCobertura.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(semCobertura.listaCompleta()).isNotEmpty();

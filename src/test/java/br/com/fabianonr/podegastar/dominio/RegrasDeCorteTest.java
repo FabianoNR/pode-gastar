@@ -53,8 +53,7 @@ class RegrasDeCorteTest {
     assertThat(avaliacao.sugestoes()).hasSize(1);
     Sugestao sugestao = avaliacao.sugestoes().get(0);
     assertThat(sugestao.opcao()).isEqualTo(Opcao.OPCAO_1);
-    assertThat(nomes(sugestao))
-        .containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
+    assertThat(nomes(sugestao)).containsExactly(JANTAR, BOLA, ITEM_CASA, VIAGEM, MANUTENCAO);
     assertThat(sugestao.cobre()).isEqualByComparingTo("900");
     assertThat(avaliacao.listaCompleta()).isEmpty();
   }
@@ -68,7 +67,7 @@ class RegrasDeCorteTest {
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.sugestoes()).isEmpty();
     assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
-        .containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA, MANUTENCAO);
+        .containsExactly(JANTAR, BOLA, ITEM_CASA, VIAGEM, MANUTENCAO);
     assertThat(avaliacao.aindaFaltaria()).isEqualByComparingTo("600");
   }
 
@@ -261,5 +260,31 @@ class RegrasDeCorteTest {
         .singleElement()
         .satisfies(
             sugestao -> assertThat(ids(sugestao)).containsExactly("item-1", "item-3", "item-4"));
+  }
+
+  @Test
+  @DisplayName(
+      "Opção 2: com a mesma soma de intensidades e de cortáveis, vence a combinação de menor id (R7)")
+  void opcaoDoisDesempataPeloMenorId() {
+    Mes mes =
+        mesCom(
+            "1050",
+            pendente("item-1", "Jantar", Categoria.SERIA_LEGAL, 2, "100"),
+            pendente("item-6", "Passeio", Categoria.QUERO_FAZER, 1, "200"),
+            pendente("item-7", "Show", Categoria.QUERO_FAZER, 5, "50"),
+            pendente("item-3", "Dentista", Categoria.DEVO_FAZER, 1, "300"),
+            pendente("item-4", "Óculos", Categoria.DEVO_FAZER, 1, "300"));
+
+    // livre 100; falta 600; a regra de corte (350) não cobre. Depois do jantar faltam 500.
+    // Passeio com dentista e passeio com óculos empatam: intensidade 2 e cortável 500. Vence o
+    // dentista (item-3), pelo menor id. Nenhum DEVO cobre 500 sozinho, então não há opção 3.
+    Avaliacao avaliacao = mes.avaliar(new Compra(valor("700.00"), Categoria.DEVO_FAZER));
+
+    assertThat(avaliacao.sugestoes()).hasSize(2);
+    assertThat(avaliacao.sugestoes().get(0).opcao()).isEqualTo(Opcao.OPCAO_1);
+    assertThat(ids(avaliacao.sugestoes().get(0)))
+        .containsExactly("item-1", "item-6", "item-7", "item-3");
+    assertThat(avaliacao.sugestoes().get(1).opcao()).isEqualTo(Opcao.OPCAO_2);
+    assertThat(ids(avaliacao.sugestoes().get(1))).containsExactly("item-1", "item-6", "item-3");
   }
 }

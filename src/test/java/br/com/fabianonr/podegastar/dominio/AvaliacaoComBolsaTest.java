@@ -46,6 +46,7 @@ class AvaliacaoComBolsaTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("70");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLSA);
     assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("90");
   }

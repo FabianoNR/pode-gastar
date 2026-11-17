@@ -12,13 +12,29 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * Onde o limite de 20 itens por grupo vale (decisão de 17/11/2026, registrada na PR #20): nos
- * grupos SERIA_LEGAL e QUERO_FAZER da regra de corte e na opção 2, com QUERO_FAZER e DEVO_FAZER
- * contados juntos. Não vale para os itens em discussão nem para o DEVO_FAZER da compra QUERO_FAZER.
+ * Limite de 20 itens por grupo nas sugestões de corte (ADR 0012). Itens em discussão e DEVO_FAZER
+ * da compra QUERO_FAZER são conferidos antes de qualquer combinação, mesmo que o grupo não seja
+ * usado.
  */
 class LimiteDeItensPorGrupoTest {
 
-  private static final int ITENS_ACIMA_DO_LIMITE = 21;
+  private static final int LIMITE = 20;
+  private static final int ACIMA_DO_LIMITE = 21;
+  private static final int MUITO_ACIMA_DO_LIMITE = 64;
+
+  private static List<Item> itensEmDiscussao(int quantidade) {
+    return itens(
+        quantidade,
+        numero ->
+            emDiscussao(
+                "item-" + numero, "Pedido " + numero, Categoria.SERIA_LEGAL, 1, "10", "marido"));
+  }
+
+  private static List<Item> itensPendentes(int quantidade, Categoria categoria, String prefixo) {
+    return itens(
+        quantidade,
+        numero -> pendente(prefixo + numero, "Item " + prefixo + numero, categoria, 1, "10"));
+  }
 
   private static List<Item> itens(int quantidade, IntFunction<Item> criarItem) {
     return IntStream.rangeClosed(1, quantidade).mapToObj(criarItem).toList();
@@ -28,65 +44,116 @@ class LimiteDeItensPorGrupoTest {
     return new Mes(MES_ID, valor(orcamentoVariavel), valor("0"), valor("0"), itens);
   }
 
+  /** Itens de 10 cada, com orçamento 1000: a compra de 800 deixa falta de 800 − livre. */
+  private static Avaliacao avaliarCompraQueroFazer(List<Item> itens, String valor) {
+    return mesCom("1000", itens).avaliar(new Compra(valor(valor), Categoria.QUERO_FAZER));
+  }
+
   private static List<String> ids(Sugestao sugestao) {
     return sugestao.itens().stream().map(Item::id).toList();
   }
 
   @Test
-  @DisplayName("Mais de 20 itens em discussão não impedem a sugestão de corte (R6)")
-  void itensEmDiscussaoNaoTemLimiteDeItens() {
-    List<Item> emDiscussao =
-        itens(
-            ITENS_ACIMA_DO_LIMITE,
-            numero ->
-                emDiscussao(
-                    "item-" + numero,
-                    "Pedido " + numero,
-                    Categoria.SERIA_LEGAL,
-                    1,
-                    "10",
-                    "marido"));
-
-    // 21 itens de 10: livre 790; falta 10; um item em discussão cobre.
-    Avaliacao avaliacao =
-        mesCom("1000", emDiscussao).avaliar(new Compra(valor("800.00"), Categoria.QUERO_FAZER));
+  @DisplayName("20 itens em discussão ainda geram a sugestão de corte (R6)")
+  void vinteItensEmDiscussaoGeramSugestao() {
+    // 20 itens de 10: livre 800; falta 10; um item em discussão cobre.
+    Avaliacao avaliacao = avaliarCompraQueroFazer(itensEmDiscussao(LIMITE), "810.00");
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(ids(avaliacao.sugestoes().get(0))).containsExactly("item-1");
   }
 
   @Test
-  @DisplayName("Mais de 20 DEVO_FAZER não impedem a sugestão de corte da compra QUERO_FAZER (R6)")
-  void devoFazerDaCompraQueroFazerNaoTemLimiteDeItens() {
-    List<Item> devoFazer =
-        itens(
-            ITENS_ACIMA_DO_LIMITE,
-            numero -> pendente("item-" + numero, "Conta " + numero, Categoria.DEVO_FAZER, 1, "10"));
+  @DisplayName("21 itens em discussão respondem itens demais (R6)")
+  void vinteEUmItensEmDiscussaoSaoItensDemais() {
+    List<Item> itens = itensEmDiscussao(ACIMA_DO_LIMITE);
 
-    // 21 itens de 10: livre 790; falta 10; só o grupo DEVO_FAZER pode cobrir.
+    assertThatThrownBy(() -> avaliarCompraQueroFazer(itens, "800.00"))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName(
+      "21 itens em discussão respondem itens demais mesmo quando não há combinação a buscar (R6)")
+  void itensEmDiscussaoAcimaDoLimiteSaoConferidosAntesDeCombinar() {
+    List<Item> itens = new ArrayList<>(itensEmDiscussao(ACIMA_DO_LIMITE));
+    itens.add(pendente("cartao", CARTAO, Categoria.DEVO_FAZER, 5, "500"));
+
+    // Orçamento 1500, comprometido 710: livre 790; falta 510. Os elegíveis somam 210, então
+    // sairia a lista completa, sem busca de combinações.
+    Mes mes = mesCom("1500", itens);
+
+    assertThatThrownBy(() -> mes.avaliar(new Compra(valor("1300.00"), Categoria.QUERO_FAZER)))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName("20 DEVO_FAZER ainda geram a sugestão de corte da compra QUERO_FAZER (R6)")
+  void vinteDevoFazerGeramSugestaoNaCompraQueroFazer() {
+    // 20 itens de 10: livre 800; falta 10; só o grupo DEVO_FAZER pode cobrir.
     Avaliacao avaliacao =
-        mesCom("1000", devoFazer).avaliar(new Compra(valor("800.00"), Categoria.QUERO_FAZER));
+        avaliarCompraQueroFazer(itensPendentes(LIMITE, Categoria.DEVO_FAZER, "item-"), "810.00");
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(ids(avaliacao.sugestoes().get(0))).containsExactly("item-1");
+  }
+
+  @Test
+  @DisplayName("21 DEVO_FAZER respondem itens demais na compra QUERO_FAZER (R6)")
+  void vinteEUmDevoFazerSaoItensDemaisNaCompraQueroFazer() {
+    List<Item> itens = itensPendentes(ACIMA_DO_LIMITE, Categoria.DEVO_FAZER, "item-");
+
+    assertThatThrownBy(() -> avaliarCompraQueroFazer(itens, "800.00"))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName(
+      "21 DEVO_FAZER respondem itens demais na compra QUERO_FAZER mesmo sem o grupo ser usado (R6)")
+  void devoFazerAcimaDoLimiteSaoConferidosMesmoSemSerUsados() {
+    List<Item> itens =
+        new ArrayList<>(itensPendentes(ACIMA_DO_LIMITE, Categoria.DEVO_FAZER, "devo-"));
+    itens.add(pendente("jantar", JANTAR, Categoria.SERIA_LEGAL, 2, "100"));
+
+    // Orçamento 1000, comprometido 310: livre 690; falta 10. O jantar cobre sozinho.
+    assertThatThrownBy(() -> avaliarCompraQueroFazer(itens, "700.00"))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName("21 QUERO_FAZER respondem itens demais quando o grupo precisa ser combinado (R6)")
+  void vinteEUmQueroFazerSaoItensDemais() {
+    List<Item> itens = itensPendentes(ACIMA_DO_LIMITE, Categoria.QUERO_FAZER, "item-");
+
+    assertThatThrownBy(() -> avaliarCompraQueroFazer(itens, "800.00"))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName("64 itens em discussão respondem itens demais, nunca erro interno (R6)")
+  void sessentaEQuatroItensEmDiscussaoSaoItensDemais() {
+    List<Item> itens = itensEmDiscussao(MUITO_ACIMA_DO_LIMITE);
+
+    assertThatThrownBy(() -> avaliarCompraQueroFazer(itens, "1000.00"))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName(
+      "64 DEVO_FAZER respondem itens demais na compra QUERO_FAZER, nunca erro interno (R6)")
+  void sessentaEQuatroDevoFazerSaoItensDemais() {
+    List<Item> itens = itensPendentes(MUITO_ACIMA_DO_LIMITE, Categoria.DEVO_FAZER, "item-");
+
+    assertThatThrownBy(() -> avaliarCompraQueroFazer(itens, "1000.00"))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
   }
 
   @Test
   @DisplayName("Na opção 2, QUERO_FAZER e DEVO_FAZER juntos continuam limitados a 20 itens (R7)")
   void opcaoDoisContaQueroEDevoJuntosNoLimite() {
     List<Item> itensDoMes = new ArrayList<>();
-    itensDoMes.addAll(
-        itens(
-            11,
-            numero ->
-                pendente("quero-" + numero, "Desejo " + numero, Categoria.QUERO_FAZER, 1, "10")));
-    itensDoMes.addAll(
-        itens(
-            10,
-            numero ->
-                pendente("devo-" + numero, "Conta " + numero, Categoria.DEVO_FAZER, 1, "10")));
+    itensDoMes.addAll(itensPendentes(11, Categoria.QUERO_FAZER, "quero-"));
+    itensDoMes.addAll(itensPendentes(10, Categoria.DEVO_FAZER, "devo-"));
 
     // 21 itens de 10: livre 790; falta 200; os QUERO (110) não cobrem e a compra segue para as
     // opções. Cada grupo tem menos de 20 itens, mas a opção 2 combina os 21.
