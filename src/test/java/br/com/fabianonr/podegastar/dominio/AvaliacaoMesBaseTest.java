@@ -44,7 +44,7 @@ class AvaliacaoMesBaseTest {
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("200");
     assertThat(avaliacao.sugestoes()).hasSize(1);
-    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(JANTAR, BOLA);
     assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("200");
   }
 
@@ -55,6 +55,7 @@ class AvaliacaoMesBaseTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("50");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLA);
     assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("80");
   }
@@ -66,7 +67,9 @@ class AvaliacaoMesBaseTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("150");
-    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(JANTAR, BOLA);
+    assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("200");
   }
 
   @Test
@@ -132,6 +135,7 @@ class AvaliacaoMesBaseTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("50");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLA);
     assertThat(nomesSugeridos(avaliacao)).doesNotContain(VIAGEM);
     assertThat(avaliacao.listaCompleta().stream().map(Item::nome)).doesNotContain(VIAGEM);

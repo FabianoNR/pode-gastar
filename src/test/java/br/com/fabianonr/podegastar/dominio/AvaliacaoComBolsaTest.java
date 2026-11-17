@@ -29,8 +29,9 @@ class AvaliacaoComBolsaTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("140");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
     Sugestao sugestao = avaliacao.sugestoes().get(0);
-    assertThat(nomes(sugestao)).containsExactlyInAnyOrder(BOLSA, BOLA);
+    assertThat(nomes(sugestao)).containsExactly(BOLSA, BOLA);
     assertThat(sugestao.cobre()).isEqualByComparingTo("170");
     Item bolsaSugerida =
         sugestao.itens().stream().filter(item -> item.nome().equals(BOLSA)).findFirst().get();

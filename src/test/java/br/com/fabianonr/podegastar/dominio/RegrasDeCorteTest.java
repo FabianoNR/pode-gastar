@@ -33,11 +33,12 @@ class RegrasDeCorteTest {
   @DisplayName(
       "Compra SERIA_LEGAL que os SERIA_LEGAL não cobrem é NAO_CABE, sem trocar por QUERO (R6)")
   void compraSeriaLegalSemCoberturaDeSeriaLegalNaoCabe() {
-    // livre 100, falta 900; os SERIA_LEGAL cobrem só 200.
+    // livre 100, falta 900; os SERIA_LEGAL cobrem só 200, então ainda faltariam 700.
     Avaliacao avaliacao = avaliar("1000.00", Categoria.SERIA_LEGAL);
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.NAO_CABE);
     assertThat(avaliacao.motivo()).isEqualTo(Motivo.FALTAM_ITENS_SERIA_LEGAL);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("700");
     assertThat(avaliacao.sugestoes()).isEmpty();
   }
 
@@ -73,7 +74,7 @@ class RegrasDeCorteTest {
 
   @Test
   @DisplayName(
-      "Item parcial já gasto além do previsto continua comprometido, mas não aparece na sugestão de corte")
+      "Item parcial já gasto além do previsto continua comprometido, mas não entra nos cortes (R6)")
   void itemParcialGastoAlemDoPrevistoNaoApareceNaSugestaoDeCorte() {
     // Viagem estimada em 300 e já gasta em 350: reserva 350 e cortar não libera nada.
     Mes mes = comViagem(viagem(StatusItem.PARCIAL, "350"));
@@ -208,5 +209,57 @@ class RegrasDeCorteTest {
     assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
         .containsExactly(BOLSA, JANTAR, BOLA, ITEM_CASA, VIAGEM, MANUTENCAO);
     assertThat(avaliacao.aindaFaltaria()).isEqualByComparingTo("500");
+  }
+
+  @Test
+  @DisplayName("Compra DEVO_FAZER com três opções diferentes as mostra na ordem 1, 2, 3 (R7)")
+  void tresOpcoesDiferentesAparecemNaOrdemUmDoisTres() {
+    Mes mes =
+        mesCom(
+            "1300",
+            pendente("item-1", "Jantar", Categoria.SERIA_LEGAL, 2, "100"),
+            pendente("item-2", "Passeio", Categoria.QUERO_FAZER, 1, "200"),
+            pendente("item-3", "Show", Categoria.QUERO_FAZER, 5, "100"),
+            pendente("item-4", "Conserto", Categoria.DEVO_FAZER, 2, "300"),
+            pendente("item-5", "Seguro", Categoria.DEVO_FAZER, 4, "500"));
+
+    // livre 100; falta 600; a regra de corte (400) não cobre. Depois do jantar faltam 500.
+    // Opção 1: os dois QUERO (300) e o conserto, que cobre os 200 restantes.
+    // Opção 2: passeio e conserto, soma de intensidades 3 contra 4 do seguro sozinho.
+    // Opção 3: o seguro, único DEVO que cobre 500 sozinho.
+    Avaliacao avaliacao = mes.avaliar(new Compra(valor("700.00"), Categoria.DEVO_FAZER));
+
+    assertThat(avaliacao.sugestoes()).hasSize(3);
+    assertThat(avaliacao.sugestoes().stream().map(Sugestao::opcao))
+        .containsExactly(Opcao.OPCAO_1, Opcao.OPCAO_2, Opcao.OPCAO_3);
+    assertThat(ids(avaliacao.sugestoes().get(0)))
+        .containsExactly("item-1", "item-2", "item-3", "item-4");
+    assertThat(ids(avaliacao.sugestoes().get(1))).containsExactly("item-1", "item-2", "item-4");
+    assertThat(ids(avaliacao.sugestoes().get(2))).containsExactly("item-1", "item-5");
+  }
+
+  @Test
+  @DisplayName(
+      "Opção 2: com a mesma soma de intensidades, vence a combinação de menor soma de cortáveis (R7)")
+  void opcaoDoisDesempataPelaMenorSomaDeCortaveis() {
+    Mes mes =
+        mesCom(
+            "1820",
+            pendente("item-1", "Jantar", Categoria.SERIA_LEGAL, 2, "100"),
+            pendente("item-2", "Seguro", Categoria.DEVO_FAZER, 2, "600"),
+            pendente("item-3", "Dentista", Categoria.DEVO_FAZER, 1, "260"),
+            pendente("item-4", "Óculos", Categoria.DEVO_FAZER, 1, "260"),
+            pendente("item-5", "Conserto", Categoria.DEVO_FAZER, 5, "500"));
+
+    // livre 100; falta 600; depois do jantar faltam 500. Seguro sozinho e dentista com óculos
+    // somam intensidade 2; dentista e óculos cortam menos (520 contra 600). O conserto corta
+    // 500, mas tem intensidade 5. Pelo id, o seguro (item-2) venceria.
+    Avaliacao avaliacao = mes.avaliar(new Compra(valor("700.00"), Categoria.DEVO_FAZER));
+
+    assertThat(avaliacao.sugestoes())
+        .filteredOn(sugestao -> sugestao.opcao() == Opcao.OPCAO_2)
+        .singleElement()
+        .satisfies(
+            sugestao -> assertThat(ids(sugestao)).containsExactly("item-1", "item-3", "item-4"));
   }
 }
