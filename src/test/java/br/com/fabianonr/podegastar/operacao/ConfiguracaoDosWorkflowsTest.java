@@ -35,7 +35,8 @@ class ConfiguracaoDosWorkflowsTest {
     var jobs = jobs(CI);
 
     assertThat(jobs.keySet()).containsExactlyInAnyOrder("verify", "publish", "deploy");
-    assertThat(Files.readString(CI)).contains("scripts/deploy.sh");
+    assertThat(new Yaml().dump(jobs.get("deploy"))).contains("scripts/deploy.sh");
+    assertThat(new Yaml().dump(jobs.get("publish"))).doesNotContain("scripts/");
   }
 
   @Test
@@ -72,7 +73,7 @@ class ConfiguracaoDosWorkflowsTest {
   }
 
   @Test
-  @DisplayName("O rollback não move a tag main no GHCR nem envia imgURL (O5)")
+  @DisplayName("O rollback não move a tag main no GHCR nem envia imgURL (ADR 0013)")
   void rollbackNaoUsaImagemDoGhcr() throws IOException {
     var workflow = Files.readString(ROLLBACK);
 

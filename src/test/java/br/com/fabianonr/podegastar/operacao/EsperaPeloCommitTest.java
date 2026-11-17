@@ -63,11 +63,15 @@ class EsperaPeloCommitTest {
   @DisplayName("Nenhuma consulta nova começa depois do fim do prazo (O13)")
   void nenhumaConsultaNovaComecaDepoisDoPrazo() throws Exception {
     try (var servico = ServidorHttpFalso.comRoteiro(healthComCommit(OUTRO_COMMIT))) {
-      var resultado = esperar(servico.endereco());
+      var intervaloQueNaoDivideOPrazo = 2;
+      var resultado =
+          ExecucaoDeScript.comAmbienteDeTeste()
+              .comIntervaloEmSegundos(intervaloQueNaoDivideOPrazo)
+              .rodarFuncao("esperar_commit", servico.endereco(), SHA_ESPERADO);
 
       assertThat(resultado.terminouComSucesso()).isFalse();
       var consultas = servico.pedidos();
-      assertThat(consultas).isNotEmpty();
+      assertThat(consultas).hasSize(2);
       var inicioDaEspera = consultas.getFirst().inicioEmNanos();
       var prazo = Duration.ofSeconds(ExecucaoDeScript.PRAZO_DE_TESTE_EM_SEGUNDOS);
       assertThat(consultas)

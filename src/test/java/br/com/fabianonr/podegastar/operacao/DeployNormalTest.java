@@ -99,8 +99,13 @@ class DeployNormalTest {
     deployHook = ServidorHttpFalso.comRoteiro(responder(200, "{}"));
     var portaDoServico = ServidorHttpFalso.portaLivre();
 
+    var intervaloLongo = 2;
     var deployEmAndamento =
-        CompletableFuture.supplyAsync(() -> rodarDeploy("http://127.0.0.1:" + portaDoServico));
+        CompletableFuture.supplyAsync(() ->
+            execucaoDoDeploy("http://127.0.0.1:" + portaDoServico)
+                .comIntervaloEmSegundos(intervaloLongo)
+                .rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM));
+    esperarFimDoAtendimentoDoDeployHook();
     Thread.sleep(Duration.ofMillis(500));
     servico = ServidorHttpFalso.naPorta(portaDoServico, healthComCommit(SHA_PUBLICADO));
     var resultado = deployEmAndamento.join();
@@ -211,15 +216,30 @@ class DeployNormalTest {
   }
 
   private ExecucaoDeScript.Resultado rodarDeploy(String enderecoDoServico) {
+    return execucaoDoDeploy(enderecoDoServico).rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM);
+  }
+
+  private ExecucaoDeScript execucaoDoDeploy(String enderecoDoServico) {
     return ExecucaoDeScript.comAmbienteDeTeste()
         .comVariavel("RENDER_DEPLOY_HOOK_URL", deployHook.endereco() + "/deploy/srv-teste?key=k")
-        .comVariavel("SERVICE_URL", enderecoDoServico)
-        .rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM);
+        .comVariavel("SERVICE_URL", enderecoDoServico);
+  }
+
+  private void esperarFimDoAtendimentoDoDeployHook() throws InterruptedException {
+    var limite = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+    while (deployHook.pedidos().stream().noneMatch(pedido -> pedido.fimEmNanos() != 0)) {
+      if (System.nanoTime() > limite) {
+        throw new IllegalStateException("O deploy hook não foi chamado em 10 s.");
+      }
+      Thread.sleep(Duration.ofMillis(20));
+    }
   }
 
   private void assertFalhaNaHoraSemConsultarOHealth(ExecucaoDeScript.Resultado resultado) {
     assertThat(resultado.terminouComSucesso()).isFalse();
     assertThat(resultado.saida()).contains("deploy hook");
+    assertThat(resultado.duracao())
+        .isLessThan(Duration.ofSeconds(ExecucaoDeScript.INTERVALO_DE_TESTE_EM_SEGUNDOS));
     assertThat(servico.pedidos()).isEmpty();
   }
 }

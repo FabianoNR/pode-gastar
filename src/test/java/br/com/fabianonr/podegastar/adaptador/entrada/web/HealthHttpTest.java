@@ -88,7 +88,7 @@ class HealthHttpTest {
   }
 
   @Test
-  @DisplayName("GET /health lê RENDER_GIT_COMMIT a cada consulta (O2)")
+  @DisplayName("GET /health reflete o valor atual de RENDER_GIT_COMMIT a cada consulta")
   void healthLeAVariavelACadaConsulta() throws Exception {
     definirCommit(SHA);
     consultarHealth().andExpect(jsonPath("$.commit").value(SHA));

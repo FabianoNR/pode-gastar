@@ -42,6 +42,10 @@ final class ExecucaoDeScript {
     return this;
   }
 
+  ExecucaoDeScript comIntervaloEmSegundos(int intervalo) {
+    return comVariavel("ESPERA_INTERVALO_SEGUNDOS", String.valueOf(intervalo));
+  }
+
   ExecucaoDeScript comPrazoEmSegundos(int prazo) {
     return comVariavel("ESPERA_PRAZO_SEGUNDOS", String.valueOf(prazo));
   }

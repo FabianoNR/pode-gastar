@@ -284,7 +284,7 @@ class RollbackPelaApiDoRenderTest {
         "{\"status\": \"UP\", \"commit\": \"desconhecido\"}"
       })
   @DisplayName(
-      "Commit nulo, numérico, vazio, desconhecido ou corpo sem JSON contam como ainda não até o prazo (CA47 a CA51)")
+      "Commit nulo, numérico, vazio, desconhecido ou corpo sem JSON contam como ainda não até o prazo (CA47, CA48, CA49, CA50, CA51)")
   void commitIlegivelContaComoAindaNaoAteOPrazo(String corpo) {
     apiDoRender = ServidorHttpFalso.comRoteiro(responder(201, "{}"));
     servico = ServidorHttpFalso.comRoteiro(responder(200, corpo));
