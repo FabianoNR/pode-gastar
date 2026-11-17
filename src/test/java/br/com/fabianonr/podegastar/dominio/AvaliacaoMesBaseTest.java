@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** Critérios CA1 a CA11 da spec (v6), sobre o mês de exemplo sem a bolsa. */
+/** Critérios CA1 a CA11, CA14 a CA16, CA19 e CA20 da spec (v8), no mês de exemplo sem a bolsa. */
 class AvaliacaoMesBaseTest {
 
   private static Avaliacao avaliar(Mes mes, String valor, Categoria categoria) {
@@ -44,7 +44,7 @@ class AvaliacaoMesBaseTest {
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("200");
     assertThat(avaliacao.sugestoes()).hasSize(1);
-    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(JANTAR, BOLA);
     assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("200");
   }
 
@@ -55,6 +55,7 @@ class AvaliacaoMesBaseTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("50");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLA);
     assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("80");
   }
@@ -66,21 +67,23 @@ class AvaliacaoMesBaseTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("150");
-    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactlyInAnyOrder(JANTAR, BOLA);
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(JANTAR, BOLA);
+    assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("200");
   }
 
   @Test
-  @DisplayName("800 DEVO_FAZER, falta 700; opção 1 fecha exato com SERIA_LEGAL e QUERO_FAZER (CA5)")
-  void compraDevoFazerGrandeTemOpcaoQueFechaExatoComSeriaLegalEQueroFazer() {
+  @DisplayName("800 DEVO_FAZER, falta 700; a regra de corte fecha exato sem chegar às opções (CA5)")
+  void compraDevoFazerQueARegraDeCorteCobreNaoChegaAsOpcoes() {
     Avaliacao avaliacao = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("700");
-    assertThat(avaliacao.sugestoes())
-        .anySatisfy(sugestao -> {
-          assertThat(nomes(sugestao)).containsExactlyInAnyOrder(JANTAR, BOLA, VIAGEM, ITEM_CASA);
-          assertThat(sugestao.cobre()).isEqualByComparingTo("700");
-        });
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(sugestao.opcao()).isEqualTo(Opcao.PADRAO);
+    assertThat(nomes(sugestao)).containsExactly(JANTAR, BOLA, ITEM_CASA, VIAGEM);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("700");
   }
 
   @Test
@@ -132,17 +135,12 @@ class AvaliacaoMesBaseTest {
 
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("50");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
     assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly(BOLA);
     assertThat(nomesSugeridos(avaliacao)).doesNotContain(VIAGEM);
     assertThat(avaliacao.listaCompleta().stream().map(Item::nome)).doesNotContain(VIAGEM);
   }
 
-  /**
-   * CA10: a spec não define em que posição de R6 o item PARCIAL entra na ordem das sugestões. Aqui
-   * só se verifica o que é derivável: a decisão e a falta, com a viagem PARCIAL contando 300 como
-   * comprometido (livre 100) e 150 como já saído (total restante 1450). A pergunta sobre quando a
-   * viagem aparece como sugestão está aberta na PR.
-   */
   @Test
   @DisplayName(
       "Viagem PARCIAL (150) e 200 QUERO com livre insuficiente: cabe com cortes, falta 100 (CA10)")
@@ -156,16 +154,104 @@ class AvaliacaoMesBaseTest {
   }
 
   @Test
+  @DisplayName(
+      "Viagem PARCIAL (150) e 600 QUERO: falta 500; a viagem entra no corte só pelo restante de 150 (CA10)")
+  void itemParcialEntraNoCortePeloRestanteDoPlanejado() {
+    Avaliacao avaliacao =
+        avaliar(comViagem(viagem(StatusItem.PARCIAL, "150")), "600.00", Categoria.QUERO_FAZER);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("500");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(nomes(sugestao)).containsExactly(JANTAR, BOLA, ITEM_CASA, VIAGEM);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("550");
+    Item viagemSugerida = sugestao.itens().get(3);
+    assertThat(viagemSugerida.valorDeCorte()).isEqualByComparingTo("150");
+    assertThat(viagemSugerida.jaSaiu()).isEqualByComparingTo("150");
+  }
+
+  @Test
   @DisplayName("O cartão de crédito nunca aparece como sugestão de corte (CA11)")
   void cartaoDeCreditoNuncaApareceComoSugestaoDeCorte() {
-    Avaliacao comOpcoes = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
+    Avaliacao cobertaPelaRegraDeCorte = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
     // 1600 não é coberto por nenhuma combinação elegível: sai a lista completa.
     Avaliacao semCobertura = avaliar(base(), "1600.00", Categoria.DEVO_FAZER);
 
-    assertThat(nomesSugeridos(comOpcoes)).doesNotContain(CARTAO);
+    assertThat(nomesSugeridos(cobertaPelaRegraDeCorte)).doesNotContain(CARTAO);
     assertThat(nomesSugeridos(semCobertura)).doesNotContain(CARTAO);
     assertThat(semCobertura.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(semCobertura.listaCompleta()).isNotEmpty();
     assertThat(semCobertura.listaCompleta().stream().map(Item::nome)).doesNotContain(CARTAO);
+  }
+
+  @Test
+  @DisplayName(
+      "900 QUERO_FAZER, falta 800: manutenção entra como último recurso e a bola fica de fora (CA14)")
+  void compraQueroFazerUsaDevoFazerComoUltimoRecursoECortaSoOMinimoDosDemais() {
+    Avaliacao avaliacao = avaliar(base(), "900.00", Categoria.QUERO_FAZER);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("800");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(sugestao.opcao()).isEqualTo(Opcao.PADRAO);
+    assertThat(nomes(sugestao)).containsExactly(JANTAR, ITEM_CASA, VIAGEM, MANUTENCAO);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("820");
+    assertThat(avaliacao.listaCompleta()).isEmpty();
+  }
+
+  @Test
+  @DisplayName(
+      "1100 QUERO_FAZER, falta 1000: sem sugestão, lista completa em ordem e ainda faltariam 100 (CA15)")
+  void compraQueroFazerSemCoberturaTrazListaCompletaComDevoFazerEQuantoAindaFaltaria() {
+    Avaliacao avaliacao = avaliar(base(), "1100.00", Categoria.QUERO_FAZER);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("1000");
+    assertThat(avaliacao.sugestoes()).isEmpty();
+    assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
+        .containsExactly(JANTAR, BOLA, ITEM_CASA, VIAGEM, MANUTENCAO);
+    assertThat(avaliacao.aindaFaltaria()).isEqualByComparingTo("100");
+  }
+
+  @Test
+  @DisplayName(
+      "500 SERIA_LEGAL é NAO_CABE por falta de itens seria legal; falta 200 depois dos cortes (CA16)")
+  void compraSeriaLegalSemItensSuficientesInformaOQueFaltariaDepoisDosCortes() {
+    Avaliacao avaliacao = avaliar(base(), "500.00", Categoria.SERIA_LEGAL);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.NAO_CABE);
+    assertThat(avaliacao.motivo()).isEqualTo(Motivo.FALTAM_ITENS_SERIA_LEGAL);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("200");
+    assertThat(avaliacao.sugestoes()).isEmpty();
+  }
+
+  @Test
+  @DisplayName(
+      "600 QUERO_FAZER, falta 500: jantar, bola e só a viagem; o item para casa não entra (CA19)")
+  void doGrupoQueroFazerEntraSoOMinimoQueOsSeriaLegalNaoCobrem() {
+    Avaliacao avaliacao = avaliar(base(), "600.00", Categoria.QUERO_FAZER);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("500");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(nomes(sugestao)).containsExactly(JANTAR, BOLA, VIAGEM);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("500");
+  }
+
+  @Test
+  @DisplayName(
+      "400 QUERO_FAZER, falta 300: jantar e item para casa (320); a viagem sozinha não é sugerida (CA20)")
+  void menosImportanteSaiPrimeiroMesmoQuandoUmItemMaisImportanteCobririaSozinho() {
+    Avaliacao avaliacao = avaliar(base(), "400.00", Categoria.QUERO_FAZER);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("300");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(nomes(sugestao)).containsExactly(JANTAR, ITEM_CASA);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("320");
   }
 }
