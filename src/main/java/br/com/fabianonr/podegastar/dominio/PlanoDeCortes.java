@@ -2,6 +2,7 @@ package br.com.fabianonr.podegastar.dominio;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Monta as sugestões de corte (R5 e R6) para uma compra que não cabe no livre, mas cabe no total
+ * Monta as sugestões de corte (R5 a R7) para uma compra que não cabe no livre, mas cabe no total
  * restante.
  */
 final class PlanoDeCortes {
@@ -19,19 +20,33 @@ final class PlanoDeCortes {
   /** Limite da busca de combinações (2^n); o mês de uma pessoa tem poucos itens por grupo. */
   private static final int MAXIMO_ITENS_POR_GRUPO = 20;
 
-  /** Categoria pesa antes da intensidade: seria legal, depois quero, depois devo. */
-  private static final Comparator<Item> PRIORIDADE =
+  /**
+   * Ordem dos itens dentro do grupo e na sugestão. A categoria só distingue itens no grupo dos
+   * itens em discussão: seria legal, depois quero, depois devo; depois a intensidade e o id.
+   */
+  private static final Comparator<Item> ORDEM_NA_SUGESTAO =
       Comparator.comparingInt((Item item) -> posicao(item.categoria()))
           .thenComparingInt(Item::intensidade)
           .thenComparing(Item::id);
 
-  private static final Comparator<List<Item>> COMBINACAO =
-      Comparator.<List<Item>>comparingInt(
-              combinacao -> combinacao.stream().mapToInt(Item::intensidade).sum())
+  /** Regra de corte (R6): menor soma de cortáveis, depois menor soma de intensidades, depois id. */
+  private static final Comparator<List<Item>> MENOR_CORTE =
+      Comparator.comparing(PlanoDeCortes::somaDeCortes)
+          .thenComparingInt(PlanoDeCortes::somaDeIntensidades)
+          .thenComparing(PlanoDeCortes::compararPeloMenorId);
+
+  /** Opção 2 (R7): menor soma de intensidades, depois menor soma de cortáveis, depois id. */
+  private static final Comparator<List<Item>> MENOR_INTENSIDADE =
+      Comparator.comparingInt(PlanoDeCortes::somaDeIntensidades)
           .thenComparing(PlanoDeCortes::somaDeCortes)
           .thenComparing(PlanoDeCortes::compararPeloMenorId);
 
-  private final List<Item> itens;
+  /** Opções 1 e 3 (R7): menor intensidade, depois menor cortável, depois menor id. */
+  private static final Comparator<Item> DEVO_FAZER_PREFERIDO =
+      Comparator.comparingInt(Item::intensidade)
+          .thenComparing(Item::valorDeCorte)
+          .thenComparing(Item::id);
+
   private final Compra compra;
   private final BigDecimal livre;
   private final BigDecimal totalRestante;
@@ -47,7 +62,6 @@ final class PlanoDeCortes {
       BigDecimal livre,
       BigDecimal totalRestante,
       BigDecimal falta) {
-    this.itens = itens;
     this.compra = compra;
     this.livre = livre;
     this.totalRestante = totalRestante;
@@ -55,11 +69,11 @@ final class PlanoDeCortes {
     this.emDiscussao =
         itens.stream()
             .filter(item -> item.status() == StatusItem.EM_DISCUSSAO && item.elegivelParaCorte())
-            .sorted(PRIORIDADE)
+            .sorted(ORDEM_NA_SUGESTAO)
             .toList();
-    this.candidatosSeriaLegal = candidatos(Categoria.SERIA_LEGAL);
-    this.candidatosQueroFazer = candidatos(Categoria.QUERO_FAZER);
-    this.candidatosDevoFazer = candidatos(Categoria.DEVO_FAZER);
+    this.candidatosSeriaLegal = candidatos(itens, Categoria.SERIA_LEGAL);
+    this.candidatosQueroFazer = candidatos(itens, Categoria.QUERO_FAZER);
+    this.candidatosDevoFazer = candidatos(itens, Categoria.DEVO_FAZER);
   }
 
   static Avaliacao montar(
@@ -76,64 +90,65 @@ final class PlanoDeCortes {
   }
 
   private Avaliacao avaliar() {
-    SelecaoDeCortes selecao = new SelecaoDeCortes(falta);
-    cortarItensEmDiscussao(selecao);
-    cortarItensPendentesPorGrupo(selecao);
-    return decidirResultado(selecao);
+    List<List<Item>> grupos = gruposDaCompra();
+    return regraDeCorte(grupos)
+        .map(itensCortados ->
+            cabeComCortes(List.of(Sugestao.de(Opcao.PADRAO, itensCortados)), List.of(), null))
+        .orElseGet(() -> semCobertura(grupos));
   }
 
-  /** Itens em discussão, de qualquer categoria, na ordem de prioridade, até cobrir a falta. */
-  private void cortarItensEmDiscussao(SelecaoDeCortes selecao) {
-    for (Item item : emDiscussao) {
-      if (selecao.cobriuAFalta()) {
-        break;
-      }
-      selecao.adicionar(List.of(item));
-    }
-  }
-
-  /** Itens pendentes conforme a categoria da compra, grupo a grupo, até cobrir a falta. */
-  private void cortarItensPendentesPorGrupo(SelecaoDeCortes selecao) {
-    for (List<Item> grupo : gruposDaCompra()) {
-      if (selecao.cobriuAFalta()) {
-        break;
-      }
-      List<Item> usados = melhorCombinacao(grupo, selecao.faltaSemCobrir()).orElse(grupo);
-      selecao.adicionar(usados);
-    }
-  }
-
-  private Avaliacao decidirResultado(SelecaoDeCortes selecao) {
-    if (selecao.cobriuAFalta()) {
-      return cabeComCortes(List.of(Sugestao.de(Opcao.PADRAO, selecao.itens())), List.of(), null);
-    }
-    return semCobertura(selecao.faltaSemCobrir());
-  }
-
-  /** Grupos de PENDENTE (ou PARCIAL) elegíveis, na ordem em que entram na sugestão. */
+  /** Grupos de corte da compra, do menos importante para o mais importante (R6). */
   private List<List<Item>> gruposDaCompra() {
-    List<List<Item>> grupos = new ArrayList<>();
-    grupos.add(candidatosSeriaLegal);
-    if (compra.categoria() != Categoria.SERIA_LEGAL) {
-      grupos.add(candidatosQueroFazer);
+    return switch (compra.categoria()) {
+      case SERIA_LEGAL -> List.of(emDiscussao, candidatosSeriaLegal);
+      case QUERO_FAZER ->
+          List.of(emDiscussao, candidatosSeriaLegal, candidatosQueroFazer, candidatosDevoFazer);
+      case DEVO_FAZER -> List.of(emDiscussao, candidatosSeriaLegal, candidatosQueroFazer);
+    };
+  }
+
+  /**
+   * Regra de corte (R6): corta primeiro o menos importante; do mais importante, só o mínimo que
+   * faltar. Vazio quando nem todos os grupos juntos cobrem a falta.
+   */
+  private Optional<List<Item>> regraDeCorte(List<List<Item>> grupos) {
+    if (somaDeCortes(juntar(grupos)).compareTo(falta) < 0) {
+      return Optional.empty();
     }
-    return grupos;
+    List<List<Item>> cortesPorGrupo =
+        new ArrayList<>(Collections.nCopies(grupos.size(), List.of()));
+    BigDecimal faltaQueResta = falta;
+    for (int posicaoDoGrupo = grupos.size() - 1; posicaoDoGrupo >= 0; posicaoDoGrupo--) {
+      BigDecimal cobertoPelosMenosImportantes =
+          somaDeCortes(juntar(grupos.subList(0, posicaoDoGrupo)));
+      BigDecimal necessarioDoGrupo = faltaQueResta.subtract(cobertoPelosMenosImportantes);
+      if (necessarioDoGrupo.signum() > 0) {
+        List<Item> cortesDoGrupo =
+            melhorCombinacao(grupos.get(posicaoDoGrupo), necessarioDoGrupo, MENOR_CORTE)
+                .orElseThrow();
+        cortesPorGrupo.set(posicaoDoGrupo, cortesDoGrupo);
+        faltaQueResta = faltaQueResta.subtract(somaDeCortes(cortesDoGrupo));
+      }
+    }
+    return Optional.of(juntar(cortesPorGrupo));
   }
 
   /** Item que não libera valor ao ser cortado (PARCIAL já gasto além do previsto) fica de fora. */
-  private List<Item> candidatos(Categoria categoria) {
+  private static List<Item> candidatos(List<Item> itens, Categoria categoria) {
     return itens.stream()
         .filter(item -> item.categoria() == categoria)
         .filter(item -> item.status() == StatusItem.PENDENTE || item.status() == StatusItem.PARCIAL)
         .filter(Item::elegivelParaCorte)
         .filter(item -> item.valorDeCorte().signum() > 0)
-        .sorted(PRIORIDADE)
+        .sorted(ORDEM_NA_SUGESTAO)
         .toList();
   }
 
-  private Avaliacao semCobertura(BigDecimal aindaFalta) {
+  private Avaliacao semCobertura(List<List<Item>> grupos) {
     if (compra.categoria() == Categoria.SERIA_LEGAL) {
-      return Avaliacao.naoCabe(livre, totalRestante, aindaFalta, Motivo.FALTAM_ITENS_SERIA_LEGAL);
+      BigDecimal aindaFaltaria = falta.subtract(somaDeCortes(juntar(grupos)));
+      return Avaliacao.naoCabe(
+          livre, totalRestante, aindaFaltaria, Motivo.FALTAM_ITENS_SERIA_LEGAL);
     }
     if (compra.categoria() == Categoria.DEVO_FAZER) {
       List<Sugestao> opcoes = opcoesDeUltimoRecurso();
@@ -144,25 +159,21 @@ final class PlanoDeCortes {
     return listaCompletaDeCortes();
   }
 
-  /** Nenhuma combinação cobre a falta: devolve todos os itens elegíveis e quanto ainda faltaria. */
+  /** Nenhum corte cobre a falta: devolve todos os itens elegíveis e quanto ainda faltaria (R7). */
   private Avaliacao listaCompletaDeCortes() {
-    List<Item> todos = new ArrayList<>(emDiscussao);
-    todos.addAll(candidatosSeriaLegal);
-    todos.addAll(candidatosQueroFazer);
-    if (compra.categoria() == Categoria.DEVO_FAZER) {
-      todos.addAll(candidatosDevoFazer);
-    }
+    List<Item> todos =
+        juntar(
+            List.of(emDiscussao, candidatosSeriaLegal, candidatosQueroFazer, candidatosDevoFazer));
     return cabeComCortes(List.of(), todos, falta.subtract(somaDeCortes(todos)));
   }
 
   /**
-   * R7: compra DEVO_FAZER que EM_DISCUSSAO, SERIA_LEGAL e QUERO_FAZER não cobrem. Os itens em
-   * discussão entram sempre primeiro, como em R6.
+   * R7: compra DEVO_FAZER que a regra de corte não cobre. Todas as opções levam os itens em
+   * discussão e os seria legal elegíveis.
    */
   private List<Sugestao> opcoesDeUltimoRecurso() {
-    BigDecimal faltaAposDiscussao = falta.subtract(somaDeCortes(emDiscussao));
     BigDecimal faltaAposSeriaLegal =
-        faltaAposDiscussao.subtract(somaDeCortes(candidatosSeriaLegal));
+        falta.subtract(somaDeCortes(emDiscussao)).subtract(somaDeCortes(candidatosSeriaLegal));
     BigDecimal faltaAposQueroFazer =
         faltaAposSeriaLegal.subtract(somaDeCortes(candidatosQueroFazer));
 
@@ -173,32 +184,40 @@ final class PlanoDeCortes {
     return List.copyOf(opcoes.values());
   }
 
-  /** Opção 1: todos os seria legal, todos os quero e um devo que feche o valor. */
+  /** Opção 1: todos os quero e um devo que, sozinho, cobre o que ainda falta. */
   private void guardarOpcaoUm(Map<Set<String>, Sugestao> opcoes, BigDecimal faltaAposQueroFazer) {
-    umDevoQueCubra(candidatosDevoFazer, faltaAposQueroFazer)
+    umDevoQueCubra(faltaAposQueroFazer)
         .ifPresent(itemDevo ->
             guardar(
                 opcoes,
                 Opcao.OPCAO_1,
                 juntar(
-                    emDiscussao, candidatosSeriaLegal, candidatosQueroFazer, List.of(itemDevo))));
+                    List.of(
+                        emDiscussao,
+                        candidatosSeriaLegal,
+                        candidatosQueroFazer,
+                        List.of(itemDevo)))));
   }
 
-  /** Opção 2: todos os seria legal e a combinação de quero com devo de menor intensidade. */
+  /** Opção 2: a combinação de quero com devo de menor soma de intensidades. */
   private void guardarOpcaoDois(Map<Set<String>, Sugestao> opcoes, BigDecimal faltaAposSeriaLegal) {
-    melhorCombinacao(juntar(candidatosQueroFazer, candidatosDevoFazer), faltaAposSeriaLegal)
+    List<Item> queroEDevo = juntar(List.of(candidatosQueroFazer, candidatosDevoFazer));
+    melhorCombinacao(queroEDevo, faltaAposSeriaLegal, MENOR_INTENSIDADE)
         .ifPresent(combinacao ->
-            guardar(opcoes, Opcao.OPCAO_2, juntar(emDiscussao, candidatosSeriaLegal, combinacao)));
+            guardar(
+                opcoes,
+                Opcao.OPCAO_2,
+                juntar(List.of(emDiscussao, candidatosSeriaLegal, combinacao))));
   }
 
-  /** Opção 3: todos os seria legal e um devo, por valor e intensidade baixa, se cobrir a falta. */
+  /** Opção 3: um devo que, sozinho, cobre o que falta depois dos seria legal. */
   private void guardarOpcaoTres(Map<Set<String>, Sugestao> opcoes, BigDecimal faltaAposSeriaLegal) {
-    umDevoQueCubra(candidatosDevoFazer, faltaAposSeriaLegal)
+    umDevoQueCubra(faltaAposSeriaLegal)
         .ifPresent(itemDevo ->
             guardar(
                 opcoes,
                 Opcao.OPCAO_3,
-                juntar(emDiscussao, candidatosSeriaLegal, List.of(itemDevo))));
+                juntar(List.of(emDiscussao, candidatosSeriaLegal, List.of(itemDevo)))));
   }
 
   /** Opções com os mesmos itens (mesmos ids) são a mesma sugestão; fica a primeira. */
@@ -207,21 +226,15 @@ final class PlanoDeCortes {
     opcoes.putIfAbsent(idsDaOpcao, Sugestao.de(opcao, itens));
   }
 
-  private static Optional<Item> umDevoQueCubra(List<Item> devo, BigDecimal alvo) {
-    return devo.stream()
+  private Optional<Item> umDevoQueCubra(BigDecimal alvo) {
+    return candidatosDevoFazer.stream()
         .filter(item -> item.valorDeCorte().compareTo(alvo) >= 0)
-        .min(
-            Comparator.comparing(Item::valorDeCorte)
-                .thenComparingInt(Item::intensidade)
-                .thenComparing(Item::id));
+        .min(DEVO_FAZER_PREFERIDO);
   }
 
-  @SafeVarargs
-  private static List<Item> juntar(List<Item>... listas) {
+  private static List<Item> juntar(List<List<Item>> listas) {
     List<Item> todos = new ArrayList<>();
-    for (List<Item> lista : listas) {
-      todos.addAll(lista);
-    }
+    listas.forEach(todos::addAll);
     return todos;
   }
 
@@ -232,10 +245,11 @@ final class PlanoDeCortes {
   }
 
   /**
-   * Entre as combinações do grupo que cobrem o alvo: menor soma de intensidades, depois menor soma
-   * de valores, depois menor id (R6). Combinação pode ter quantos itens forem necessários.
+   * Melhor combinação de itens que cobre o alvo, pelo critério informado. Uma combinação pode ter
+   * quantos itens forem necessários e mantém a ordem dos itens no grupo.
    */
-  static Optional<List<Item>> melhorCombinacao(List<Item> grupo, BigDecimal alvo) {
+  private static Optional<List<Item>> melhorCombinacao(
+      List<Item> grupo, BigDecimal alvo, Comparator<List<Item>> criterio) {
     int quantidadeDeItens = grupo.size();
     if (quantidadeDeItens > MAXIMO_ITENS_POR_GRUPO) {
       throw new ItensDemaisParaCombinarException(MAXIMO_ITENS_POR_GRUPO);
@@ -244,7 +258,7 @@ final class PlanoDeCortes {
     for (int mascara = 1; mascara < (1 << quantidadeDeItens); mascara++) {
       List<Item> combinacao = combinacaoDaMascara(grupo, mascara);
       if (somaDeCortes(combinacao).compareTo(alvo) >= 0
-          && (melhor == null || COMBINACAO.compare(combinacao, melhor) < 0)) {
+          && (melhor == null || criterio.compare(combinacao, melhor) < 0)) {
         melhor = combinacao;
       }
     }
@@ -260,6 +274,10 @@ final class PlanoDeCortes {
       }
     }
     return combinacao;
+  }
+
+  private static int somaDeIntensidades(List<Item> combinacao) {
+    return combinacao.stream().mapToInt(Item::intensidade).sum();
   }
 
   /** Compara os ids de cada combinação, em ordem alfabética, até o primeiro diferente. */
@@ -278,34 +296,6 @@ final class PlanoDeCortes {
 
   private static List<String> idsEmOrdemAlfabetica(List<Item> combinacao) {
     return combinacao.stream().map(Item::id).sorted().toList();
-  }
-
-  /** Itens já escolhidos para corte e quanto da falta ainda não foi coberto. */
-  private static final class SelecaoDeCortes {
-
-    private final List<Item> itens = new ArrayList<>();
-    private BigDecimal faltaSemCobrir;
-
-    SelecaoDeCortes(BigDecimal falta) {
-      this.faltaSemCobrir = falta;
-    }
-
-    void adicionar(List<Item> itensCortados) {
-      itens.addAll(itensCortados);
-      faltaSemCobrir = faltaSemCobrir.subtract(somaDeCortes(itensCortados));
-    }
-
-    boolean cobriuAFalta() {
-      return faltaSemCobrir.signum() <= 0;
-    }
-
-    BigDecimal faltaSemCobrir() {
-      return faltaSemCobrir;
-    }
-
-    List<Item> itens() {
-      return itens;
-    }
   }
 
   private static int posicao(Categoria categoria) {
