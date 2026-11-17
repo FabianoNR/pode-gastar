@@ -1,10 +1,10 @@
 # Spec: Pode Gastar (v8)
 
-Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. As decisões das regras complementares da operação (O9 a O12) foram aprovadas pelo Fabiano em 17/11/2026; o texto delas e os critérios de aceite CA21 a CA39 aguardam a aprovação da PR #24 (`docs/rollback-spec-adr-0013`). Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. As decisões das regras complementares da operação (O9 a O13) foram aprovadas pelo Fabiano em 17/11/2026; o texto delas e os critérios de aceite CA21 a CA42 aguardam a aprovação da PR #24 (`docs/rollback-spec-adr-0013`). Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
-- **v8, critérios de aceite e regras complementares da operação (2026-11-17):** CA21 a CA39 novos, para O2 a O12. Decisões aprovadas pelo Fabiano em 17/11/2026, na conversa de design desta revisão (sem resumo de design separado; `docs/design/health-commit-rollback.md` não foi alterado): o valor de `RENDER_GIT_COMMIT` é aparado, e vazio ou só com espaços vale `"desconhecido"` (O2, O3); qualquer 2xx da API do Render aceita o pedido (O8); 3xx, sem seguir o redirecionamento, 4xx, 5xx e falha de rede fazem o rollback falhar na hora, sem nova tentativa, e 1xx fica fora da regra (O9, nova); erro ou demora do `/health` durante a espera conta como "ainda não", com tempo limite de 5 segundos por consulta (O10, nova); o rollback só roda na `main` e, fora dela, o job aparece como "pulado" (O11, nova); rollback, deploy hook e smoke test usam o mesmo grupo de concorrência, e quem chega depois espera (O12, nova). A ADR 0013 registra os nomes dos segredos. Os Abertos ganham os itens do `imgURL` no deploy hook e dos jobs separados de deploy hook e smoke test. Fonte: PR #24 (`docs/rollback-spec-adr-0013`).
+- **v8, critérios de aceite e regras complementares da operação (2026-11-17):** CA21 a CA42 novos, para O2 a O13. Decisões aprovadas pelo Fabiano em 17/11/2026, na conversa de design desta revisão (sem resumo de design separado; `docs/design/health-commit-rollback.md` não foi alterado): o valor de `RENDER_GIT_COMMIT` é aparado, e vazio ou só com espaços vale `"desconhecido"` (O2, O3); qualquer 2xx da API do Render aceita o pedido (O8); 3xx, sem seguir o redirecionamento, 4xx, 5xx e falha de rede fazem o rollback falhar na hora, sem nova tentativa, e 1xx fica fora da regra (O9, nova); na espera, código diferente de 200, conexão recusada, falha de DNS ou TLS, conexão interrompida, resposta sem `commit` legível e consulta acima do tempo limite de 5 segundos contam como "ainda não" (O10, nova); no rollback, o prazo começa quando a API aceita o pedido com 2xx; a fila do GitHub não conta no prazo (O4, O7); o intervalo conta do fim de uma consulta ao início da próxima (O13, nova); o rollback só roda na `main` e, fora dela, o job aparece como "pulado" (O11, nova); deploy hook e smoke test viram um único job no `ci.yml`, no mesmo grupo de concorrência do rollback, e quem chega depois espera (O12, nova); CA37 e CA42 são verificados à mão numa execução real. A ADR 0013 registra os nomes dos segredos. Os Abertos ganham o item do `imgURL` no deploy hook. Fonte: PR #24 (`docs/rollback-spec-adr-0013`).
 - **v8, revisão de operação de 2026-11-17:** `/health` passa a expor o commit; regras do deploy e do rollback (seção "Operação"); CA13 atualizado. Design: `docs/design/health-commit-rollback.md`. Decisão: ADR 0013. Fonte: PR #23 (`docs/health-commit-rollback`).
 - **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e PR #21 (`docs/spec-v8-decisoes`). Pendências em "Abertos".
 - **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
@@ -206,24 +206,28 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 
 ### Deploy normal
 
-- **O4.** Depois de disparar o deploy hook, o smoke test consulta `/health` até o `commit` exposto ser igual ao SHA do commit publicado. Usa o mesmo intervalo e o mesmo prazo do rollback (O7). Se o prazo acabar antes disso, o smoke test falha.
+- **O4.** Depois de disparar o deploy hook, o smoke test consulta `/health` até o `commit` exposto ser igual ao SHA do commit publicado. Usa o mesmo intervalo e o mesmo prazo do rollback (O7, O13). O tempo de espera na fila do GitHub não conta no prazo. Se o prazo acabar antes disso, o smoke test falha.
 
 ### Rollback
 
 - **O5.** O rollback recebe o SHA completo, com 40 caracteres, do commit que deve voltar ao ar. Ele chama `POST https://api.render.com/v1/services/{serviceId}/deploys` com `commitId` igual a esse SHA, autenticado pela chave da API do Render.
 - **O6.** Se o SHA recebido não tiver exatamente 40 caracteres hexadecimais minúsculos, o rollback é rejeitado antes de qualquer chamada à API do Render, e o workflow falha com uma mensagem clara.
-- **O7.** Depois da chamada da O5, consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. Se não chegar a esse SHA dentro do prazo, o rollback falha.
+- **O7.** Depois que a API aceita o pedido da O5 com uma resposta 2xx (O8), consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. O prazo de 10 minutos começa no momento em que a API aceita o pedido; o tempo de espera na fila do GitHub não conta. Se não chegar a esse SHA dentro do prazo, o rollback falha.
 - **O8.** Qualquer resposta 2xx da API, por exemplo 201 ou 202, só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O7 confirma o rollback.
 - **O9.** Se a API do Render responder 3xx, 4xx ou 5xx, o rollback falha na hora, sem consultar `/health`, com uma mensagem que traz o código HTTP da resposta. Um 3xx não é seguido: o redirecionamento não é feito, e a resposta 3xx é a que conta. Respostas 1xx não entram nesta regra, porque o cliente HTTP as trata sozinho. Se a chamada não tiver resposta por falha de rede, o rollback também falha na hora, com uma mensagem clara, sem nova tentativa e sem consultar `/health`.
 
 ### Espera pelo commit
 
-- **O10.** Na espera do smoke test (O4) e do rollback (O7), uma consulta ao `/health` com erro conta como "ainda não". Erro é: código diferente de 200, conexão recusada, resposta sem um campo `commit` legível ou consulta que passa do tempo limite de 5 segundos. Esse tempo limite vale para cada consulta e inclui a conexão e a leitura da resposta. As consultas continuam até o prazo.
+- **O10.** Na espera do smoke test (O4) e do rollback (O7), uma consulta ao `/health` com erro conta como "ainda não". Erro é: código diferente de 200, conexão recusada, falha de DNS, falha de TLS, conexão interrompida, resposta sem um campo `commit` legível ou consulta que passa do tempo limite de 5 segundos. Esse tempo limite vale para cada consulta e inclui a conexão e a leitura da resposta. As consultas continuam até o prazo.
 
 ### Execução dos workflows
 
 - **O11.** O workflow de rollback só roda na `main`. O job tem uma condição que exige a `main`; disparado a partir de outra branch, o job não roda e aparece no GitHub como "pulado" (skipped), e nenhuma chamada é feita à API do Render nem ao `/health`. Esse é o comportamento esperado; a execução não aparece como falha.
-- **O12.** O rollback, o deploy hook do `ci.yml` e o smoke test do deploy normal usam o mesmo grupo de concorrência e, assim, nunca rodam ao mesmo tempo. Quem chega depois espera, sem cancelar o que já está rodando (`cancel-in-progress: false`). Se houver mais de uma execução esperando no grupo, o GitHub cancela a que estava na fila e mantém só a mais nova.
+- **O12.** No `ci.yml`, o deploy hook e o smoke test formam um único job, em sequência: primeiro o deploy hook, depois o smoke test. O grupo de concorrência fica nesse job e tem o mesmo nome do grupo do job de rollback. Assim, o deploy normal e o rollback nunca rodam ao mesmo tempo, e nenhum rollback roda entre o deploy hook e o smoke test. Quem chega depois espera, sem cancelar o que já está rodando (`cancel-in-progress: false`). Se houver mais de uma execução esperando no grupo, o GitHub cancela a que estava na fila e mantém só a mais nova.
+
+### Intervalo e prazo das consultas
+
+- **O13.** O intervalo de 15 segundos conta do fim de uma consulta ao início da próxima. Nenhuma consulta nova começa depois do fim do prazo. Uma consulta iniciada antes do fim do prazo vale, mesmo que termine depois dele.
 
 ## Mês de exemplo (estado no servidor)
 
@@ -302,9 +306,31 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA34.** Rollback para `<sha>`: a chamada à API não tem resposta, por exemplo porque a conexão é recusada. O rollback falha na hora, com uma mensagem clara, depois de uma única tentativa e sem consultar `/health` (O9).
 - **CA35.** Smoke test do deploy normal do commit `<sha>`: `/health` responde 502 numa consulta e expõe `<sha>` na consulta seguinte, dentro de 10 minutos. O smoke test continua depois do 502 e passa (O10).
 - **CA36.** Rollback para `<sha>`, com a API respondendo 201: uma consulta ao `/health` não termina em 5 segundos, e a consulta seguinte expõe `<sha>`, dentro de 10 minutos. O rollback continua e termina com sucesso (O10).
-- **CA37.** Workflow de rollback disparado a partir de uma branch diferente da `main`: o job não roda e aparece como "pulado", e não há chamada à API do Render nem ao `/health` (O11).
-- **CA38.** Rollback disparado enquanto o smoke test de um deploy normal está rodando: o rollback espera o smoke test terminar e só então começa. O smoke test não é cancelado (O12).
+- **CA37.** Workflow de rollback disparado a partir de uma branch diferente da `main`: o job não roda e aparece como "pulado", e não há chamada à API do Render nem ao `/health` (O11). Verificação manual numa execução real; passo a passo em "Verificação manual".
+- **CA38.** Rollback disparado enquanto o job de deploy hook e smoke test de um deploy normal está rodando: o rollback espera o smoke test terminar e só então começa. O smoke test não é cancelado (O12).
 - **CA39.** Rollback para `<sha>`, com a API respondendo 201: por 10 minutos, toda consulta ao `/health` responde 502. O rollback falha por prazo, com uma mensagem que traz o SHA pedido (O7, O10).
+- **CA40.** Smoke test do deploy normal do commit `<sha>`: a primeira consulta ao `/health` tem a conexão recusada, e a consulta seguinte expõe `<sha>`, dentro de 10 minutos. O smoke test continua depois da conexão recusada e passa (O10).
+- **CA41.** Rollback para `<sha>`, com a API respondendo 201: a primeira consulta ao `/health` responde 200 sem um campo `commit` legível, por exemplo `{"status": "UP"}`, e a consulta seguinte expõe `<sha>`, dentro de 10 minutos. O rollback continua e termina com sucesso (O10).
+- **CA42.** Com o job de deploy hook e smoke test rodando, um rollback está esperando no grupo de concorrência e um segundo rollback é disparado: o GitHub cancela o primeiro rollback, que estava na fila; o segundo passa a esperar; o job que estava rodando não é cancelado (O12). Verificação manual numa execução real; passo a passo em "Verificação manual".
+
+### Verificação manual
+
+Estes passos usam uma execução real no GitHub e no Render, depois do merge da PR que implementa a seção "Operação". O CA37 usa o SHA que já está no ar e não troca a versão publicada. O CA42 aproveita o merge de uma PR já aprovada, que publica uma versão nova pelo deploy normal.
+
+**CA37 (rollback fora da `main`):**
+
+1. Abrir o `/health` de produção e anotar o `commit` exposto (`<sha-no-ar>`).
+2. Em Actions, abrir o workflow de rollback, escolher "Run workflow", selecionar uma branch criada a partir da `main` depois do merge da implementação, sem alterar o workflow de rollback, e informar `<sha-no-ar>`.
+3. Conferir que o job de rollback aparece como "pulado" e que a execução não aparece como falha.
+4. Conferir no painel do Render que nenhum deploy novo foi criado, e que o `/health` continua expondo `<sha-no-ar>`.
+
+**CA42 (cancelamento na fila):**
+
+1. Mesclar na `main` uma PR já aprovada e anotar o SHA do merge (`<sha-do-merge>`). Esperar o job de deploy hook e smoke test dessa execução começar a rodar (execução A).
+2. Com A rodando, disparar o workflow de rollback na `main` com `<sha-do-merge>` (execução B). Conferir que B aparece esperando.
+3. Ainda com A rodando, disparar de novo o workflow de rollback na `main` com `<sha-do-merge>` (execução C). Conferir que B aparece cancelada pelo GitHub, que C aparece esperando e que A continua rodando.
+4. Quando A terminar, conferir que C roda e termina com sucesso, e que o `/health` expõe `<sha-do-merge>`. C pede ao Render um novo deploy do mesmo commit, então a versão no ar não muda.
+5. Se A falhar no smoke test, cancelar C manualmente antes de ele começar, porque `<sha-do-merge>` é o commit com falha, e seguir o procedimento normal de rollback para o commit anterior.
 
 ## Fora de escopo desta versão
 
@@ -331,7 +357,6 @@ Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é o
 - **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
 - **Publicação no GHCR.** O serviço no Render é construído a partir do GitHub (ADR 0013), então a imagem publicada no GHCR pode não ser o que roda em produção. Confirmar em outra PR se essa publicação ainda é necessária.
 - **README descreve o fluxo por imagem.** O README descreve o smoke test e o rollback por imagem, sem conferir o commit. A PR que implementa a seção "Operação" não altera o README, por decisão do Fabiano de 17/11/2026. A atualização, para o README apontar para a spec em vez de descrever a regra, fica para PR própria.
-- **Deploy hook e smoke test em jobs separados (O12).** No `ci.yml`, o deploy hook e o smoke test são jobs diferentes. A O12 não diz se os dois formam um bloco só no grupo de concorrência. Se cada job usar o grupo separadamente, um rollback que estava na fila pode rodar entre o deploy hook e o smoke test. Nesse caso, o smoke test espera o SHA do deploy enquanto o Render publica o SHA do rollback, e o smoke test falha por prazo.
 - **Deploy hook envia `imgURL` do GHCR.** O passo do deploy hook no `ci.yml` ainda envia `imgURL` com a imagem do GHCR, mas o serviço no Render é construído a partir do GitHub (ADR 0013). Revisar em outra PR, junto com o item "Publicação no GHCR".
 - **Deploy alcançado por commit mais novo (O4).** Se outro merge entrar antes de o deploy terminar, o Render pode publicar um commit mais novo. Nesse caso, o smoke test espera o SHA anterior e falha por prazo. A spec não define esse caso.
 - **Status das ADRs desta revisão.** A ADR 0009, já aceita, foi editada sem nota de revisão. A ADR 0013, também aceita, foi editada de novo na PR `docs/rollback-spec-adr-0013` (nomes dos segredos), sem nota de revisão. Decidir se uma ADR aceita ganha nota quando é editada.
