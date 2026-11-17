@@ -4,12 +4,7 @@ Status: aprovada e mesclada na main pela PR #18. A revisão de 17/11/2026 (ADR 0
 
 ## Histórico
 
-- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e esta PR (#21, `docs/spec-v8-decisoes`).
-  - R6: limite de 20 itens (ADR 0012). Vale para o grupo 0 (em discussão) e para o grupo `DEVO_FAZER` da compra `QUERO_FAZER`, antes de qualquer combinação, e para os demais grupos quando precisam ser combinados.
-  - Contrato: na compra `SERIA_LEGAL` com mais de 20 itens em discussão, a resposta é 422 em vez de `NAO_CABE`.
-  - R6, passo 3: desempate por id em ordem numérica natural (ADR 0011).
-  - R6: valor de corte zero registrado como pendência, sem mudar a regra (ADR 0010).
-  - "Perguntas em aberto" vira "Abertos", com os itens novos.
+- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e esta PR (#21, `docs/spec-v8-decisoes`). Pendências em "Abertos".
 - **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
   - R6: regra de corte nova. Corta primeiro o menos importante (`EM_DISCUSSAO`, `SERIA_LEGAL`, `QUERO_FAZER`, `DEVO_FAZER`); do mais importante, só o mínimo que faltar. Dentro do grupo, a combinação passa a ser ordenada por menor soma de valores, depois menor soma de intensidades, depois menor id (na v7, a intensidade vinha antes do valor).
   - R6: `PARCIAL` entra nos grupos de corte, junto com `PENDENTE`, pelo cortável (planejado − realizado). `PARCIAL` que já gastou além do previsto não entra.
@@ -99,15 +94,14 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - **Regra de corte:** corta primeiro o menos importante; do mais importante, só o mínimo que faltar.
     1. Se a soma dos cortáveis de todos os grupos da compra não cobre a falta, não há sugestão: a compra `SERIA_LEGAL` é `NAO_CABE`, a compra `QUERO_FAZER` recebe a lista completa (R7) e a compra `DEVO_FAZER` segue para as opções (R7).
     2. Se cobre, a conta vai do grupo mais importante da compra para o menos importante. Em cada grupo, calcula-se quanto da falta que resta os grupos menos importantes, inteiros, não conseguem cobrir. Se esse valor é zero ou menos, nenhum item do grupo entra. Se é maior que zero, entra a combinação de itens do grupo que cobre esse valor com a menor soma de cortáveis. O valor cortado no grupo é descontado da falta que resta, e a conta segue para o grupo anterior.
-    3. Empates entre combinações do mesmo grupo, nesta ordem: menor soma das intensidades; menor id. Para comparar duas combinações, os ids de cada uma são ordenados e comparados um a um, até o primeiro diferente; se todos os ids comuns forem iguais, a combinação com menos itens vem antes. Dois ids são comparados em ordem numérica natural: trechos de dígitos comparam pelo valor e trechos de texto comparam pelo texto, então `item-2` vem antes de `item-10`. Se dois ids só diferem por zeros à esquerda, o texto decide. O id é único no mês, então o resultado é sempre o mesmo. Essa ordem natural vale só para o desempate entre combinações (ADR 0011), o que inclui a busca da opção 2 da R7. Os outros desempates por id (opções 1 e 3 da R7, ordem dentro da sugestão e lista completa) seguem em ordem alfabética até a decisão registrada em "Abertos".
+    3. Empates entre combinações do mesmo grupo, nesta ordem: menor soma das intensidades; menor id. Para comparar duas combinações, os ids de cada uma são ordenados e comparados um a um, até o primeiro diferente; se todos os ids comuns forem iguais, a combinação com menos itens vem antes. Dois ids são comparados em ordem numérica natural: trechos de dígitos comparam pelo valor e trechos de texto comparam pelo texto, então `item-2` vem antes de `item-10`. Se dois ids só diferem por zeros à esquerda, o texto decide. Essa ordem vale para o desempate entre combinações, inclusive na busca da opção 2 da R7 (ADR 0011). Os outros desempates por id (opções 1 e 3 da R7, ordem dentro da sugestão e lista completa) são em ordem alfabética.
   - Uma combinação pode ter quantos itens forem necessários. Nenhum item entra na sugestão sem ser necessário.
   - **Limite de 20 itens (ADR 0012).** A busca testa todas as combinações do grupo, então nenhum grupo com mais de 20 itens chega a ela.
-    - Grupo 0 (`EM_DISCUSSAO`, de qualquer categoria), em qualquer compra, e grupo 3 (`DEVO_FAZER`) da compra `QUERO_FAZER`: a contagem é só de itens elegíveis pela R5 (não conta `REALIZADO`, o cartão de crédito nem item de valor de corte zero que a regra atual deixa de fora). Se algum tiver mais de 20 itens, a resposta é 422 antes de qualquer combinação, mesmo que o grupo não fosse usado, inclusive quando a compra iria direto para a lista completa.
+    - Grupo 0 (`EM_DISCUSSAO`, de qualquer categoria), em qualquer compra, e grupo 3 (`DEVO_FAZER`) da compra `QUERO_FAZER`: a contagem considera só itens elegíveis, isto é, pela R5 e com valor de corte maior que zero. Exceção conhecida: o item `EM_DISCUSSAO` de valor zero entra na contagem do grupo 0 (ver "Abertos", valor de corte zero). Se algum tiver mais de 20 itens, a resposta é 422 antes de qualquer combinação, mesmo que o grupo não fosse usado, inclusive quando a compra iria direto para a lista completa.
     - Grupos 1 e 2 (`SERIA_LEGAL` e `QUERO_FAZER`) na regra de corte: o limite vale quando o grupo precisa ser combinado. Grupo que não é necessário para cobrir a falta não gera erro.
-    - Opção 2 da R7: o limite vale quando a opção é calculada, com `QUERO_FAZER` e `DEVO_FAZER` contados juntos (ver "Abertos").
+    - Opção 2 da R7: o limite vale quando a opção é calculada, com `QUERO_FAZER` e `DEVO_FAZER` contados juntos.
     - A checagem acontece sempre que a compra entra no cálculo de sugestões de corte (R3). `APROVADO` (R2) e `NAO_CABE` pela R4 não passam por ela.
-    - Consequência para a compra `SERIA_LEGAL`: com mais de 20 itens em discussão, a resposta é 422 em vez de `NAO_CABE`, mesmo quando, sem o limite, a compra terminaria em `NAO_CABE` por falta de itens seria legal (R6 e R11).
-  - **Valor de corte zero (pendente, ADR 0010).** A regra atual é inconsistente entre os status: `PENDENTE` com valor estimado zero e `PARCIAL` com realizado igual ao planejado ficam fora dos grupos e da lista completa, e `EM_DISCUSSAO` com valor estimado zero entra no grupo 0 e na lista completa. A regra não muda nesta versão. Ver "Abertos".
+    - Compra `SERIA_LEGAL` com mais de 20 itens em discussão: a resposta é 422 em vez de `NAO_CABE` (R6 e R11).
   - A sugestão traz os itens na ordem dos grupos. Dentro do grupo, menor intensidade e depois menor id. No grupo 0, a ordem é pela categoria (seria legal, depois quero, depois devo) e só depois pela intensidade (menor primeiro).
 - **R7.** Compra `DEVO_FAZER` e lista completa.
   - **Compra `DEVO_FAZER`, passo a passo.**
@@ -143,7 +137,7 @@ Respostas:
 - **200, `NAO_CABE`:** `totalRestante`, `falta` e `motivo`, sem sugestões. `falta` é compra − total restante (R4) ou, na compra `SERIA_LEGAL` sem itens suficientes (R6), o que ainda faltaria depois de cortar todos os elegíveis.
 - **400:** valor inválido ou categoria fora do conjunto. A mensagem aponta o campo.
 - **404:** `mesId` não existe.
-- **422:** grupo com mais de 20 itens ao calcular as sugestões (R6, "Limite de 20 itens"), inclusive na compra `SERIA_LEGAL` com mais de 20 itens em discussão, que não vira `NAO_CABE`. A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
+- **422:** grupo com mais de 20 itens ao calcular as sugestões (R6, "Limite de 20 itens"). A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
 
 Cada item em `sugestoes` e em `listaCompleta` traz `id`, `nome`, `status` e, só para `EM_DISCUSSAO`, `decisorResponsavel` e `mensagem`.
 
@@ -279,9 +273,7 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 
 Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é obtido, por usuário ou por grupo, fica para a funcionalidade de grupo.
 
-- **Valor de corte zero (ADR 0010).** Pendente. A regra atual é inconsistente entre `PENDENTE`, `PARCIAL` e `EM_DISCUSSAO` (ver R6). Falta decidir se item de valor de corte zero entra nos grupos e na lista completa, para os três status. A mudança vem em PR própria, com teste para os três casos.
-- **Limite da opção 2 (R7).** Falta decidir se o limite de 20 vale para `QUERO_FAZER` e `DEVO_FAZER` contados juntos, como o código faz hoje (ADR 0012), ou separados.
-- **Ordem natural nos outros desempates por id (ADR 0011).** Falta decidir se a ordem numérica natural vale também para as opções 1 e 3 (R7), a ordem dentro da sugestão e a lista completa, hoje em ordem alfabética. Se valer, esses pontos mudam juntos, em PR própria.
+- **Valor de corte zero (ADR 0010).** Inconsistência conhecida, pendente de decisão. `PENDENTE` com valor estimado zero e `PARCIAL` com realizado igual ao planejado ficam fora dos grupos e da lista completa; `EM_DISCUSSAO` com valor estimado zero entra no grupo 0, na lista completa e na contagem do limite de 20. A regra não muda nesta versão. Quando for decidida, a mudança vem em PR própria, com teste para os três casos.
 - **CA10 e `REALIZADO`.** O CA10 diz que a viagem cortada vira `REALIZADO` com o valor já gasto, mas o contrato da resposta não tem esse campo (o item traz só `id`, `nome`, `status` atual e, para `EM_DISCUSSAO`, decisor e mensagem). Falta decidir se o contrato ganha o campo ou se o CA10 deixa de citar `REALIZADO`.
 - **Cartão de crédito reconhecido pelo nome (R5, CA11).** Qualquer item com o nome "Cartão de crédito" é tratado como o cartão. A troca para um marcador próprio do item fica para depois.
-- **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. O código tem testes para os dois, mas sem CA na spec. Esta PR não cria CA; decidir se deve existir.
+- **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
