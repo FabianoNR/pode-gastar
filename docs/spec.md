@@ -1,10 +1,10 @@
 # Spec: Pode Gastar (v8)
 
-Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. Os critérios de aceite da operação aguardam aprovação do Fabiano na PR `docs/criterios-operacao`. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. As regras e os critérios de aceite complementares da operação aguardam aprovação do Fabiano na PR `docs/rollback-spec-adr-0013`. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
-- **v8, critérios de aceite da operação (2026-11-17):** CA21 a CA29 novos, para O3 a O9. Decisões do Fabiano de 17/11/2026: `RENDER_GIT_COMMIT` vazia vale `"desconhecido"`, igual à variável ausente (O3); erro 4xx ou 5xx da API do Render faz o rollback falhar na hora (O9, nova). Fonte: esta PR (`docs/criterios-operacao`).
+- **v8, critérios de aceite e regras complementares da operação (2026-11-17):** CA21 a CA39 novos, para O2 a O12. Decisões do Fabiano de 17/11/2026: o valor de `RENDER_GIT_COMMIT` é aparado, e vazio ou só com espaços vale `"desconhecido"` (O2, O3); qualquer 2xx da API do Render aceita o pedido (O8); 1xx e 3xx passam a falhar na hora, como 4xx e 5xx, e falha de rede também falha na hora, sem nova tentativa (O9, criada nesta PR para 4xx e 5xx); erro ou demora do `/health` durante a espera conta como "ainda não" (O10, nova); o rollback só roda na `main` (O11, nova); rollback e smoke test nunca rodam juntos (O12, nova). ADR 0013 registra os nomes dos segredos. Abertos ganham o item do `imgURL` no deploy hook. Fonte: esta PR (`docs/rollback-spec-adr-0013`).
 - **v8, revisão de operação de 2026-11-17:** `/health` passa a expor o commit; regras do deploy e do rollback (seção "Operação"); CA13 atualizado. Design: `docs/design/health-commit-rollback.md`. Decisão: ADR 0013. Fonte: PR #23 (`docs/health-commit-rollback`).
 - **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e PR #21 (`docs/spec-v8-decisoes`). Pendências em "Abertos".
 - **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
@@ -201,8 +201,8 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 ### `/health`
 
 - **O1.** A resposta é `{"status": "UP", "commit": "<sha>"}`.
-- **O2.** O valor de `commit` vem da variável de ambiente `RENDER_GIT_COMMIT`, que o Render disponibiliza no build e em tempo de execução.
-- **O3.** Se a variável não existir, por exemplo ao rodar localmente, ou existir com valor vazio, `commit` vale `"desconhecido"`. A falta da variável não faz o endpoint falhar: a resposta continua 200 com `"status": "UP"`.
+- **O2.** O valor de `commit` vem da variável de ambiente `RENDER_GIT_COMMIT`, que o Render disponibiliza no build e em tempo de execução. O valor é aparado: espaços em branco no início e no fim (espaço, tabulação, quebra de linha) são removidos antes de ser exposto e comparado.
+- **O3.** Se a variável não existir, por exemplo ao rodar localmente, ou ficar vazia depois de aparada (vazia ou só com espaços), `commit` vale `"desconhecido"`. A falta da variável não faz o endpoint falhar: a resposta continua 200 com `"status": "UP"`.
 
 ### Deploy normal
 
@@ -213,8 +213,17 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 - **O5.** O rollback recebe o SHA completo, com 40 caracteres, do commit que deve voltar ao ar. Ele chama `POST https://api.render.com/v1/services/{serviceId}/deploys` com `commitId` igual a esse SHA, autenticado pela chave da API do Render.
 - **O6.** Se o SHA recebido não tiver exatamente 40 caracteres hexadecimais minúsculos, o rollback é rejeitado antes de qualquer chamada à API do Render, e o workflow falha com uma mensagem clara.
 - **O7.** Depois da chamada da O5, consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. Se não chegar a esse SHA dentro do prazo, o rollback falha.
-- **O8.** Uma resposta 201 ou 202 da API só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O7 confirma o rollback.
-- **O9.** Se a API do Render responder com erro, 4xx ou 5xx, o rollback falha na hora, sem consultar `/health`, com uma mensagem que traz o código HTTP da resposta.
+- **O8.** Qualquer resposta 2xx da API, por exemplo 201 ou 202, só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O7 confirma o rollback.
+- **O9.** Se a API do Render responder 1xx, 3xx, 4xx ou 5xx, o rollback falha na hora, sem consultar `/health`, com uma mensagem que traz o código HTTP da resposta. Se a chamada não tiver resposta por falha de rede, o rollback também falha na hora, com uma mensagem clara, sem nova tentativa e sem consultar `/health`.
+
+### Espera pelo commit
+
+- **O10.** Na espera do smoke test (O4) e do rollback (O7), uma consulta ao `/health` com erro conta como "ainda não". Erro é: código diferente de 200, conexão recusada, resposta sem um campo `commit` legível ou consulta que passa do tempo limite de cada consulta (valor em "Abertos"). As consultas continuam até o prazo.
+
+### Execução dos workflows
+
+- **O11.** O workflow de rollback só roda na `main`. O job tem uma condição que exige a `main`; disparado a partir de outra branch, o job não roda, e nenhuma chamada é feita à API do Render nem ao `/health`.
+- **O12.** O rollback e o smoke test do deploy normal usam o mesmo grupo de concorrência e, assim, nunca rodam ao mesmo tempo.
 
 ## Mês de exemplo (estado no servidor)
 
@@ -255,7 +264,7 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA10.** Viagem `PARCIAL` com realizado de 150 e `valor=200.00&categoria=QUERO_FAZER` com livre insuficiente: a viagem é candidata a corte, cancelando só o restante de 150. Se for cortada, o item vira `REALIZADO` com valor 150. Reforço (v8): com a mesma viagem e `valor=600.00&categoria=QUERO_FAZER`, falta 500. Os `SERIA_LEGAL` (200) não bastam; a sugestão traz jantar fora, bola de futebol, item para casa e a viagem, que cobre 550. A viagem vira `REALIZADO` com 150.
 - **CA11.** O cartão de crédito nunca aparece como sugestão de corte.
 - **CA12.** `valor=0` ou negativo: 400.
-- **CA13.** `GET /health` com `RENDER_GIT_COMMIT` definida: 200 com `{"status": "UP", "commit": "<valor da variável>"}`. Sem a variável: 200 com `{"status": "UP", "commit": "desconhecido"}` (O1 a O3).
+- **CA13.** `GET /health` com `RENDER_GIT_COMMIT` definida: 200 com `{"status": "UP", "commit": "<valor da variável, aparado>"}`. Sem a variável: 200 com `{"status": "UP", "commit": "desconhecido"}` (O1 a O3).
 - **CA14.** `valor=900.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 800, uma sugestão com jantar fora, item para casa, viagem e manutenção do carro, que somam 820. Os grupos menos importantes somam 700, então a manutenção do carro (200) é necessária. Depois dela e dos dois `QUERO_FAZER` (500), faltam 100, e o jantar fora (120) cobre sozinho. A bola de futebol fica de fora.
 - **CA15.** `valor=1100.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 1000, `sugestoes` vazia, `listaCompleta` com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, nessa ordem, e ainda faltariam 100.
 - **CA16.** `valor=500.00&categoria=SERIA_LEGAL`: `NAO_CABE`, motivo "não há itens seria legal suficientes para cobrir a compra", falta 200.
@@ -286,6 +295,16 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA27.** Rollback para `<sha>`: a API responde 202 e, por 10 minutos, `/health` não expõe `<sha>`. O rollback falha por prazo, com uma mensagem que traz o SHA pedido, mesmo com a resposta de sucesso da API (O7, O8).
 - **CA28.** Rollback para `<sha>`: a API responde 401. O rollback falha na hora, com uma mensagem que traz o código 401, sem consultar `/health` (O9).
 - **CA29.** Rollback para `<sha>`: a API responde 503. O rollback falha na hora, com uma mensagem que traz o código 503, sem consultar `/health` (O9).
+- **CA30.** `GET /health` com `RENDER_GIT_COMMIT` igual a `"  <sha>  "`, com espaços antes e depois: 200 com `{"status": "UP", "commit": "<sha>"}`, sem os espaços (O2).
+- **CA31.** `GET /health` com `RENDER_GIT_COMMIT` só com espaços: 200 com `{"status": "UP", "commit": "desconhecido"}` (O3).
+- **CA32.** Rollback para `<sha>`: a API responde 200 e `/health` passa a expor `<sha>` dentro de 10 minutos. O rollback termina com sucesso (O8).
+- **CA33.** Rollback para `<sha>`: a API responde 302. O rollback falha na hora, com uma mensagem que traz o código 302, sem consultar `/health` (O9).
+- **CA34.** Rollback para `<sha>`: a chamada à API não tem resposta, por exemplo porque a conexão é recusada. O rollback falha na hora, com uma mensagem clara, depois de uma única tentativa e sem consultar `/health` (O9).
+- **CA35.** Smoke test do deploy normal do commit `<sha>`: `/health` responde 502 numa consulta e expõe `<sha>` na consulta seguinte, dentro de 10 minutos. O smoke test continua depois do 502 e passa (O10).
+- **CA36.** Rollback para `<sha>`, com a API respondendo 201: uma consulta ao `/health` passa do tempo limite de cada consulta, e a consulta seguinte expõe `<sha>`, dentro de 10 minutos. O rollback continua e termina com sucesso (O10).
+- **CA37.** Workflow de rollback disparado a partir de uma branch diferente da `main`: o job não roda, e não há chamada à API do Render nem ao `/health` (O11).
+- **CA38.** Rollback disparado enquanto o smoke test de um deploy normal está rodando: o rollback e o smoke test não rodam ao mesmo tempo (O12).
+- **CA39.** Rollback para `<sha>`, com a API respondendo 201: por 10 minutos, toda consulta ao `/health` responde 502. O rollback falha por prazo, com uma mensagem que traz o SHA pedido (O7, O10).
 
 ## Fora de escopo desta versão
 
@@ -312,6 +331,11 @@ Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é o
 - **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
 - **Publicação no GHCR.** O serviço no Render é construído a partir do GitHub (ADR 0013), então a imagem publicada no GHCR pode não ser o que roda em produção. Confirmar em outra PR se essa publicação ainda é necessária.
 - **README descreve o fluxo por imagem.** O README descreve o smoke test e o rollback por imagem, sem conferir o commit. A PR que implementa a seção "Operação" não altera o README, por decisão do Fabiano de 17/11/2026. A atualização, para o README apontar para a spec em vez de descrever a regra, fica para PR própria.
+- **Tempo limite de cada consulta ao `/health` (O10, CA36).** A spec não define quanto tempo uma consulta pode levar antes de contar como erro. Sem esse valor, o CA36 não tem número para teste.
+- **Fila do grupo de concorrência (O12, CA38).** A spec não diz se o que chega depois espera ou cancela o que está rodando. No GitHub Actions, sem cancelamento, o grupo guarda só uma execução na fila: uma terceira cancela a que estava esperando. Também não diz se o deploy hook entra no grupo; um merge durante um rollback pode publicar outro commit e fazer o rollback falhar por prazo.
+- **Resposta 1xx e 3xx (O9).** O cliente HTTP trata 1xx sozinho, então não há CA para 1xx. A spec não diz se um 3xx é seguido; a O9 supõe que não.
+- **Resultado visível do CA37.** Com a condição no job, a execução fora da `main` aparece como "pulada" (skipped) no GitHub, não como falha. Confirmar se isso basta.
+- **Deploy hook envia `imgURL` do GHCR.** O passo do deploy hook no `ci.yml` ainda envia `imgURL` com a imagem do GHCR, mas o serviço no Render é construído a partir do GitHub (ADR 0013). Revisar em outra PR, junto com o item "Publicação no GHCR".
 - **Deploy alcançado por commit mais novo (O4).** Se outro merge entrar antes de o deploy terminar, o Render pode publicar um commit mais novo. Nesse caso, o smoke test espera o SHA anterior e falha por prazo. A spec não define esse caso.
-- **Status das ADRs desta revisão.** A ADR 0013 está "aceita", mas a revisão de operação da spec ainda aguarda aprovação. A ADR 0009, já aceita, foi editada sem nota de revisão. Decidir se uma ADR aceita ganha nota quando é editada.
+- **Status das ADRs desta revisão.** A ADR 0009, já aceita, foi editada sem nota de revisão. A ADR 0013, também aceita, foi editada de novo na PR `docs/rollback-spec-adr-0013` (nomes dos segredos), sem nota de revisão. Decidir se uma ADR aceita ganha nota quando é editada.
 - **Papel do design.** O design `health-commit-rollback.md` só aponta para a spec, e a spec cita o design como fonte. Assim, nenhum documento guarda o entendimento aprovado separado da regra. Decidir se isso atende ao fluxo do CLAUDE.md.
