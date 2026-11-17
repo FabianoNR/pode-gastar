@@ -9,7 +9,9 @@ Status: v8 em revisão, ainda não aprovada nem mesclada na main. Substitui a v7
   - R6: `PARCIAL` entra nos grupos de corte, junto com `PENDENTE`. `PARCIAL` que já gastou além do previsto não entra.
   - R7: a lista completa tem a mesma ordem para compra `DEVO_FAZER` e `QUERO_FAZER`.
   - R6: em `NAO_CABE` por falta de `SERIA_LEGAL`, `falta` é o que ainda faltaria depois de cortar todos os elegíveis. O contrato registra isso.
-  - CA14, CA15 e CA16 novos; CA10 reforçado.
+  - R5 e R7: `DEVO_FAZER` `PARCIAL` entra nas opções 1 a 3 da compra `DEVO_FAZER`, junto com `PENDENTE`; cortável = planejado − realizado.
+  - R7: regra "Só o necessário" e, como consequência, a lista completa só aparece quando a soma dos elegíveis não cobre a falta (o que ainda faltaria é sempre maior que zero).
+  - CA14 a CA18 novos; CA10 reforçado.
   - Limite de 20 itens (6a) segue adiado; passa a valer também para o grupo `DEVO_FAZER` da compra `QUERO_FAZER`.
   - A v7 foi aprovada e mesclada na main pela PR #10.
 - **v7 (2026-11-12):**
@@ -73,7 +75,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - `EM_DISCUSSAO`, de qualquer categoria, incluindo `DEVO_FAZER`.
   - `PENDENTE` de `SERIA_LEGAL` e `QUERO_FAZER`, conforme R6.
   - `PARCIAL`. Cortar cancela só o restante. O item passa a `REALIZADO` com o valor já gasto.
-  - `PENDENTE` de `DEVO_FAZER`, só como último recurso (R7).
+  - `PENDENTE` ou `PARCIAL` de `DEVO_FAZER`, só como último recurso (R7).
   - Nunca `REALIZADO`. Nunca o cartão de crédito.
 - **R6.** Ordem das sugestões:
   1. Itens `EM_DISCUSSAO`, de qualquer categoria. Dentro deles, a ordem é pela categoria (seria legal, depois quero, depois devo) e só depois pela intensidade (menor primeiro).
@@ -87,11 +89,13 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
     3. em empate, menor id, na ordem alfabética dos ids. O id é único no mês, então o resultado é sempre o mesmo.
   - Uma combinação pode ter quantos itens forem necessários.
   - Item `PARCIAL` que já gastou além do previsto (cortar não libera valor) não entra em nenhum grupo.
-- **R7.** Compra `DEVO_FAZER` sem cobertura por todos os `SERIA_LEGAL` e `QUERO_FAZER`: há três opções:
-  - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` que feche o valor.
-  - **Opção 2:** todos os `SERIA_LEGAL` e combinações de cortes (`QUERO_FAZER` com `DEVO_FAZER` `PENDENTE`) que somem o valor restante, começando pelos de menor intensidade.
-  - **Opção 3:** todos os `SERIA_LEGAL` e um `DEVO_FAZER` `PENDENTE`, escolhido por valor e intensidade baixa, se cobrir a falta.
-  - Se nenhuma opção cobrir a falta, a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria. Motivo: "compra não cabe no livre; cabe no total restante com cortes; mesmo cortando todos os itens elegíveis ainda faltariam {valor que ainda faltaria}".
+  - Só entra o necessário para cobrir a falta (ver "Só o necessário", na R7).
+- **R7.** Compra `DEVO_FAZER` que a sequência da R6 (`EM_DISCUSSAO`, `SERIA_LEGAL` e `QUERO_FAZER`) não cobre: há três opções. Nelas, `DEVO_FAZER` `PENDENTE` e `PARCIAL` entram juntos. O valor cortável do `PARCIAL` é planejado − realizado, porque o corte cancela só o restante. Nas opções 1 e 2, quando a escolha é entre itens `DEVO_FAZER`, vale a ordem da R6: menor intensidade, depois menor valor cortável, depois menor id.
+  - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` ou `PARCIAL` que feche o valor.
+  - **Opção 2:** todos os `SERIA_LEGAL` e combinações de cortes (`QUERO_FAZER` com `DEVO_FAZER` `PENDENTE` ou `PARCIAL`) que somem o valor restante, começando pelos de menor intensidade.
+  - **Opção 3:** todos os `SERIA_LEGAL` e um `DEVO_FAZER` `PENDENTE` ou `PARCIAL`, escolhido por valor e intensidade baixa, se cobrir a falta.
+  - **Só o necessário.** Toda sugestão traz só os itens necessários para cobrir a falta, na ordem da R6: `EM_DISCUSSAO`, `SERIA_LEGAL`, `QUERO_FAZER` e, quando a regra manda, `DEVO_FAZER` `PENDENTE` ou `PARCIAL`. Os itens `EM_DISCUSSAO` entram um a um, na ordem da R6, até cobrir. Em cada um dos demais grupos: se nenhuma combinação do grupo cobre sozinha a falta que resta, o grupo inteiro entra e a conta segue para o próximo grupo; no grupo em que alguma combinação cobre, entra só a melhor combinação (R6) e a conta termina ali. Item `PENDENTE` ou `EM_DISCUSSAO` sai inteiro, com o valor estimado; item `PARCIAL` libera só o cortável. Nenhum item entra depois de a soma já cobrir a falta.
+  - Se nenhuma opção cobrir a falta, é porque a soma de todos os itens elegíveis, incluindo `DEVO_FAZER` `PENDENTE` e `PARCIAL`, não cobre a falta (a opção 2 aceita qualquer número de itens). Nesse caso a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria, sempre maior que zero. Motivo: "compra não cabe no livre; cabe no total restante com cortes; mesmo cortando todos os itens elegíveis ainda faltariam {valor que ainda faltaria}".
   - Compra `QUERO_FAZER` sem cobertura por `SERIA_LEGAL` e `QUERO_FAZER`: não usa as três opções acima. O `DEVO_FAZER` `PENDENTE` ou `PARCIAL` entra como terceiro grupo de corte (R6). Se os três grupos cobrem a falta, a decisão é `CABE_COM_CORTES` com uma sugestão, como nas demais compras. Se nem assim cobrem, a decisão é `CABE_COM_CORTES` com `sugestoes` vazia, a lista completa e o valor que ainda faltaria, com o motivo do item acima.
   - Lista completa, para compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro os itens `EM_DISCUSSAO`, como na R6; depois `SERIA_LEGAL`, `QUERO_FAZER` e `DEVO_FAZER` (`PENDENTE` ou `PARCIAL`), nessa ordem de categoria; dentro de cada categoria, menor intensidade primeiro; empate pelo id. Só itens elegíveis pela R5.
 - **R8.** Item `EM_DISCUSSAO` na sugestão traz o decisor responsável e o campo `mensagem`, com o texto "aguardando decisão de {decisor responsável}". O serviço de aplicação monta a mensagem (ver "Mensagens ao usuário").
@@ -216,6 +220,8 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA14.** `valor=900.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 800, uma sugestão com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, que somam 900.
 - **CA15.** `valor=1100.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 1000, `sugestoes` vazia, `listaCompleta` com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, nessa ordem, e ainda faltariam 100.
 - **CA16.** `valor=500.00&categoria=SERIA_LEGAL`: `NAO_CABE`, motivo "não há itens seria legal suficientes para cobrir a compra", falta 200.
+- **CA17.** Mês com orçamento variável 700 e só três itens: jantar fora (`SERIA_LEGAL`, `PENDENTE`, 200), bola de futebol (`QUERO_FAZER`, `PENDENTE`, 100) e dentista (`DEVO_FAZER`, `PARCIAL`, planejado 300, realizado 100, cortável 200). Livre 100, total restante 600. `valor=600.00&categoria=DEVO_FAZER`: `CABE_COM_CORTES`, falta 500, uma sugestão com jantar fora, bola de futebol e dentista, que somam 500. `listaCompleta` vazia.
+- **CA18.** Mês com orçamento variável 800 e só três itens: jantar fora (`SERIA_LEGAL`, `PENDENTE`, 200, intensidade 2), manutenção do carro (`DEVO_FAZER`, `PENDENTE`, 200, intensidade 5) e dentista (`DEVO_FAZER`, `PARCIAL`, planejado 300, realizado 100, cortável 200, intensidade 2). Livre 100, total restante 700. `valor=400.00&categoria=DEVO_FAZER`: `CABE_COM_CORTES`, falta 300, uma sugestão com jantar fora e dentista, que somam 400. O dentista entra no lugar da manutenção pela menor intensidade (2 contra 5), já que os dois cortam 200.
 
 ### Com a bolsa em discussão
 
