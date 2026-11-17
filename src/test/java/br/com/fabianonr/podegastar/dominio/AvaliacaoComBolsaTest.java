@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** Critérios CB1 a CB4 da spec (v6), com a bolsa em discussão. */
+/** Critérios CB1 a CB5 da spec (v8), com a bolsa em discussão. */
 class AvaliacaoComBolsaTest {
 
   private static Avaliacao avaliar(Mes mes, String valor, Categoria categoria) {
@@ -73,5 +73,19 @@ class AvaliacaoComBolsaTest {
     assertThat(avaliacao.falta()).isEqualByComparingTo("80");
     assertThat(nomes(avaliacao.sugestoes().get(0))).containsExactly("Item QUERO", "Item DEVO");
     assertThat(avaliacao.sugestoes().get(0).cobre()).isEqualByComparingTo("100");
+  }
+
+  @Test
+  @DisplayName(
+      "130 SERIA_LEGAL, falta 120: bolsa e bola (170); o jantar cobriria sozinho, mas a bolsa sai primeiro (CB5)")
+  void itemEmDiscussaoSaiAntesDeUmSeriaLegalQueCobririaSozinho() {
+    Avaliacao avaliacao = avaliar(comExtras(bolsa()), "130.00", Categoria.SERIA_LEGAL);
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("120");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    Sugestao sugestao = avaliacao.sugestoes().get(0);
+    assertThat(nomes(sugestao)).containsExactly(BOLSA, BOLA);
+    assertThat(sugestao.cobre()).isEqualByComparingTo("170");
   }
 }
