@@ -1,7 +1,7 @@
 # Design: Pode Gastar, decisão de pode ou não pode
 
-Status: aprovado pelo Fabiano em 11/11/2026.
-Substitui qualquer entendimento anterior sobre o escopo de decisão. A spec correspondente é docs/spec.md (v7).
+Status: aprovado pelo Fabiano em 11/11/2026. Os acréscimos de 16/11/2026 (seção própria) foram aprovados pelo Fabiano em 16/11/2026.
+Substitui qualquer entendimento anterior sobre o escopo de decisão. A spec correspondente é docs/spec.md (v8, em revisão).
 
 ## Problema
 
@@ -31,17 +31,17 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Compra com valor e categoria. Não vira item do mês.
 - APROVADO: cabe no livre. Mostra o saldo restante.
 - CABE_COM_CORTES: não cabe no livre, mas cabe no total restante. Mostra a falta e as sugestões de corte.
-- NAO_CABE: maior que o total restante. Cortar não resolve, porque cortar não altera o total restante. Mostra o motivo e a falta.
+- NAO_CABE: maior que o total restante. Cortar não resolve, porque cortar não altera o total restante. Mostra o motivo e a falta. Exceção: compra seria legal sem itens suficientes; a falta é o quanto ainda falta depois de cortar todos os elegíveis (ver Acréscimos de 16/11/2026).
 
 ### Sugestões de corte
-- Ordem: primeiro os itens EM_DISCUSSAO, de qualquer categoria. Dentro deles, categoria (seria legal, depois quero, depois devo) e só depois intensidade (menor primeiro). Depois, os itens PENDENTE conforme a categoria da compra.
+- Ordem: primeiro os itens EM_DISCUSSAO, de qualquer categoria. Dentro deles, categoria (seria legal, depois quero, depois devo) e só depois intensidade (menor primeiro). Depois, os itens PENDENTE ou PARCIAL conforme a categoria da compra.
 - Compra seria legal: entram itens seria legal e itens em discussão, de qualquer categoria; quero e devo pendentes ou parciais ficam de fora. Se não bastar, a resposta é não, com motivo.
-- Compra quero ou devo: primeiro seria legal, depois quero.
-- Devo PENDENTE: só como último recurso, em três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
+- Compra quero: primeiro seria legal, depois quero; se ainda não bastar, devo pendente ou parcial, como terceiro grupo. Compra devo: primeiro seria legal, depois quero, e só então as opções de devo.
+- Compra devo sem cobertura: três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
 - Se nenhuma opção cobrir, mostra a lista completa e o quanto ainda falta.
-- Compra quero que seria legal e quero não cobrem: não usa as três opções. Só nesse caso, devo pendente entra como último recurso, na lista completa. Mostra a lista completa (primeiro em discussão; depois seria legal, quero e devo pendente, por categoria e, dentro dela, menor intensidade primeiro; o cartão nunca) e o quanto ainda falta, com o mesmo motivo (decisões de 16/11/2026).
+- Compra quero sem cobertura por seria legal e quero: não usa as três opções. O devo pendente ou parcial entra como terceiro grupo. Se os três grupos cobrem a falta, uma sugestão. Se nem assim cobrem, mostra a lista completa e o quanto ainda falta, com o mesmo motivo (decisões de 16/11/2026, ver Acréscimos).
 - Itens REALIZADOS nunca são sugeridos. O cartão nunca é sugerido.
-- Item PARCIAL pode ser cortado: o corte cancela só o restante, e o item vira REALIZADO com o valor já gasto.
+- Item PARCIAL pode ser cortado: o corte cancela só o restante, e o item vira REALIZADO com o valor já gasto. PARCIAL que já gastou além do previsto não entra, porque cortar não libera valor.
 - Itens EM_DISCUSSAO trazem o decisor responsável, na mensagem "aguardando decisão de…".
 
 ### Papéis
@@ -83,6 +83,29 @@ Entendimento que sustenta a spec v7. Não repete a spec: registra o que ficou de
 
 ### Compra seria legal
 - Só entram no cálculo os itens seria legal e os itens em discussão.
+
+## Acréscimos de 16/11/2026
+
+Decisões do Fabiano em 16/11/2026, sobre a v7. Sustentam a spec v8.
+
+### Compra quero sem cobertura
+- Seria legal e quero não cobrem: o devo pendente ou parcial entra como terceiro grupo de corte.
+- Se os três grupos cobrem a falta, uma sugestão.
+- Se nem assim cobrem, lista completa e quanto ainda falta, com o motivo atual.
+
+### Ordem da lista completa
+- Primeiro os itens em discussão; depois seria legal, quero e devo; dentro de cada categoria, menor intensidade primeiro; empate pelo id.
+
+### Item parcial
+- Entra no grupo do pendente da categoria dele.
+- Se já gastou além do previsto, cortar não libera valor: não entra.
+
+### Falta no não cabe por seria legal
+- Quando a compra seria legal não tem itens suficientes, a falta é o quanto ainda faltaria depois de cortar todos os elegíveis.
+
+### Mantidos
+- 6b: nenhuma opção cobre a falta; lista completa e quanto ainda falta, com o motivo atual.
+- Limite de 20 itens (6a): adiado.
 
 ## Fora de escopo nesta fase
 - Grupo, identificação de usuário, papéis e permissões.
