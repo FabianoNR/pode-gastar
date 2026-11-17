@@ -37,8 +37,9 @@ Durante o mês, o Fabiano quer saber se uma compra cabe no orçamento sem tirar 
 - Ordem: primeiro os itens EM_DISCUSSAO, de qualquer categoria. Dentro deles, categoria (seria legal, depois quero, depois devo) e só depois intensidade (menor primeiro). Depois, os itens PENDENTE ou PARCIAL conforme a categoria da compra.
 - Compra seria legal: entram itens seria legal e itens em discussão, de qualquer categoria; quero e devo pendentes ou parciais ficam de fora. Se não bastar, a resposta é não, com motivo.
 - Compra quero: primeiro seria legal, depois quero; se ainda não bastar, devo pendente ou parcial, como terceiro grupo. Compra devo: primeiro seria legal, depois quero, e só então as opções de devo.
-- Compra devo sem cobertura: três opções. (1) todos os seria legal, todos os quero e um devo que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
+- Compra devo sem cobertura: três opções, com devo pendente ou parcial (o corte do parcial cancela só o restante). (1) todos os seria legal, todos os quero e um devo pendente ou parcial que feche o valor. (2) todos os seria legal e combinações de quero com devo, pelo menor intensidade. (3) todos os seria legal e um devo, por valor e intensidade baixa.
 - Se nenhuma opção cobrir, mostra a lista completa e o quanto ainda falta.
+- Só o necessário: a sugestão traz só os itens que cobrem a falta, na ordem em discussão, seria legal, quero e devo. Um grupo que sozinho não cobre a falta entra inteiro, e a conta segue para o próximo. O grupo que cobre entra só com a melhor combinação. Item pendente sai inteiro; item parcial libera só o restante.
 - Compra quero sem cobertura por seria legal e quero: não usa as três opções. O devo pendente ou parcial entra como terceiro grupo. Se os três grupos cobrem a falta, uma sugestão. Se nem assim cobrem, mostra a lista completa e o quanto ainda falta, com o mesmo motivo (decisões de 16/11/2026, ver Acréscimos).
 - Itens REALIZADOS nunca são sugeridos. O cartão nunca é sugerido.
 - Item PARCIAL pode ser cortado: o corte cancela só o restante, e o item vira REALIZADO com o valor já gasto. PARCIAL que já gastou além do previsto não entra, porque cortar não libera valor.
@@ -102,6 +103,16 @@ Decisões do Fabiano em 16/11/2026, sobre a v7. Sustentam a spec v8.
 
 ### Falta no não cabe por seria legal
 - Quando a compra seria legal não tem itens suficientes, a falta é o quanto ainda faltaria depois de cortar todos os elegíveis.
+
+### Devo parcial nas opções da compra devo
+- Devo parcial entra nas opções 1, 2 e 3, junto com devo pendente.
+- O corte do parcial cancela só o restante: o valor cortável é o planejado menos o realizado.
+- Quando a opção escolhe entre devos, vale a mesma ordem dos demais itens: menor intensidade, depois menor valor, depois menor id.
+- Consequência: lista completa só aparece quando a soma de todos os itens elegíveis não cobre a falta, então o que ainda faltaria é sempre maior que zero.
+
+### Só o necessário
+- Toda sugestão traz só o que é preciso para cobrir a falta, na ordem em discussão, seria legal, quero e devo.
+- Item pendente sai inteiro; item parcial libera só o restante.
 
 ### Mantidos
 - 6b: nenhuma opção cobre a falta; lista completa e quanto ainda falta, com o motivo atual.
