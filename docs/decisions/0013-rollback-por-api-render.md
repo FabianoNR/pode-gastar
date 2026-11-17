@@ -14,5 +14,5 @@ A regra do rollback é a de `docs/spec.md`, seção "Operação".
 
 ## Consequências
 
-- O rollback passa a depender da chave da API do Render e do id do serviço. Onde eles ficam será definido na PR que implementar o workflow.
+- O rollback passa a depender da chave da API do Render e do id do serviço. Os dois ficam nos segredos do repositório no GitHub (spec, O14), com os nomes `RENDER_API_KEY` (chave da API) e `RENDER_SERVICE_ID` (id do serviço).
 - A necessidade da publicação no GHCR fica em aberto (spec, "Abertos").
