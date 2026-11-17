@@ -34,7 +34,7 @@ O Fabiano decidiu, em 17/11/2026, voltar o limite para esses grupos e garantir q
 
 ## Consequências
 
-- Um mês com mais de 20 itens em discussão recebe 422 em toda compra que precise de cortes, mesmo quando os itens em discussão não seriam usados.
+- Um mês com mais de 20 itens em discussão recebe 422 em toda compra que entra no cálculo de sugestões (R3), mesmo quando os itens em discussão não seriam usados. Isso inclui a compra `SERIA_LEGAL` que, sem o limite, terminaria em `NAO_CABE` pela R6.
 - A checagem antecipada vale para dois grupos, e a checagem no momento da combinação vale para os outros. A diferença fica registrada aqui até a spec decidir.
 - Os testes ficam em `LimiteDeItensPorGrupoTest` (domínio) e `LimiteDeItensHttpTest` (422 na API).
 
