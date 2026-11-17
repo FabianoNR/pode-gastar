@@ -1,8 +1,6 @@
 package br.com.fabianonr.podegastar.adaptador.entrada.web;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.fabianonr.podegastar.configuracao.ConfiguracaoAplicacao;
@@ -13,12 +11,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** Contrato HTTP da spec (v6): CA12, 404 para mesId inexistente e CA13. */
+/** Contrato HTTP da spec (v6): CA12 e 404 para mesId inexistente. O CA13 está em HealthHttpTest. */
 @Import(ConfiguracaoAplicacao.class)
-@WebMvcTest(controllers = {AvaliacaoController.class, HealthController.class})
+@WebMvcTest(controllers = AvaliacaoController.class)
 class ApiHttpTest {
 
   private static final String MES_ID = "mes-exemplo";
@@ -46,15 +43,5 @@ class ApiHttpTest {
                 .param("valor", "80.00")
                 .param("categoria", "QUERO_FAZER"))
         .andExpect(status().isNotFound());
-  }
-
-  @Test
-  @DisplayName("GET /health retorna 200 com {\"status\": \"UP\"} (CA13)")
-  void healthRetornaStatusUp() throws Exception {
-    mockMvc
-        .perform(get("/health"))
-        .andExpect(status().isOk())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.status").value("UP"));
   }
 }
