@@ -4,7 +4,7 @@ Status: aprovada e mesclada na main pela PR #18. A revisão de 17/11/2026 (ADR 0
 
 ## Histórico
 
-- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e esta PR (`docs/spec-v8-decisoes`).
+- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e esta PR (#21, `docs/spec-v8-decisoes`).
   - R6: limite de 20 itens (ADR 0012). Vale para o grupo 0 (em discussão) e para o grupo `DEVO_FAZER` da compra `QUERO_FAZER`, antes de qualquer combinação, e para os demais grupos quando precisam ser combinados.
   - Contrato: na compra `SERIA_LEGAL` com mais de 20 itens em discussão, a resposta é 422 em vez de `NAO_CABE`.
   - R6, passo 3: desempate por id em ordem numérica natural (ADR 0011).
