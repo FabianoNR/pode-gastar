@@ -35,5 +35,4 @@ A API precisa estar no ar para o front (ADR 0004) e, depois, o mobile consumirem
 
 - O empacotamento é um `Dockerfile` na raiz, o mesmo que serve para rodar a imagem localmente.
 - A aplicação lê a porta da variável `PORT`, com 8080 como padrão local.
-- O rollback será detalhado na PR do workflow, depois de conferir a documentação do Render. Esta decisão não define o procedimento.
-- Migrar para outra plataforma exige só trocar o destino do deploy, porque a imagem Docker é padrão.
+- Rollback: ver ADR 0013.
