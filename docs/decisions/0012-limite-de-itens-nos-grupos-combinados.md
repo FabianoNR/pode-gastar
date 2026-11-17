@@ -9,7 +9,7 @@ Data: 2026-11-17
 A spec v8 prevê o erro 422 para "grupo com mais de 20 itens ao calcular as sugestões" (`docs/spec.md`, contrato da API) e diz que o limite "continua valendo por grupo". Duas coisas a spec não define:
 
 - quando a checagem acontece;
-- se, na opção 2 da R7, o limite vale para `QUERO_FAZER` e `DEVO_FAZER` juntos (pendência registrada em "Perguntas em aberto").
+- se, na opção 2 da R7, o limite vale para `QUERO_FAZER` e `DEVO_FAZER` juntos (pendência registrada em "Abertos").
 
 A busca de combinações testa todas as combinações do grupo (2^n), e o tempo dobra a cada item a mais. Na PR #20, o limite chegou a ser retirado dos itens em discussão e do `DEVO_FAZER` da compra `QUERO_FAZER`. Com isso, o custo ficou assim:
 
