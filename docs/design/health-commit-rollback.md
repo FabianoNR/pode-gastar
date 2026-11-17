@@ -2,7 +2,7 @@
 
 Status: aprovado pelo Fabiano em 17/11/2026.
 
-A spec correspondente é `docs/spec.md` (v8, seção "Operação", e CA13). As regras ficam só na spec; este resumo registra o que foi decidido e onde.
+A spec correspondente é `docs/spec.md` (v8).
 
 ## Problema
 
@@ -10,10 +10,7 @@ Hoje o `/health` responde só `"UP"`. O smoke test e o rollback não conseguem d
 
 ## Entendimento aprovado
 
-- O `/health` passa a informar o commit no ar, com um valor fixo quando roda localmente (spec O1 a O3; CA13).
-- O deploy normal só é confirmado quando o `/health` mostra o commit publicado (spec O4).
-- O rollback usa a API do Render com o commit desejado e só é confirmado pelo `/health` (spec O5 a O7; ADR 0013).
-- Se a publicação no GHCR ainda é necessária fica para outra PR (spec, "Abertos").
+As regras aprovadas estão em `docs/spec.md`, seção "Operação", e no CA13.
 
 ## Fora desta PR
 

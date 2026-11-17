@@ -10,10 +10,9 @@ A ADR 0009 hospeda a API no Render e deixou o procedimento de rollback para depo
 
 ## Decisão
 
-O rollback pede ao Render, pela API, um deploy do commit desejado (`commitId`) e só é considerado concluído quando o `/health` expõe esse commit. As regras estão em `docs/spec.md`, seção "Operação" (O1 a O7).
+A regra do rollback é a de `docs/spec.md`, seção "Operação".
 
 ## Consequências
 
 - O rollback passa a depender da chave da API do Render e do id do serviço. Onde eles ficam será definido na PR que implementar o workflow.
-- O `/health` passa a informar qual commit está no ar, e o mesmo critério confirma o deploy normal.
 - A necessidade da publicação no GHCR fica em aberto (spec, "Abertos").

@@ -193,7 +193,7 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 }
 ```
 
-`GET /health`: 200 com `{"status": "UP", "commit": "<sha>"}`. As regras do campo `commit` estão em "Operação".
+`GET /health`: ver "Operação" (O1 a O3).
 
 ## Operação
 
@@ -205,13 +205,14 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 
 ### Deploy normal
 
-- **O4.** Depois de disparar o deploy hook, o smoke test consulta `/health` até o `commit` exposto ser igual ao SHA do commit publicado. Usa o mesmo intervalo e o mesmo tempo limite do rollback (O6). Se o prazo acabar antes disso, o smoke test falha.
+- **O4.** Depois de disparar o deploy hook, o smoke test consulta `/health` até o `commit` exposto ser igual ao SHA do commit publicado. Usa o mesmo intervalo e o mesmo tempo limite do rollback (O7). Se o prazo acabar antes disso, o smoke test falha.
 
 ### Rollback
 
 - **O5.** O rollback recebe o SHA completo, com 40 caracteres, do commit que deve voltar ao ar. Ele chama `POST https://api.render.com/v1/services/{serviceId}/deploys` com `commitId` igual a esse SHA, autenticado pela chave da API do Render.
-- **O6.** Depois, consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. Se não chegar a esse SHA dentro do prazo, o rollback falha.
-- **O7.** Uma resposta 201 ou 202 da API só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O6 confirma o rollback.
+- **O6.** Se o SHA recebido não tiver exatamente 40 caracteres hexadecimais minúsculos, o rollback é rejeitado antes de qualquer chamada à API do Render, e o workflow falha com uma mensagem clara.
+- **O7.** Depois da chamada da O5, consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. Se não chegar a esse SHA dentro do prazo, o rollback falha.
+- **O8.** Uma resposta 201 ou 202 da API só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O7 confirma o rollback.
 
 ## Mês de exemplo (estado no servidor)
 
@@ -296,3 +297,10 @@ Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é o
 - **Comparação de ids.** A comparação de ids não cobre maiúsculas e minúsculas, ids com prefixo comum nem trechos misturados de número e texto. Esses casos seguem o comportamento atual do código.
 - **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
 - **Publicação no GHCR.** O serviço no Render é construído a partir do GitHub (ADR 0013), então a imagem publicada no GHCR pode não ser o que roda em produção. Confirmar em outra PR se essa publicação ainda é necessária.
+- **README descreve o fluxo por imagem.** O README descreve o smoke test e o rollback por imagem, sem conferir o commit. Na PR que implementar a seção "Operação", o README passa a apontar para a spec em vez de descrever a regra.
+- **Deploy alcançado por commit mais novo (O4).** Se outro merge entrar antes de o deploy terminar, o Render pode publicar um commit mais novo. Nesse caso, o smoke test espera o SHA anterior e falha por prazo. A spec não define esse caso.
+- **Erro da API do Render (O5, O8).** A spec não diz o que acontece quando a API responde 4xx ou 5xx. Hoje o rollback só falharia pelo prazo da O7.
+- **`RENDER_GIT_COMMIT` vazia (O3).** A spec não diz se uma variável que existe, mas está vazia, vale `""` ou `"desconhecido"`.
+- **Critério de aceite da operação.** O CA13 cobre só O1 a O3. Nenhum CA cobre O4 a O8. Decidir se deve existir.
+- **Status das ADRs desta revisão.** A ADR 0013 está "aceita", mas a revisão de operação da spec ainda aguarda aprovação. A ADR 0009, já aceita, foi editada sem nota de revisão. Decidir se uma ADR aceita ganha nota quando é editada.
+- **Papel do design.** O design `health-commit-rollback.md` só aponta para a spec, e a spec cita o design como fonte. Assim, nenhum documento guarda o entendimento aprovado separado da regra. Decidir se isso atende ao fluxo do CLAUDE.md.
