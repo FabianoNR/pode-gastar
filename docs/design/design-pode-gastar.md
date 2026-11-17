@@ -1,7 +1,7 @@
 # Design: Pode Gastar, decisão de pode ou não pode
 
 Status: aprovado pelo Fabiano em 11/11/2026. Os acréscimos de 16/11/2026 (seção própria) foram aprovados pelo Fabiano em 16/11/2026.
-Substitui qualquer entendimento anterior sobre o escopo de decisão. A spec correspondente é docs/spec.md (v8, em revisão).
+Substitui qualquer entendimento anterior sobre o escopo de decisão. A spec correspondente é docs/spec.md (v8).
 
 ## Problema
 

@@ -1,10 +1,10 @@
 # Spec: Pode Gastar (v8)
 
-Status: v8 em revisão, ainda não aprovada nem mesclada na main. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: aprovada e mesclada na main pela PR #18. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
-- **v8 (2026-11-16, em revisão):** decisões do Fabiano de 16/11/2026, sobre a v7.
+- **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
   - R6: regra de corte nova. Corta primeiro o menos importante (`EM_DISCUSSAO`, `SERIA_LEGAL`, `QUERO_FAZER`, `DEVO_FAZER`); do mais importante, só o mínimo que faltar. Dentro do grupo, a combinação passa a ser ordenada por menor soma de valores, depois menor soma de intensidades, depois menor id (na v7, a intensidade vinha antes do valor).
   - R6: `PARCIAL` entra nos grupos de corte, junto com `PENDENTE`, pelo cortável (planejado − realizado). `PARCIAL` que já gastou além do previsto não entra.
   - R6: na compra `QUERO_FAZER`, o `DEVO_FAZER` `PENDENTE` ou `PARCIAL` entra como último grupo. Se nem assim cobre, a resposta traz a lista completa e quanto ainda faltaria.
