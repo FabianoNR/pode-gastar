@@ -1,9 +1,17 @@
-# Spec: Pode Gastar (v7)
+# Spec: Pode Gastar (v8)
 
-Status: aprovada e mesclada na main pela PR #10. Substitui a v6. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v8 em revisão, ainda não aprovada nem mesclada na main. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
+- **v8 (2026-11-16, em revisão):** decisões do Fabiano de 16/11/2026, sobre a v7.
+  - R6 e R7: compra `QUERO_FAZER` sem cobertura por `SERIA_LEGAL` e `QUERO_FAZER` passa a considerar `DEVO_FAZER` `PENDENTE` ou `PARCIAL` como terceiro grupo de corte. Se os três grupos cobrem a falta, a resposta traz uma sugestão; se não, a lista completa e quanto ainda faltaria.
+  - R6: `PARCIAL` entra nos grupos de corte, junto com `PENDENTE`. `PARCIAL` que já gastou além do previsto não entra.
+  - R7: a lista completa tem a mesma ordem para compra `DEVO_FAZER` e `QUERO_FAZER`.
+  - R6: em `NAO_CABE` por falta de `SERIA_LEGAL`, `falta` é o que ainda faltaria depois de cortar todos os elegíveis. O contrato registra isso.
+  - CA14, CA15 e CA16 novos; CA10 reforçado.
+  - Limite de 20 itens (6a) segue adiado; passa a valer também para o grupo `DEVO_FAZER` da compra `QUERO_FAZER`.
+  - A v7 foi aprovada e mesclada na main pela PR #10.
 - **v7 (2026-11-12):**
   - R6: as combinações passam a ser ordenadas por menor soma de intensidades, depois por menor soma de valores, depois pelo menor id.
   - R11 (nova): em compra `SERIA_LEGAL`, só entram nas sugestões itens `SERIA_LEGAL` e `EM_DISCUSSAO`.
@@ -70,20 +78,22 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
 - **R6.** Ordem das sugestões:
   1. Itens `EM_DISCUSSAO`, de qualquer categoria. Dentro deles, a ordem é pela categoria (seria legal, depois quero, depois devo) e só depois pela intensidade (menor primeiro).
   2. Depois, conforme a categoria da compra:
-     - Compra `SERIA_LEGAL`: só `SERIA_LEGAL` `PENDENTE` elegíveis. Nenhum `QUERO_FAZER` ou `DEVO_FAZER` `PENDENTE` é sugerido como troca. Se não bastarem, `NAO_CABE`, com motivo "não há itens seria legal suficientes para cobrir a compra". Ver R11.
-     - Compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro `SERIA_LEGAL` `PENDENTE`; se não bastarem, `QUERO_FAZER` `PENDENTE`.
+     - Compra `SERIA_LEGAL`: só `SERIA_LEGAL` `PENDENTE` ou `PARCIAL` elegíveis. Nenhum `QUERO_FAZER` ou `DEVO_FAZER` `PENDENTE` é sugerido como troca. Se não bastarem, `NAO_CABE`, com motivo "não há itens seria legal suficientes para cobrir a compra". Ver R11.
+     - Compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro `SERIA_LEGAL` `PENDENTE` ou `PARCIAL`; se não bastarem, `QUERO_FAZER` `PENDENTE` ou `PARCIAL`. Só na compra `QUERO_FAZER`, se ainda não bastarem, entra `DEVO_FAZER` `PENDENTE` ou `PARCIAL` como último grupo (R7).
      - Compra `DEVO_FAZER` não coberta por todos os `SERIA_LEGAL` mais todos os `QUERO_FAZER`: aplica-se R7.
   - Dentro de cada grupo, as combinações que cobrem a falta são ordenadas, nesta ordem:
     1. menor soma das intensidades dos itens da combinação;
     2. em empate, menor soma dos valores dos itens;
     3. em empate, menor id, na ordem alfabética dos ids. O id é único no mês, então o resultado é sempre o mesmo.
   - Uma combinação pode ter quantos itens forem necessários.
-- **R7.** Compra sem cobertura: todos os `SERIA_LEGAL` mais todos os `QUERO_FAZER` não cobrem a falta. Para compra `DEVO_FAZER`, há três opções:
+  - Item `PARCIAL` que já gastou além do previsto (cortar não libera valor) não entra em nenhum grupo.
+- **R7.** Compra `DEVO_FAZER` sem cobertura por todos os `SERIA_LEGAL` e `QUERO_FAZER`: há três opções:
   - **Opção 1:** todos os `SERIA_LEGAL`, todos os `QUERO_FAZER` e um `DEVO_FAZER` `PENDENTE` que feche o valor.
   - **Opção 2:** todos os `SERIA_LEGAL` e combinações de cortes (`QUERO_FAZER` com `DEVO_FAZER` `PENDENTE`) que somem o valor restante, começando pelos de menor intensidade.
   - **Opção 3:** todos os `SERIA_LEGAL` e um `DEVO_FAZER` `PENDENTE`, escolhido por valor e intensidade baixa, se cobrir a falta.
   - Se nenhuma opção cobrir a falta, a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria. Motivo: "compra não cabe no livre; cabe no total restante com cortes; mesmo cortando todos os itens elegíveis ainda faltariam {valor que ainda faltaria}".
-  - Compra `QUERO_FAZER` sem cobertura (todos os `SERIA_LEGAL` mais todos os `QUERO_FAZER` não cobrem a falta) não usa as três opções acima. Só nesse caso, os `DEVO_FAZER` `PENDENTE` entram como último recurso, na lista completa. A decisão é `CABE_COM_CORTES`, com `sugestoes` vazia, a lista completa de itens elegíveis pela R5 (itens `EM_DISCUSSAO`, de qualquer categoria, e os `SERIA_LEGAL`, `QUERO_FAZER` e `DEVO_FAZER` `PENDENTE` elegíveis) e o valor que ainda faltaria. A lista completa segue a ordem de corte: primeiro os itens `EM_DISCUSSAO`, como na R6; depois os `SERIA_LEGAL`, os `QUERO_FAZER` e os `DEVO_FAZER` `PENDENTE`; dentro de cada categoria, menor intensidade primeiro. Motivo: "compra não cabe no livre; cabe no total restante com cortes; mesmo cortando todos os itens elegíveis ainda faltariam {valor que ainda faltaria}".
+  - Compra `QUERO_FAZER` sem cobertura por `SERIA_LEGAL` e `QUERO_FAZER`: não usa as três opções acima. O `DEVO_FAZER` `PENDENTE` ou `PARCIAL` entra como terceiro grupo de corte (R6). Se os três grupos cobrem a falta, a decisão é `CABE_COM_CORTES` com uma sugestão, como nas demais compras. Se nem assim cobrem, a decisão é `CABE_COM_CORTES` com `sugestoes` vazia, a lista completa e o valor que ainda faltaria, com o motivo do item acima.
+  - Lista completa, para compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro os itens `EM_DISCUSSAO`, como na R6; depois `SERIA_LEGAL`, `QUERO_FAZER` e `DEVO_FAZER` (`PENDENTE` ou `PARCIAL`), nessa ordem de categoria; dentro de cada categoria, menor intensidade primeiro; empate pelo id. Só itens elegíveis pela R5.
 - **R8.** Item `EM_DISCUSSAO` na sugestão traz o decisor responsável e o campo `mensagem`, com o texto "aguardando decisão de {decisor responsável}". O serviço de aplicação monta a mensagem (ver "Mensagens ao usuário").
 - **R9.** Investimento: `APLICADO` é imutável. `PLANEJADO` pode ser editado, mas a edição fica fora desta fase.
 - **R10.** A decisão só mostra o que sairia. Quem executa o corte fica fora desta fase.
@@ -103,7 +113,7 @@ Respostas:
 
 - **200, `APROVADO`:** `livre` antes da compra, `saldoRestante` depois, sem sugestões.
 - **200, `CABE_COM_CORTES`:** `totalRestante`, `livre`, `falta`, `motivo`, `sugestoes` (com itens e o valor que cobrem) e `listaCompleta` (quando não há combinação que cubra).
-- **200, `NAO_CABE`:** `totalRestante`, `falta` e `motivo`, sem sugestões.
+- **200, `NAO_CABE`:** `totalRestante`, `falta` e `motivo`, sem sugestões. `falta` é compra − total restante (R4) ou, na compra `SERIA_LEGAL` sem itens suficientes (R6), o que ainda faltaria depois de cortar todos os elegíveis.
 - **400:** valor inválido ou categoria fora do conjunto. A mensagem aponta o campo.
 - **404:** `mesId` não existe.
 - **422:** grupo com mais de 20 itens ao calcular as sugestões. A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
@@ -199,10 +209,13 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA7.** Viagem `PARCIAL` com realizado de 150 (estimado 300): total restante 1450, livre 100. `valor=100.00&categoria=QUERO_FAZER`: `APROVADO`, saldo restante 0.
 - **CA8.** Viagem `REALIZADO` com realizado de 250: total restante 1350, livre 150. `valor=150.00&categoria=QUERO_FAZER`: `APROVADO`, saldo restante 0.
 - **CA9.** Caso CA8 com `valor=200.00&categoria=QUERO_FAZER`: falta 50, sugestão bola de futebol. A viagem, realizada, nunca aparece.
-- **CA10.** Viagem `PARCIAL` com realizado de 150 e `valor=200.00&categoria=QUERO_FAZER` com livre insuficiente: a viagem é candidata a corte, cancelando só o restante de 150. Se for cortada, o item vira `REALIZADO` com valor 150.
+- **CA10.** Viagem `PARCIAL` com realizado de 150 e `valor=200.00&categoria=QUERO_FAZER` com livre insuficiente: a viagem é candidata a corte, cancelando só o restante de 150. Se for cortada, o item vira `REALIZADO` com valor 150. Reforço (v8): com a mesma viagem e `valor=600.00&categoria=QUERO_FAZER`, falta 500. Os `SERIA_LEGAL` (200) não bastam; a sugestão traz jantar fora, bola de futebol, item para casa e a viagem, que cobre 550. A viagem vira `REALIZADO` com 150.
 - **CA11.** O cartão de crédito nunca aparece como sugestão de corte.
 - **CA12.** `valor=0` ou negativo: 400.
 - **CA13.** `GET /health`: 200 com `{"status": "UP"}`.
+- **CA14.** `valor=900.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 800, uma sugestão com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, que somam 900.
+- **CA15.** `valor=1100.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 1000, `sugestoes` vazia, `listaCompleta` com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, nessa ordem, e ainda faltariam 100.
+- **CA16.** `valor=500.00&categoria=SERIA_LEGAL`: `NAO_CABE`, motivo "não há itens seria legal suficientes para cobrir a compra", falta 200.
 
 ### Com a bolsa em discussão
 
