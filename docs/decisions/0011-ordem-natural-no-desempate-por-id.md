@@ -24,7 +24,7 @@ O Fabiano decidiu, em 17/11/2026, na PR #20, usar a ordem numérica natural.
 
 - Esta interpretação vale só para o desempate entre combinações (R6, passo 3), que inclui a busca da opção 2 da R7.
 - Os outros desempates por id continuam em ordem alfabética: a ordem dos itens dentro da sugestão (R6), as opções 1 e 3 (R7) e a lista completa (R7). Se a spec confirmar a ordem natural, esses pontos devem mudar juntos, em PR própria.
-- A spec ainda diz "ordem alfabética". A confirmação ou correção vem em PR de spec, separado do código.
+- A spec descreve esta regra na [R6](../spec.md). A confirmação ou correção vem em PR de spec, separado do código.
 
 ## Trade-offs
 

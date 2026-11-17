@@ -1,9 +1,10 @@
 # Spec: Pode Gastar (v8)
 
-Status: aprovada e mesclada na main pela PR #18. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: aguarda aprovação do Fabiano. A revisão de 17/11/2026 (ADR 0010, 0011 e 0012) está nesta PR. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
+- **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e esta PR (#21, `docs/spec-v8-decisoes`). Pendências em "Abertos".
 - **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
   - R6: regra de corte nova. Corta primeiro o menos importante (`EM_DISCUSSAO`, `SERIA_LEGAL`, `QUERO_FAZER`, `DEVO_FAZER`); do mais importante, só o mínimo que faltar. Dentro do grupo, a combinação passa a ser ordenada por menor soma de valores, depois menor soma de intensidades, depois menor id (na v7, a intensidade vinha antes do valor).
   - R6: `PARCIAL` entra nos grupos de corte, junto com `PENDENTE`, pelo cortável (planejado − realizado). `PARCIAL` que já gastou além do previsto não entra.
@@ -72,7 +73,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
 - **R1.** Valor da compra menor ou igual a zero é entrada inválida (400).
 - **R2.** Se a compra cabe no livre, a decisão é `APROVADO`. Saldo restante = livre − compra.
 - **R3.** Se a compra não cabe no livre, mas cabe no total restante, a decisão é `CABE_COM_CORTES`. Falta = compra − livre.
-- **R4.** Se a compra é maior que o total restante, a decisão é `NAO_CABE`. Cortar itens não resolve, porque cortar não altera o total restante. Motivo: "compra excede o total que ainda sobra no mês". Falta = compra − total restante.
+- **R4.** Se a compra é maior que o total restante, a decisão é `NAO_CABE`. Cortar itens não resolve, porque cortar não altera o total restante. Motivo: "compra excede o total que ainda sobra no mês". Falta = compra − total restante. A compra `NAO_CABE` por esta regra, como a `APROVADO` (R2), não passa pela checagem do limite de 20 itens (R6).
 - **R5.** Elegíveis para corte:
   - `EM_DISCUSSAO`, de qualquer categoria, incluindo `DEVO_FAZER`.
   - `PENDENTE` de `SERIA_LEGAL` e `QUERO_FAZER`, conforme R6.
@@ -93,21 +94,25 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - **Regra de corte:** corta primeiro o menos importante; do mais importante, só o mínimo que faltar.
     1. Se a soma dos cortáveis de todos os grupos da compra não cobre a falta, não há sugestão: a compra `SERIA_LEGAL` é `NAO_CABE`, a compra `QUERO_FAZER` recebe a lista completa (R7) e a compra `DEVO_FAZER` segue para as opções (R7).
     2. Se cobre, a conta vai do grupo mais importante da compra para o menos importante. Em cada grupo, calcula-se quanto da falta que resta os grupos menos importantes, inteiros, não conseguem cobrir. Se esse valor é zero ou menos, nenhum item do grupo entra. Se é maior que zero, entra a combinação de itens do grupo que cobre esse valor com a menor soma de cortáveis. O valor cortado no grupo é descontado da falta que resta, e a conta segue para o grupo anterior.
-    3. Empates entre combinações do mesmo grupo, nesta ordem: menor soma das intensidades; menor id, na ordem alfabética dos ids. O id é único no mês, então o resultado é sempre o mesmo.
+    3. Empates entre combinações do mesmo grupo, nesta ordem: menor soma das intensidades; menor id. Para comparar duas combinações, os ids de cada uma são ordenados e comparados um a um, até o primeiro diferente; se todos os ids comuns forem iguais, a combinação com menos itens vem antes. Combinações usam a ordem numérica natural dos ids (`item-2` antes de `item-10`, ADR 0011), inclusive na opção 2 da R7, e os demais desempates por id (opções 1 e 3 da R7, ordem dentro da sugestão e lista completa) usam a ordem de texto.
   - Uma combinação pode ter quantos itens forem necessários. Nenhum item entra na sugestão sem ser necessário.
-  - A sugestão traz os itens na ordem dos grupos. Dentro do grupo, menor intensidade e depois menor id. No grupo 0, a ordem é pela categoria (seria legal, depois quero, depois devo) e só depois pela intensidade (menor primeiro).
+  - **Limite de 20 itens (ADR 0012).** A busca testa todas as combinações do grupo, então nenhum grupo com mais de 20 itens chega a ela. Acima do limite, a resposta é 422.
+    - Grupo 0 (em discussão): a contagem inclui todos os itens `EM_DISCUSSAO`, inclusive os de valor zero. A checagem vale em qualquer compra, antes de qualquer combinação, mesmo que o grupo não fosse usado e inclusive quando a compra iria direto para a lista completa. Na compra `SERIA_LEGAL`, mais de 20 itens em discussão dá 422 em vez de `NAO_CABE`.
+    - Grupos 1 a 3: a contagem considera só itens com valor de corte maior que zero. Nos grupos 1 e 2, a checagem vale só quando o grupo é combinado. O grupo 3 da compra `QUERO_FAZER` é checado antes de qualquer combinação, como o grupo 0.
+    - Opção 2 da R7: `QUERO_FAZER` e `DEVO_FAZER` contam juntos.
+  - A sugestão traz os itens na ordem dos grupos. Dentro do grupo, menor intensidade e depois menor id (R6). No grupo 0, a ordem é pela categoria (seria legal, depois quero, depois devo) e só depois pela intensidade (menor primeiro).
 - **R7.** Compra `DEVO_FAZER` e lista completa.
   - **Compra `DEVO_FAZER`, passo a passo.**
     1. Aplica-se a regra de corte da R6 aos grupos 0, 1 e 2. Se cobre a falta, essa é a única sugestão e a conta termina.
     2. Se não cobre, há três opções. Elas são alternativas, para a pessoa escolher entre cortar mais `QUERO_FAZER` ou sacrificar um `DEVO_FAZER`. Por definição, em todas entram todos os itens `EM_DISCUSSAO` e todos os `SERIA_LEGAL` elegíveis. `DEVO_FAZER` `PENDENTE` e `PARCIAL` entram juntos, pelo cortável.
-       - **Opção 1:** acrescenta todos os `QUERO_FAZER` e um `DEVO_FAZER` cujo cortável, sozinho, cobre o que ainda falta depois deles. Entre os que cobrem, vence o de menor intensidade, depois menor cortável, depois menor id.
-       - **Opção 2:** acrescenta a combinação de itens `QUERO_FAZER` e `DEVO_FAZER` que cobre o que ainda falta depois dos `SERIA_LEGAL`. Vence a de menor soma das intensidades, depois menor soma dos cortáveis, depois menor id.
-       - **Opção 3:** acrescenta um `DEVO_FAZER` cujo cortável, sozinho, cobre o que ainda falta depois dos `SERIA_LEGAL`. Vence o de menor intensidade, depois menor cortável, depois menor id.
+       - **Opção 1:** acrescenta todos os `QUERO_FAZER` e um `DEVO_FAZER` cujo cortável, sozinho, cobre o que ainda falta depois deles. Entre os que cobrem, vence o de menor intensidade, depois menor cortável, depois menor id (R6).
+       - **Opção 2:** acrescenta a combinação de itens `QUERO_FAZER` e `DEVO_FAZER` que cobre o que ainda falta depois dos `SERIA_LEGAL`. Vence a de menor soma das intensidades, depois menor soma dos cortáveis, depois menor id (R6).
+       - **Opção 3:** acrescenta um `DEVO_FAZER` cujo cortável, sozinho, cobre o que ainda falta depois dos `SERIA_LEGAL`. Vence o de menor intensidade, depois menor cortável, depois menor id (R6).
        - Uma opção que não cobre a falta não existe. Opções com os mesmos itens (mesmos ids) valem uma só, e fica a primeira. As sugestões aparecem na ordem opção 1, 2, 3.
     3. Se nenhuma opção cobre, vale o item abaixo.
   - Se nenhuma opção cobrir a falta, é porque a soma de todos os itens elegíveis, incluindo `DEVO_FAZER` `PENDENTE` e `PARCIAL`, não cobre a falta (a opção 2 aceita qualquer número de itens). Nesse caso a decisão continua `CABE_COM_CORTES`, com a lista completa de itens elegíveis e o valor que ainda faltaria, sempre maior que zero. Motivo: "compra não cabe no livre; cabe no total restante com cortes; mesmo cortando todos os itens elegíveis ainda faltariam {valor que ainda faltaria}".
   - Compra `QUERO_FAZER` que nem a soma dos grupos 0 a 3 cobre: não usa as opções. A decisão é `CABE_COM_CORTES`, com `sugestoes` vazia, a lista completa e o valor que ainda faltaria, com o motivo do item acima.
-  - Lista completa, para compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro os itens `EM_DISCUSSAO`, na ordem da R6; depois `SERIA_LEGAL`, `QUERO_FAZER` e `DEVO_FAZER` (`PENDENTE` ou `PARCIAL`), nessa ordem de categoria; dentro de cada categoria, menor intensidade primeiro; empate pelo id. Só itens elegíveis pela R5.
+  - Lista completa, para compra `QUERO_FAZER` ou `DEVO_FAZER`: primeiro os itens `EM_DISCUSSAO`, na ordem da R6; depois `SERIA_LEGAL`, `QUERO_FAZER` e `DEVO_FAZER` (`PENDENTE` ou `PARCIAL`), nessa ordem de categoria; dentro de cada categoria, menor intensidade primeiro; empate pelo id (R6). Só itens elegíveis pela R5.
 - **R8.** Item `EM_DISCUSSAO` na sugestão traz o decisor responsável e o campo `mensagem`, com o texto "aguardando decisão de {decisor responsável}". O serviço de aplicação monta a mensagem (ver "Mensagens ao usuário").
 - **R9.** Investimento: `APLICADO` é imutável. `PLANEJADO` pode ser editado, mas a edição fica fora desta fase.
 - **R10.** A decisão só mostra o que sairia. Quem executa o corte fica fora desta fase.
@@ -130,7 +135,7 @@ Respostas:
 - **200, `NAO_CABE`:** `totalRestante`, `falta` e `motivo`, sem sugestões. `falta` é compra − total restante (R4) ou, na compra `SERIA_LEGAL` sem itens suficientes (R6), o que ainda faltaria depois de cortar todos os elegíveis.
 - **400:** valor inválido ou categoria fora do conjunto. A mensagem aponta o campo.
 - **404:** `mesId` não existe.
-- **422:** grupo com mais de 20 itens ao calcular as sugestões. A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
+- **422:** grupo com mais de 20 itens ao calcular as sugestões (R6, "Limite de 20 itens"). A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
 
 Cada item em `sugestoes` e em `listaCompleta` traz `id`, `nome`, `status` e, só para `EM_DISCUSSAO`, `decisorResponsavel` e `mensagem`.
 
@@ -262,10 +267,12 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - Autenticação.
 - Aplicativo mobile.
 
-## Perguntas em aberto
+## Abertos
 
-Nenhuma para o escopo de decisão. Como o `mesId` é obtido, por usuário ou por grupo, fica para a funcionalidade de grupo.
+Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é obtido, por usuário ou por grupo, fica para a funcionalidade de grupo.
 
-Pendência conhecida: o cartão de crédito (R5, CA11) ainda é reconhecido pelo nome. Enquanto isso, qualquer item com o nome "Cartão de crédito" é tratado como o cartão. A troca para um marcador próprio do item fica para depois.
-
-Pendência conhecida: o limite de 20 itens por grupo ao calcular as sugestões (erro 422) foi adiado. Falta decidir se, na opção 2 da R7, o limite vale para `QUERO_FAZER` e `DEVO_FAZER` juntos.
+- **Valor de corte zero (ADR 0010).** Inconsistência conhecida, pendente de decisão. `PENDENTE` com valor estimado zero e `PARCIAL` com realizado igual ao planejado ficam fora dos grupos e da lista completa; `EM_DISCUSSAO` com valor estimado zero entra no grupo 0 e na lista completa. A regra não muda nesta versão. Quando for decidida, a mudança vem em PR própria, com teste para os três casos.
+- **CA10 e `REALIZADO`.** O CA10 diz que a viagem cortada vira `REALIZADO` com o valor já gasto, mas o contrato da resposta não tem esse campo (o item traz só `id`, `nome`, `status` atual e, para `EM_DISCUSSAO`, decisor e mensagem). Falta decidir se o contrato ganha o campo ou se o CA10 deixa de citar `REALIZADO`.
+- **Cartão de crédito reconhecido pelo nome (R5, CA11).** Qualquer item com o nome "Cartão de crédito" é tratado como o cartão. A troca para um marcador próprio do item fica para depois.
+- **Comparação de ids.** A comparação de ids não cobre maiúsculas e minúsculas, ids com prefixo comum nem trechos misturados de número e texto. Esses casos seguem o comportamento atual do código.
+- **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
