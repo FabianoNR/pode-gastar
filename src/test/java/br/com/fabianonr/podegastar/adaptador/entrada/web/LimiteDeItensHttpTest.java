@@ -29,7 +29,7 @@ class LimiteDeItensHttpTest {
   private static final String MES_COM_64_EM_DISCUSSAO = "mes-com-64-em-discussao";
 
   @TestConfiguration
-  static class MesComVinteEUmItens {
+  static class MesesComItensDemais {
 
     @Bean
     AvaliarCompra avaliarCompra() {

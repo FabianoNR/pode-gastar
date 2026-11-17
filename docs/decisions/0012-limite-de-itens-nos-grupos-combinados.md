@@ -30,7 +30,7 @@ O Fabiano decidiu, em 17/11/2026, voltar o limite para esses grupos e garantir q
   - **`SERIA_LEGAL` e `QUERO_FAZER` na regra de corte:** quando o grupo precisa ser combinado. Um grupo que não é necessário para cobrir a falta não gera erro. É o comportamento que já existia.
   - **Opção 2 da R7:** `QUERO_FAZER` e `DEVO_FAZER` contados juntos, quando a opção é calculada. É o comportamento que já existia.
 - A própria busca de combinações recusa um grupo acima do limite antes de começar. Assim, nenhum grupo com mais de 20 itens chega a ela, e o caso de 64 itens responde 422, nunca 500.
-- A checagem só acontece quando a compra precisa de sugestões de corte (`CABE_COM_CORTES`). Compra `APROVADO` ou `NAO_CABE` pela R4 não passa por ela.
+- A checagem acontece sempre que a compra não cabe no livre, mas cabe no total restante, ou seja, quando entra no cálculo de sugestões de corte (R3). Isso inclui a compra `SERIA_LEGAL` que terminaria em `NAO_CABE` por falta de itens seria legal (R6 e R11): com mais de 20 itens em discussão, ela responde 422. Compra `APROVADO` (R2) ou `NAO_CABE` pela R4 não passa pela checagem.
 
 ## Consequências
 

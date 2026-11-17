@@ -44,7 +44,7 @@ class LimiteDeItensPorGrupoTest {
     return new Mes(MES_ID, valor(orcamentoVariavel), valor("0"), valor("0"), itens);
   }
 
-  /** Itens de 10 cada, com orçamento 1000: a compra de 800 deixa falta de 800 − livre. */
+  /** Compra QUERO_FAZER do valor informado, num mês de orçamento variável 1000. */
   private static Avaliacao avaliarCompraQueroFazer(List<Item> itens, String valor) {
     return mesCom("1000", itens).avaliar(new Compra(valor(valor), Categoria.QUERO_FAZER));
   }
@@ -84,6 +84,21 @@ class LimiteDeItensPorGrupoTest {
     Mes mes = mesCom("1500", itens);
 
     assertThatThrownBy(() -> mes.avaliar(new Compra(valor("1300.00"), Categoria.QUERO_FAZER)))
+        .isInstanceOf(ItensDemaisParaCombinarException.class);
+  }
+
+  @Test
+  @DisplayName(
+      "21 itens em discussão respondem itens demais na compra SERIA_LEGAL que não teria cortes suficientes (R6)")
+  void itensEmDiscussaoAcimaDoLimiteSaoConferidosNaCompraSeriaLegal() {
+    List<Item> itens = new ArrayList<>(itensEmDiscussao(ACIMA_DO_LIMITE));
+    itens.add(pendente("cartao", CARTAO, Categoria.DEVO_FAZER, 5, "500"));
+
+    // Orçamento 1500, comprometido 710: livre 790; falta 510. Os grupos 0 e 1 somam 210, então
+    // sem o limite a decisão seria NAO_CABE por falta de itens seria legal.
+    Mes mes = mesCom("1500", itens);
+
+    assertThatThrownBy(() -> mes.avaliar(new Compra(valor("1300.00"), Categoria.SERIA_LEGAL)))
         .isInstanceOf(ItensDemaisParaCombinarException.class);
   }
 

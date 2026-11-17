@@ -268,23 +268,21 @@ class RegrasDeCorteTest {
   void opcaoDoisDesempataPeloMenorId() {
     Mes mes =
         mesCom(
-            "1050",
+            "1200",
             pendente("item-1", "Jantar", Categoria.SERIA_LEGAL, 2, "100"),
-            pendente("item-6", "Passeio", Categoria.QUERO_FAZER, 1, "200"),
-            pendente("item-7", "Show", Categoria.QUERO_FAZER, 5, "50"),
-            pendente("item-3", "Dentista", Categoria.DEVO_FAZER, 1, "300"),
-            pendente("item-4", "Óculos", Categoria.DEVO_FAZER, 1, "300"));
+            pendente("item-9", "Remédio", Categoria.DEVO_FAZER, 1, "100"),
+            pendente("item-5", "Dentista", Categoria.DEVO_FAZER, 2, "250"),
+            pendente("item-7", "Óculos", Categoria.DEVO_FAZER, 2, "250"),
+            pendente("item-2", "Seguro", Categoria.DEVO_FAZER, 3, "400"));
 
-    // livre 100; falta 600; a regra de corte (350) não cobre. Depois do jantar faltam 500.
-    // Passeio com dentista e passeio com óculos empatam: intensidade 2 e cortável 500. Vence o
-    // dentista (item-3), pelo menor id. Nenhum DEVO cobre 500 sozinho, então não há opção 3.
+    // livre 100; falta 600; depois do jantar faltam 500 e nenhum DEVO cobre sozinho (sem opções
+    // 1 e 3). Remédio com seguro e dentista com óculos empatam: intensidade 4 e cortável 500.
+    // Vence remédio com seguro, que tem o menor id (item-2), embora a busca encontre antes
+    // dentista com óculos.
     Avaliacao avaliacao = mes.avaliar(new Compra(valor("700.00"), Categoria.DEVO_FAZER));
 
-    assertThat(avaliacao.sugestoes()).hasSize(2);
-    assertThat(avaliacao.sugestoes().get(0).opcao()).isEqualTo(Opcao.OPCAO_1);
-    assertThat(ids(avaliacao.sugestoes().get(0)))
-        .containsExactly("item-1", "item-6", "item-7", "item-3");
-    assertThat(avaliacao.sugestoes().get(1).opcao()).isEqualTo(Opcao.OPCAO_2);
-    assertThat(ids(avaliacao.sugestoes().get(1))).containsExactly("item-1", "item-6", "item-3");
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(avaliacao.sugestoes().get(0).opcao()).isEqualTo(Opcao.OPCAO_2);
+    assertThat(ids(avaliacao.sugestoes().get(0))).containsExactly("item-1", "item-9", "item-2");
   }
 }
