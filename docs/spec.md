@@ -1,10 +1,11 @@
 # Spec: Pode Gastar (v8)
 
-Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) aguarda aprovação do Fabiano na PR `docs/health-commit-rollback`. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. Os critérios de aceite da operação aguardam aprovação do Fabiano na PR `docs/criterios-operacao`. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
-- **v8, revisão de operação de 2026-11-17:** `/health` passa a expor o commit; regras do deploy e do rollback (seção "Operação"); CA13 atualizado. Design: `docs/design/health-commit-rollback.md`. Decisão: ADR 0013. Fonte: esta PR (`docs/health-commit-rollback`).
+- **v8, critérios de aceite da operação (2026-11-17):** CA21 a CA29 novos, para O3 a O9. Decisões do Fabiano de 17/11/2026: `RENDER_GIT_COMMIT` vazia vale `"desconhecido"`, igual à variável ausente (O3); erro 4xx ou 5xx da API do Render faz o rollback falhar na hora (O9, nova). Fonte: esta PR (`docs/criterios-operacao`).
+- **v8, revisão de operação de 2026-11-17:** `/health` passa a expor o commit; regras do deploy e do rollback (seção "Operação"); CA13 atualizado. Design: `docs/design/health-commit-rollback.md`. Decisão: ADR 0013. Fonte: PR #23 (`docs/health-commit-rollback`).
 - **v8, revisão de 2026-11-17:** registra as decisões da Etapa C (ADR 0010, 0011 e 0012) na R6 e no contrato, sem critério de aceite novo. Fontes: PR #18 (spec v8), PR #20 (código da Etapa C) e PR #21 (`docs/spec-v8-decisoes`). Pendências em "Abertos".
 - **v8 (2026-11-16):** aprovada e mesclada na main pela PR #18. Decisões do Fabiano de 16/11/2026, sobre a v7.
   - R6: regra de corte nova. Corta primeiro o menos importante (`EM_DISCUSSAO`, `SERIA_LEGAL`, `QUERO_FAZER`, `DEVO_FAZER`); do mais importante, só o mínimo que faltar. Dentro do grupo, a combinação passa a ser ordenada por menor soma de valores, depois menor soma de intensidades, depois menor id (na v7, a intensidade vinha antes do valor).
@@ -201,7 +202,7 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 
 - **O1.** A resposta é `{"status": "UP", "commit": "<sha>"}`.
 - **O2.** O valor de `commit` vem da variável de ambiente `RENDER_GIT_COMMIT`, que o Render disponibiliza no build e em tempo de execução.
-- **O3.** Se a variável não existir, por exemplo ao rodar localmente, `commit` vale `"desconhecido"`. A falta da variável não faz o endpoint falhar: a resposta continua 200 com `"status": "UP"`.
+- **O3.** Se a variável não existir, por exemplo ao rodar localmente, ou existir com valor vazio, `commit` vale `"desconhecido"`. A falta da variável não faz o endpoint falhar: a resposta continua 200 com `"status": "UP"`.
 
 ### Deploy normal
 
@@ -213,6 +214,7 @@ Exemplo de `APROVADO` em um mês com dois itens de mesmo nome:
 - **O6.** Se o SHA recebido não tiver exatamente 40 caracteres hexadecimais minúsculos, o rollback é rejeitado antes de qualquer chamada à API do Render, e o workflow falha com uma mensagem clara.
 - **O7.** Depois da chamada da O5, consulta `/health` a cada 15 segundos, por até 10 minutos, até o `commit` exposto ser igual ao SHA pedido. Se não chegar a esse SHA dentro do prazo, o rollback falha.
 - **O8.** Uma resposta 201 ou 202 da API só significa que o pedido de deploy foi aceito. Ela não prova que o deploy terminou; só a O7 confirma o rollback.
+- **O9.** Se a API do Render responder com erro, 4xx ou 5xx, o rollback falha na hora, sem consultar `/health`, com uma mensagem que traz o código HTTP da resposta.
 
 ## Mês de exemplo (estado no servidor)
 
@@ -273,6 +275,18 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CB4.** Dois itens `EM_DISCUSSAO`, um `QUERO_FAZER` de intensidade 5 e um `DEVO_FAZER` de intensidade 2: o `QUERO_FAZER` vem antes na sugestão, porque a categoria pesa antes da intensidade.
 - **CB5.** `valor=130.00&categoria=SERIA_LEGAL`: `CABE_COM_CORTES`, falta 120. Sugestão: bolsa (90) mais bola de futebol (80). Somam 170. O jantar fora (120) cobriria a falta sozinho, mas a bolsa, em discussão, sai primeiro; depois dela faltam 30, e a bola é o menor corte que cobre.
 
+### Operação
+
+- **CA21.** `GET /health` com `RENDER_GIT_COMMIT` definida, mas vazia: 200 com `{"status": "UP", "commit": "desconhecido"}`, igual à variável ausente (O3).
+- **CA22.** Deploy normal do commit `<sha>`: depois do deploy hook, `/health` expõe outro commit nas primeiras consultas e `<sha>` numa consulta seguinte, dentro de 10 minutos. O smoke test passa nessa consulta e não consulta mais (O4).
+- **CA23.** Deploy normal do commit `<sha>`: por 10 minutos, `/health` expõe outro commit ou `"desconhecido"`. O smoke test falha por prazo, com uma mensagem que traz o SHA esperado (O4).
+- **CA24.** Rollback com um SHA de 40 caracteres hexadecimais minúsculos: o workflow faz um `POST` em `https://api.render.com/v1/services/{serviceId}/deploys` com o corpo `{"commitId": "<sha>"}`, autenticado pela chave da API do Render (O5).
+- **CA25.** Rollback com um SHA de 39 caracteres, de 41 caracteres, com letra maiúscula ou com caractere fora de `0-9` e `a-f`: o workflow falha com uma mensagem clara sobre o formato do SHA, sem nenhuma chamada à API do Render nem ao `/health` (O6).
+- **CA26.** Rollback para `<sha>`: a API responde 201 e `/health` expõe o commit anterior nas primeiras consultas e `<sha>` numa consulta seguinte, dentro de 10 minutos. O rollback termina com sucesso nessa consulta e não consulta mais (O7, O8).
+- **CA27.** Rollback para `<sha>`: a API responde 202 e, por 10 minutos, `/health` não expõe `<sha>`. O rollback falha por prazo, com uma mensagem que traz o SHA pedido, mesmo com a resposta de sucesso da API (O7, O8).
+- **CA28.** Rollback para `<sha>`: a API responde 401. O rollback falha na hora, com uma mensagem que traz o código 401, sem consultar `/health` (O9).
+- **CA29.** Rollback para `<sha>`: a API responde 503. O rollback falha na hora, com uma mensagem que traz o código 503, sem consultar `/health` (O9).
+
 ## Fora de escopo desta versão
 
 - Grupo, identificação de usuário, papéis e permissões.
@@ -297,10 +311,7 @@ Para o escopo de decisão não há outra pergunta em aberto. Como o `mesId` é o
 - **Comparação de ids.** A comparação de ids não cobre maiúsculas e minúsculas, ids com prefixo comum nem trechos misturados de número e texto. Esses casos seguem o comportamento atual do código.
 - **Critério de aceite que pode faltar.** Nenhum CA cobre o 422 do limite de 20 nem o desempate por ordem natural do id. Decidir se deve existir.
 - **Publicação no GHCR.** O serviço no Render é construído a partir do GitHub (ADR 0013), então a imagem publicada no GHCR pode não ser o que roda em produção. Confirmar em outra PR se essa publicação ainda é necessária.
-- **README descreve o fluxo por imagem.** O README descreve o smoke test e o rollback por imagem, sem conferir o commit. Na PR que implementar a seção "Operação", o README passa a apontar para a spec em vez de descrever a regra.
+- **README descreve o fluxo por imagem.** O README descreve o smoke test e o rollback por imagem, sem conferir o commit. A PR que implementa a seção "Operação" não altera o README, por decisão do Fabiano de 17/11/2026. A atualização, para o README apontar para a spec em vez de descrever a regra, fica para PR própria.
 - **Deploy alcançado por commit mais novo (O4).** Se outro merge entrar antes de o deploy terminar, o Render pode publicar um commit mais novo. Nesse caso, o smoke test espera o SHA anterior e falha por prazo. A spec não define esse caso.
-- **Erro da API do Render (O5, O8).** A spec não diz o que acontece quando a API responde 4xx ou 5xx. Hoje o rollback só falharia pelo prazo da O7.
-- **`RENDER_GIT_COMMIT` vazia (O3).** A spec não diz se uma variável que existe, mas está vazia, vale `""` ou `"desconhecido"`.
-- **Critério de aceite da operação.** O CA13 cobre só O1 a O3. Nenhum CA cobre O4 a O8. Decidir se deve existir.
 - **Status das ADRs desta revisão.** A ADR 0013 está "aceita", mas a revisão de operação da spec ainda aguarda aprovação. A ADR 0009, já aceita, foi editada sem nota de revisão. Decidir se uma ADR aceita ganha nota quando é editada.
 - **Papel do design.** O design `health-commit-rollback.md` só aponta para a spec, e a spec cita o design como fonte. Assim, nenhum documento guarda o entendimento aprovado separado da regra. Decidir se isso atende ao fluxo do CLAUDE.md.
