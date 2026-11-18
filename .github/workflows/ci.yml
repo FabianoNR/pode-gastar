@@ -20,34 +20,12 @@ jobs:
 
       - run: ./mvnw verify
 
-  publish:
-    needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/fabianonr/pode-gastar:${{ github.sha }}
-            ghcr.io/fabianonr/pode-gastar:main
-
   # O4, O12: deploy hook e smoke test em um único job, em sequência, no mesmo grupo de
   # concorrência do rollback; quem chega depois espera.
+  # ADR 0014: o Render constrói a aplicação a partir do repositório; o CI não publica imagem.
   deploy:
-    needs: publish
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # O16: tempo limite do job.
     timeout-minutes: 15
@@ -62,5 +40,4 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           SERVICE_URL: ${{ secrets.SERVICE_URL }}
           SHA_PUBLICADO: ${{ github.sha }}
-          IMAGE_URL: ghcr.io/fabianonr/pode-gastar:${{ github.sha }}
-        run: bash scripts/deploy.sh "$SHA_PUBLICADO" "$IMAGE_URL"
+        run: bash scripts/deploy.sh "$SHA_PUBLICADO"

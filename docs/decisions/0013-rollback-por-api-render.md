@@ -1,6 +1,6 @@
 # 0013: Rollback pela API do Render com `commitId`
 
-Status: aceita
+Status: aceita; substituída em parte pela ADR 0014 (premissa do contexto e consequência sobre o GHCR)
 
 Data: 2026-11-17
 

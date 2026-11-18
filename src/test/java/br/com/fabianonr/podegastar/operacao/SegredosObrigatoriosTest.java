@@ -19,7 +19,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 class SegredosObrigatoriosTest {
 
   private static final String SHA = "0123456789abcdef0123456789abcdef01234567";
-  private static final String IMAGEM = "ghcr.io/fabianonr/pode-gastar:" + SHA;
   private static final String CHAVE_DA_API = "chave-secreta-de-teste-91";
   private static final String ID_DO_SERVICO = "srv-secreto-de-teste-37";
   private static final String CHAVE_DO_DEPLOY_HOOK = "chave-do-hook-de-teste-55";
@@ -68,7 +67,7 @@ class SegredosObrigatoriosTest {
             .comVariavel("SERVICE_URL", servico.endereco());
     deixarAusente(execucao, segredoAusente, valor);
 
-    var resultado = execucao.rodarScript("deploy.sh", SHA, IMAGEM);
+    var resultado = execucao.rodarScript("deploy.sh", SHA);
 
     assertFalhaPeloSegredo(resultado, segredoAusente);
   }

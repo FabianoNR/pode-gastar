@@ -90,18 +90,17 @@ pedir_deploy_do_commit() {
 }
 
 # O4, O16: uma única chamada, sem seguir redirecionamento. Só 2xx leva à espera pelo
-# /health. O envio de imgURL continua como antes (ver "Abertos" na spec).
+# /health. O Render constrói o último commit da main (ADR 0014), sem parâmetro extra.
 disparar_deploy_hook() {
-  local url_do_hook="$1" imagem="$2" codigo saida_do_curl=0
+  local url_do_hook="$1" codigo saida_do_curl=0
   codigo=$(
     curl --silent --output /dev/null --write-out '%{http_code}' \
       --max-time "$(limite_da_chamada_em_segundos)" \
-      --request POST --get \
-      --data-urlencode "imgURL=${imagem}" \
+      --request POST \
       "$url_do_hook"
   ) || saida_do_curl=$?
   exigir_resposta_2xx "ao deploy hook" "Job" "$saida_do_curl" "$codigo"
-  echo "O deploy hook aceitou o deploy de ${imagem} (HTTP ${codigo})."
+  echo "O deploy hook aceitou o pedido de deploy (HTTP ${codigo})."
 }
 
 # O10: uma consulta ao /health. Retorna 0 se o commit exposto é o esperado; senão imprime
@@ -173,8 +172,8 @@ executar_rollback() {
 
 # O4, O10, O15, O16. Usa RENDER_DEPLOY_HOOK_URL e SERVICE_URL (O14).
 executar_deploy_normal() {
-  local sha_publicado="${1:-}" imagem="${2:-}"
+  local sha_publicado="${1:-}"
   exigir_segredos RENDER_DEPLOY_HOOK_URL SERVICE_URL
-  disparar_deploy_hook "$RENDER_DEPLOY_HOOK_URL" "$imagem"
+  disparar_deploy_hook "$RENDER_DEPLOY_HOOK_URL"
   esperar_commit "$SERVICE_URL" "$sha_publicado"
 }
