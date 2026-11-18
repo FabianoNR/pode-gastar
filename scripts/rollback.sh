@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Rollback pela API do Render (docs/spec.md, O5 a O10): valida o SHA, pede o deploy desse
-# commit e espera o /health expor o commit.
+# Rollback pela API do Render (docs/spec.md, O5 a O10, O15 e O16): confere os segredos,
+# valida o SHA, pede o deploy desse commit e espera o /health expor o commit.
 #
 # Uso: rollback.sh <sha>
-# Ambiente: RENDER_API_KEY, RENDER_SERVICE_ID e SERVICE_URL (O14).
+# Ambiente: RENDER_API_KEY, RENDER_SERVICE_ID e SERVICE_URL (O14), obrigatórios (O15).
 #
 # O endereço da API é fixo: nenhuma variável de ambiente o troca.
 

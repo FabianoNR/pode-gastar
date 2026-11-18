@@ -49,6 +49,8 @@ jobs:
   deploy:
     needs: publish
     runs-on: ubuntu-latest
+    # O16: tempo limite do job.
+    timeout-minutes: 15
     concurrency:
       group: production-deploy
       cancel-in-progress: false

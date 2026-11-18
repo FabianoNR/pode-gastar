@@ -16,6 +16,8 @@ jobs:
     # O11: fora da main o job aparece como pulado e não chama a API nem o /health.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # O16: tempo limite do job.
+    timeout-minutes: 15
     # O12: mesmo grupo do job de deploy do ci.yml; quem chega depois espera.
     concurrency:
       group: production-deploy
