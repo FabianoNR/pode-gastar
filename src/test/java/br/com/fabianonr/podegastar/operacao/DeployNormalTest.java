@@ -21,7 +21,7 @@ class DeployNormalTest {
 
   private static final String SHA_PUBLICADO = "0123456789abcdef0123456789abcdef01234567";
   private static final String COMMIT_ANTERIOR = "fedcba9876543210fedcba9876543210fedcba98";
-  private static final String IMAGEM = "ghcr.io/fabianonr/pode-gastar:" + SHA_PUBLICADO;
+  private static final String CAMINHO_DO_DEPLOY_HOOK = "/deploy/srv-teste?key=k";
 
   private ServidorHttpFalso deployHook;
   private ServidorHttpFalso servico;
@@ -50,6 +50,18 @@ class DeployNormalTest {
     assertThat(deployHook.pedidos()).hasSize(1);
     assertThat(deployHook.pedidos().getFirst().metodo()).isEqualTo("POST");
     assertThat(servico.pedidos()).hasSize(2);
+  }
+
+  @Test
+  @DisplayName("O deploy hook é chamado na URL configurada, sem imgURL (ADR 0014)")
+  void deployHookEChamadoSemImgUrl() {
+    deployHook = ServidorHttpFalso.comRoteiro(responder(200, "{}"));
+    servico = ServidorHttpFalso.comRoteiro(healthComCommit(SHA_PUBLICADO));
+
+    var resultado = rodarDeploy(servico.endereco());
+
+    assertThat(resultado.terminouComSucesso()).as(resultado.saida()).isTrue();
+    assertThat(deployHook.pedidos().getFirst().caminho()).isEqualTo(CAMINHO_DO_DEPLOY_HOOK);
   }
 
   @ParameterizedTest(name = "deploy hook responde {0}")
@@ -104,7 +116,7 @@ class DeployNormalTest {
         CompletableFuture.supplyAsync(() ->
             execucaoDoDeploy("http://127.0.0.1:" + portaDoServico)
                 .comIntervaloEmSegundos(intervaloLongo)
-                .rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM));
+                .rodarScript("deploy.sh", SHA_PUBLICADO));
     esperarFimDoAtendimentoDoDeployHook();
     Thread.sleep(Duration.ofMillis(500));
     servico = ServidorHttpFalso.naPorta(portaDoServico, healthComCommit(SHA_PUBLICADO));
@@ -170,7 +182,7 @@ class DeployNormalTest {
     var resultado =
         execucaoDoDeploy(servico.endereco())
             .comLimiteDaChamadaEmSegundos(limiteDaChamada)
-            .rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM);
+            .rodarScript("deploy.sh", SHA_PUBLICADO);
 
     assertThat(resultado.terminouComSucesso()).isFalse();
     assertThat(resultado.saida()).contains("tempo limite");
@@ -204,7 +216,7 @@ class DeployNormalTest {
         ExecucaoDeScript.comAmbienteDeTeste()
             .comVariavel("RENDER_DEPLOY_HOOK_URL", hookSemNinguemEscutando + "/deploy")
             .comVariavel("SERVICE_URL", servico.endereco())
-            .rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM);
+            .rodarScript("deploy.sh", SHA_PUBLICADO);
 
     assertFalhaNaHoraSemConsultarOHealth(resultado);
   }
@@ -240,12 +252,12 @@ class DeployNormalTest {
   }
 
   private ExecucaoDeScript.Resultado rodarDeploy(String enderecoDoServico) {
-    return execucaoDoDeploy(enderecoDoServico).rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM);
+    return execucaoDoDeploy(enderecoDoServico).rodarScript("deploy.sh", SHA_PUBLICADO);
   }
 
   private ExecucaoDeScript execucaoDoDeploy(String enderecoDoServico) {
     return ExecucaoDeScript.comAmbienteDeTeste()
-        .comVariavel("RENDER_DEPLOY_HOOK_URL", deployHook.endereco() + "/deploy/srv-teste?key=k")
+        .comVariavel("RENDER_DEPLOY_HOOK_URL", deployHook.endereco() + CAMINHO_DO_DEPLOY_HOOK)
         .comVariavel("SERVICE_URL", enderecoDoServico);
   }
 

@@ -19,6 +19,8 @@ class ConfiguracaoDosWorkflowsTest {
   private static final Path CI = Path.of(".github/workflows/ci.yml");
   private static final Path ROLLBACK = Path.of(".github/workflows/rollback.yml");
   private static final Path SCRIPT_DE_ROLLBACK = Path.of("scripts/rollback.sh");
+  private static final Path SCRIPT_DE_DEPLOY = Path.of("scripts/deploy.sh");
+  private static final Path FUNCOES_DA_OPERACAO = Path.of("scripts/operacao.sh");
   private static final Pattern SEGREDO = Pattern.compile("secrets\\.([A-Z_]+)");
 
   @Test
@@ -34,9 +36,54 @@ class ConfiguracaoDosWorkflowsTest {
   void deployHookESmokeTestFormamUmUnicoJob() throws IOException {
     var jobs = jobs(CI);
 
-    assertThat(jobs.keySet()).containsExactlyInAnyOrder("verify", "publish", "deploy");
+    assertThat(jobs.keySet()).containsExactlyInAnyOrder("verify", "deploy");
     assertThat(new Yaml().dump(jobs.get("deploy"))).contains("scripts/deploy.sh");
-    assertThat(new Yaml().dump(jobs.get("publish"))).doesNotContain("scripts/");
+  }
+
+  @Test
+  @DisplayName("O job de deploy depende do verify e só roda em push na main (ADR 0014)")
+  void jobDeDeployDependeDoVerifyESoRodaEmPushNaMain() throws IOException {
+    var jobDeDeploy = mapa(jobs(CI).get("deploy"));
+    var condicao = String.valueOf(jobDeDeploy.get("if"));
+
+    assertThat(jobDeDeploy).containsEntry("needs", "verify");
+    assertThat(condicao.replace(" ", ""))
+        .isEqualTo("github.event_name=='push'&&github.ref=='refs/heads/main'");
+  }
+
+  @Test
+  @DisplayName("O job de deploy espera o /health expor o SHA do commit publicado (O4, ADR 0014)")
+  void jobDeDeployEsperaOShaDoCommitPublicado() throws IOException {
+    var jobDeDeploy = new Yaml().dump(jobs(CI).get("deploy"));
+
+    assertThat(jobDeDeploy).contains("${{ github.sha }}").contains("scripts/deploy.sh");
+  }
+
+  @Test
+  @DisplayName("O ci.yml não publica imagem nem faz login no GHCR (ADR 0014)")
+  void ciNaoPublicaImagemNemFazLoginNoGhcr() throws IOException {
+    var workflow = Files.readString(CI);
+
+    assertThat(jobs(CI)).doesNotContainKey("publish");
+    assertThat(workflow)
+        .doesNotContain("ghcr.io")
+        .doesNotContain("docker/login-action")
+        .doesNotContain("docker/build-push-action")
+        .doesNotContain("packages: write")
+        .doesNotContain("IMAGE_URL");
+  }
+
+  @Test
+  @DisplayName(
+      "Os scripts de deploy não enviam imgURL ao deploy hook nem recebem imagem (ADR 0014)")
+  void scriptsDeDeployNaoEnviamImgUrl() throws IOException {
+    for (var script : new Path[] {SCRIPT_DE_DEPLOY, FUNCOES_DA_OPERACAO}) {
+      assertThat(Files.readString(script))
+          .as(script.toString())
+          .doesNotContain("imgURL")
+          .doesNotContain("imagem")
+          .doesNotContain("ghcr.io");
+    }
   }
 
   @Test
