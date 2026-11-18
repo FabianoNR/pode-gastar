@@ -168,6 +168,30 @@ class RollbackPelaApiDoRenderTest {
   }
 
   @Test
+  @DisplayName(
+      "API que não responde dentro do tempo limite faz o rollback falhar na hora, depois de uma única tentativa (CA57)")
+  void apiQueNaoRespondeNoTempoLimiteFalhaNaHora() {
+    var limiteDaChamada = 2;
+    apiDoRender =
+        ServidorHttpFalso.comRoteiro(
+            responderDepoisDe(Duration.ofSeconds(limiteDaChamada + 4), 201, "{}"));
+    servico = ServidorHttpFalso.comRoteiro(healthComCommit(SHA_PEDIDO));
+
+    var resultado =
+        execucaoDoRollback()
+            .comLimiteDaChamadaEmSegundos(limiteDaChamada)
+            .rodarFuncao("executar_rollback", apiDoRender.endereco(), SHA_PEDIDO);
+
+    assertThat(resultado.terminouComSucesso()).isFalse();
+    assertThat(resultado.saida()).contains("tempo limite");
+    assertThat(resultado.duracao())
+        .isGreaterThanOrEqualTo(Duration.ofSeconds(limiteDaChamada))
+        .isLessThan(Duration.ofSeconds(limiteDaChamada + 2));
+    assertThat(apiDoRender.pedidos()).hasSize(1);
+    assertThat(servico.pedidos()).isEmpty();
+  }
+
+  @Test
   @DisplayName("Resposta 1xx da API sem resposta final faz o rollback falhar na hora (O9)")
   void resposta1xxSemRespostaFinalFalhaNaHora() {
     apiDoRender = ServidorHttpFalso.comRoteiro(informativoEFechar());

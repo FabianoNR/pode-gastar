@@ -92,7 +92,8 @@ class ConfiguracaoDosWorkflowsTest {
           .doesNotContain("ESPERA_INTERVALO_SEGUNDOS")
           .doesNotContain("ESPERA_PRAZO_SEGUNDOS")
           .doesNotContain("api.render.com")
-          .doesNotContain("RENDER_API_URL");
+          .doesNotContain("RENDER_API_URL")
+          .doesNotContain("LIMITE_DA_CHAMADA_SEGUNDOS");
     }
   }
 
@@ -105,6 +106,13 @@ class ConfiguracaoDosWorkflowsTest {
     assertThat(script)
         .contains("readonly URL_DA_API_DO_RENDER=\"https://api.render.com\"")
         .doesNotContain(":-");
+  }
+
+  @Test
+  @DisplayName("Os jobs de deploy e de rollback têm timeout-minutes: 15 (CA59)")
+  void jobsDeDeployERollbackTemTempoLimiteDe15Minutos() throws IOException {
+    assertThat(mapa(jobs(CI).get("deploy"))).containsEntry("timeout-minutes", 15);
+    assertThat(jobDeRollback()).containsEntry("timeout-minutes", 15);
   }
 
   private static Map<String, Object> jobDeRollback() throws IOException {

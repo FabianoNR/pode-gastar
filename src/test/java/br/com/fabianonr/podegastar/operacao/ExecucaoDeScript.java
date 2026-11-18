@@ -14,7 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Roda os scripts de operação em um processo bash com ambiente limpo: só PATH, HOME, as variáveis
- * passadas pelo teste e o intervalo e o prazo reduzidos (O13).
+ * passadas pelo teste e o intervalo e o prazo reduzidos (O13). O tempo limite das chamadas (O16) só
+ * é reduzido nos testes que pedem.
  */
 final class ExecucaoDeScript {
 
@@ -40,6 +41,16 @@ final class ExecucaoDeScript {
   ExecucaoDeScript comVariavel(String nome, String valor) {
     ambiente.put(nome, valor);
     return this;
+  }
+
+  ExecucaoDeScript semVariavel(String nome) {
+    ambiente.remove(nome);
+    return this;
+  }
+
+  /** Reduz o tempo limite das chamadas à API do Render e ao deploy hook (O16). */
+  ExecucaoDeScript comLimiteDaChamadaEmSegundos(int limite) {
+    return comVariavel("LIMITE_DA_CHAMADA_SEGUNDOS", String.valueOf(limite));
   }
 
   ExecucaoDeScript comIntervaloEmSegundos(int intervalo) {

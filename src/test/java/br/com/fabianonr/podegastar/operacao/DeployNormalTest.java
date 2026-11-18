@@ -158,6 +158,30 @@ class DeployNormalTest {
   }
 
   @Test
+  @DisplayName(
+      "Deploy hook que não responde dentro do tempo limite faz o job falhar na hora, depois de uma única chamada (CA58)")
+  void deployHookQueNaoRespondeNoTempoLimiteFalhaNaHora() {
+    var limiteDaChamada = 2;
+    deployHook =
+        ServidorHttpFalso.comRoteiro(
+            responderDepoisDe(Duration.ofSeconds(limiteDaChamada + 4), 200, "{}"));
+    servico = ServidorHttpFalso.comRoteiro(healthComCommit(SHA_PUBLICADO));
+
+    var resultado =
+        execucaoDoDeploy(servico.endereco())
+            .comLimiteDaChamadaEmSegundos(limiteDaChamada)
+            .rodarScript("deploy.sh", SHA_PUBLICADO, IMAGEM);
+
+    assertThat(resultado.terminouComSucesso()).isFalse();
+    assertThat(resultado.saida()).contains("tempo limite");
+    assertThat(resultado.duracao())
+        .isGreaterThanOrEqualTo(Duration.ofSeconds(limiteDaChamada))
+        .isLessThan(Duration.ofSeconds(limiteDaChamada + 2));
+    assertThat(deployHook.pedidos()).hasSize(1);
+    assertThat(servico.pedidos()).isEmpty();
+  }
+
+  @Test
   @DisplayName("Deploy hook com 1xx sem resposta final faz o job falhar na hora (O4)")
   void deployHookCom1xxSemRespostaFinalFalhaNaHora() {
     deployHook = ServidorHttpFalso.comRoteiro(informativoEFechar());
