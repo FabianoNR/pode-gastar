@@ -26,42 +26,52 @@ Formata o código com google-java-format.
 
 ## Deploy
 
-Todo merge na `main` passa pelo pipeline do GitHub Actions (`.github/workflows/ci.yml`), nesta ordem:
+A API roda no Render, num serviço construído a partir deste repositório: runtime Docker com o `Dockerfile` da raiz, branch `main` e Auto-Deploy desligado. O build acontece no próprio Render, a cada deploy. Ver [ADR 0014](docs/decisions/0014-render-construido-do-repositorio.md).
 
-1. **verify**: roda `./mvnw verify` (testes, formatação e cobertura).
-2. **publish**: se o `verify` passou, gera a imagem Docker e publica no GHCR (`ghcr.io/fabianonr/pode-gastar`) com duas tags: o SHA do commit e `main`.
-3. **deploy**: chama o deploy hook do Render apontando para a imagem do SHA. O Render baixa a imagem e troca a versão no ar.
-4. **smoke-test**: consulta o `/health` do serviço no Render até 20 vezes, a cada 30 segundos, esperando `200` com `"UP"`. O serviço roda no Render; a URL fica no segredo `SERVICE_URL` do repositório.
+Quem dispara o deploy é o GitHub Actions (`.github/workflows/ci.yml`):
 
-O deploy é automático. Ele exige o segredo `RENDER_DEPLOY_HOOK_URL` no GitHub (Settings > Secrets and variables > Actions). Sem o segredo, a imagem é publicada, mas o job `deploy` pula com um aviso. O smoke test exige o segredo `SERVICE_URL` (Settings > Secrets and variables > Actions > Secrets).
+1. **verify**: roda `./mvnw verify` (testes, formatação e cobertura). Roda em toda PR e em todo push na `main`.
+2. **deploy**: só em push na `main`, depois do `verify`. Chama o deploy hook do Render e consulta o `/health` até ele mostrar o commit que acabou de ser mesclado, com prazo de 10 minutos. Se o prazo acabar, o job falha.
 
-Só existem imagens para commits publicados depois da PR #15 (commit `06943bd`). Commits anteriores não têm imagem no GHCR, então não servem para rollback.
+As regras do deploy, da espera pelo `/health` e dos tempos limite estão na seção "Operação" da [spec](docs/spec.md).
+
+### Segredos
+
+Ficam em Settings > Secrets and variables > Actions > Secrets, no repositório:
+
+| Segredo | Usado por |
+| --- | --- |
+| `RENDER_DEPLOY_HOOK_URL` | deploy |
+| `SERVICE_URL` | deploy e rollback (URL base do serviço no Render) |
+| `RENDER_API_KEY` | rollback |
+| `RENDER_SERVICE_ID` | rollback |
+
+Segredo ausente ou vazio faz o job falhar no início, com uma mensagem que diz qual segredo falta, antes de chamar o Render ou o `/health`.
 
 ## Rollback
 
-Use quando a versão nova no ar estiver quebrada e precisar voltar para a anterior.
+Use quando a versão nova no ar estiver quebrada e precisar voltar para uma anterior.
 
 1. Abra a aba **Actions** do repositório e escolha o workflow **Rollback**.
-2. Clique em **Run workflow**.
-3. No campo `sha`, cole o SHA completo, com 40 caracteres, do último commit que funcionava.
+2. Clique em **Run workflow**, com a branch `main` selecionada. Em outra branch, o job aparece como pulado.
+3. No campo `sha`, cole o SHA completo, com 40 caracteres, do commit que deve voltar ao ar.
 4. Clique em **Run workflow** de novo e espere o job ficar verde.
 
 Para pegar o SHA, abra a página do commit no GitHub. O hash completo aparece na barra de endereço, depois de `/commit/`. Use o hash completo, não o curto de 7 caracteres.
 
-O workflow faz, nesta ordem:
+O workflow pede ao Render, pela API, o deploy desse commit e consulta o `/health` até ele mostrar o SHA pedido, com prazo de 10 minutos. Job verde significa que o commit pedido está no ar. Para conferir à mão, abra `<SERVICE_URL>/health` e veja o campo `commit`:
 
-- confere que a imagem `ghcr.io/fabianonr/pode-gastar:<sha>` existe. Se não existir, para com erro e não altera nada;
-- move a tag `main` para essa imagem. Isso é necessário porque uma reinicialização no Render usa a imagem configurada no serviço, que é `main`;
-- dispara o deploy no Render com essa imagem;
-- consulta `/health` com a mesma regra do smoke test.
+```json
+{"status": "UP", "commit": "<sha pedido>"}
+```
 
-O smoke test só confirma que `/health` responde. Ele não diz qual versão está no ar. Para confirmar, abra o serviço no Render, na aba **Events**, e veja se o último deploy usou a imagem com o SHA escolhido.
+O rollback só funciona para commits a partir da PR #25 (`a28a8af`). Commits anteriores não expõem o commit no `/health`, e o job falha por prazo mesmo com o deploy feito.
+
+As regras do rollback estão na seção "Operação" da [spec](docs/spec.md) e na [ADR 0013](docs/decisions/0013-rollback-por-api-render.md).
 
 Alternativa sem o workflow: crie um commit que desfaz a mudança problemática (`git revert <sha-ruim>`), abra uma PR e faça o merge. O pipeline completo roda de novo. É mais lento, mas o histórico fica claro.
 
-Não é possível voltar para um commit anterior à PR #15, porque ele não tem imagem publicada.
-
-**Estado do teste:** o workflow foi executado com o SHA `06943bd`, que já é a `main` atual. Isso testou a verificação da imagem, a troca da tag, o deploy e o smoke test, mas não testou a volta para uma versão anterior. Um SHA sem imagem publicada parou no primeiro passo, como esperado. Voltar para um commit anterior ainda não foi testado.
+**Estado do teste:** em 18/11/2026, o rollback foi executado em produção nas duas direções, de `ff55e0c` para `a28a8af` e de volta para `ff55e0c`, cerca de 1 minuto cada, com o commit conferido no `/health`.
 
 ## Commits
 
