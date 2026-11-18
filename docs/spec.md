@@ -1,6 +1,6 @@
 # Spec: Pode Gastar (v8)
 
-Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. As regras complementares da operação (O9 a O14) e os critérios de aceite CA21 a CA51 foram mesclados pela PR #24. As decisões de 18/11/2026 sobre segredos vazios e tempo limite (O15 a O17, CA52 a CA59) aguardam a aprovação da PR `docs/operacao-segredos-timeouts`. Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
+Status: v8 aprovada e mesclada (PR #18 e #19). A revisão de operação de 17/11/2026 (`/health` com commit, deploy e rollback, ADR 0013) foi mesclada pela PR #23. As regras complementares da operação (O9 a O14) e os critérios de aceite CA21 a CA51 foram mesclados pela PR #24. As decisões de 18/11/2026 sobre segredos vazios e tempo limite (O15 a O17, CA52 a CA59) aguardam a aprovação da PR #26 (`docs/operacao-segredos-timeouts`). Substitui a v7. Escopo de decisão fechado. Grupo, identificação de usuário, permissões e aprovação ficam para as funcionalidades futuras. Mudanças futuras da spec vão em PR próprio, separado da implementação, conforme o CLAUDE.md.
 
 ## Histórico
 
