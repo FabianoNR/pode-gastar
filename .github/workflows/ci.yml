@@ -44,49 +44,23 @@ jobs:
             ghcr.io/fabianonr/pode-gastar:${{ github.sha }}
             ghcr.io/fabianonr/pode-gastar:main
 
+  # O4, O12: deploy hook e smoke test em um único job, em sequência, no mesmo grupo de
+  # concorrência do rollback; quem chega depois espera.
   deploy:
     needs: publish
     runs-on: ubuntu-latest
+    # O16: tempo limite do job.
+    timeout-minutes: 15
     concurrency:
       group: production-deploy
       cancel-in-progress: false
-    outputs:
-      deployed: ${{ steps.hook.outputs.deployed }}
     steps:
-      - id: hook
+      - uses: actions/checkout@v7
+
+      - name: Disparar o deploy hook e esperar o /health expor o commit publicado
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          SERVICE_URL: ${{ secrets.SERVICE_URL }}
+          SHA_PUBLICADO: ${{ github.sha }}
           IMAGE_URL: ghcr.io/fabianonr/pode-gastar:${{ github.sha }}
-        run: |
-          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
-            echo "::warning::Segredo RENDER_DEPLOY_HOOK_URL vazio: deploy pulado."
-            echo "deployed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          curl --fail --silent --show-error --output /dev/null \
-            --request POST --get \
-            --data-urlencode "imgURL=${IMAGE_URL}" \
-            "$RENDER_DEPLOY_HOOK_URL"
-          echo "Deploy disparado para ${IMAGE_URL}."
-          echo "deployed=true" >> "$GITHUB_OUTPUT"
-
-  smoke-test:
-    needs: deploy
-    if: needs.deploy.outputs.deployed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Consultar /health até responder UP
-        run: |
-          url="${{ secrets.SERVICE_URL }}/health"
-          for attempt in $(seq 1 20); do
-            body=$(curl --silent --max-time 60 --write-out '\n%{http_code}' "$url" || true)
-            status=$(echo "$body" | tail -n 1)
-            if [ "$status" = "200" ] && echo "$body" | grep -q '"UP"'; then
-              echo "Tentativa ${attempt}: /health respondeu 200 com UP."
-              exit 0
-            fi
-            echo "Tentativa ${attempt}/20: status '${status}'. Nova tentativa em 30s."
-            sleep 30
-          done
-          echo "::error::/health não respondeu 200 com UP em 20 tentativas."
-          exit 1
+        run: bash scripts/deploy.sh "$SHA_PUBLICADO" "$IMAGE_URL"
