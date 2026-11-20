@@ -5,6 +5,7 @@ API HTTP que diz se uma compra cabe no orçamento do mês.
 ## Documentação
 
 - Spec: [docs/spec.md](docs/spec.md)
+- Deploy e rollback: [docs/operacao.md](docs/operacao.md)
 - Design aprovado: [docs/design/](docs/design/)
 - Decisões de arquitetura: [docs/decisions/](docs/decisions/)
 
@@ -33,7 +34,7 @@ Quem dispara o deploy é o GitHub Actions (`.github/workflows/ci.yml`):
 1. **verify**: roda `./mvnw verify` (testes, formatação e cobertura). Roda em toda PR e em todo push na `main`.
 2. **deploy**: só em push na `main`, depois do `verify`. Chama o deploy hook do Render e consulta o `/health` até ele mostrar o commit que acabou de ser mesclado, com prazo de 10 minutos. Se o prazo acabar, o job falha.
 
-As regras do deploy, da espera pelo `/health` e dos tempos limite estão na seção "Operação" da [spec](docs/spec.md).
+As regras do deploy, da espera pelo `/health` e dos tempos limite estão em [docs/operacao.md](docs/operacao.md).
 
 ### Segredos
 
@@ -67,7 +68,7 @@ O workflow pede ao Render, pela API, o deploy desse commit e consulta o `/health
 
 O rollback só funciona para commits a partir da PR #25 (`a28a8af`). Commits anteriores não expõem o commit no `/health`, e o job falha por prazo mesmo com o deploy feito.
 
-As regras do rollback estão na seção "Operação" da [spec](docs/spec.md) e na [ADR 0013](docs/decisions/0013-rollback-por-api-render.md).
+As regras do rollback estão em [docs/operacao.md](docs/operacao.md) e na [ADR 0013](docs/decisions/0013-rollback-por-api-render.md).
 
 Alternativa sem o workflow: crie um commit que desfaz a mudança problemática (`git revert <sha-ruim>`), abra uma PR e faça o merge. O pipeline completo roda de novo. É mais lento, mas o histórico fica claro.
 

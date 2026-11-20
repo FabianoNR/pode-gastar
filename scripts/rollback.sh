@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rollback pela API do Render (docs/spec.md, O5 a O10, O15 e O16): confere os segredos,
+# Rollback pela API do Render (docs/operacao.md, O5 a O10, O15 e O16): confere os segredos,
 # valida o SHA, pede o deploy desse commit e espera o /health expor o commit.
 #
 # Uso: rollback.sh <sha>
