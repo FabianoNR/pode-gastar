@@ -1,5 +1,7 @@
 # Design: `/health` com commit, deploy e rollback
 
+Congelado em 20/11/2026: regras vigentes em docs/spec.md (O1 a O3, CA13) e docs/operacao.md (O4 em diante).
+
 Status: aprovado pelo Fabiano em 17/11/2026.
 
 A spec correspondente é `docs/spec.md` (v8).

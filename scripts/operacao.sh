@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Funções do deploy normal e do rollback (docs/spec.md, seção "Operação", O4 a O16).
+# Funções do deploy normal e do rollback (docs/operacao.md, O4 a O16).
 # Carregada por deploy.sh e rollback.sh; os testes automatizados chamam as funções direto.
 #
 # Intervalo e prazo da espera pelo commit (O13): 15 s e 10 min. Tempo limite de cada
