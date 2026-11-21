@@ -13,7 +13,7 @@ O projeto é escrito em grande parte com apoio de IA, que produz código rápido
 - Clean Code e SOLID são critério obrigatório para todo código de produção e de teste.
 - Classes, métodos, variáveis e testes têm nomes descritivos. Variável de uma letra só aparece em laço curto de índice.
 - Identificadores de regra de negócio (CA1, CB2 etc.) não aparecem em nome de classe, método ou variável. A rastreabilidade para a spec fica no `@DisplayName` do teste, entre parênteses, no final do texto. Exemplo: `@DisplayName("Decisão é negada quando o saldo não cobre a compra (CA8)")`.
-- O domínio não usa Spring, JPA nem adaptadores, conforme a ADR 0003. Um teste de ArchUnit que impõe essa regra entra em fatia própria.
+- O domínio não usa Spring, JPA nem adaptadores, conforme a ADR 0003. O `ArquiteturaHexagonalTest` (ArchUnit, PR #22) impõe essa regra.
 - O subagent revisor ganha um checklist com esses itens e com os critérios de SOLID aplicáveis a cada diff. Ele continua somente leitura.
 
 ## Consequências
