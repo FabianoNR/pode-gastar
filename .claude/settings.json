@@ -23,6 +23,17 @@
       "Bash(gh pr diff *)",
       "Bash(gh issue view *)",
       "Bash(gh issue list *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue edit *)",
+      "Bash(gh issue comment *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh project view *)",
+      "Bash(gh project list *)",
+      "Bash(gh project field-list *)",
+      "Bash(gh project item-list *)",
+      "Bash(gh project item-add *)",
+      "Bash(gh project item-edit *)",
+      "Bash(gh api -X PATCH repos/FabianoNR/pode-gastar/issues/*)",
       "Bash(gh repo view *)"
     ],
     "deny": [
@@ -66,7 +77,17 @@
       "Bash(git push * +main)",
       "Bash(git push *:main)",
       "Bash(gh pr merge *)",
-      "Bash(gh repo delete *)"
+      "Bash(gh repo delete *)",
+      "Bash(gh project delete *)",
+      "Bash(gh project item-delete *)",
+      "Bash(gh project field-delete *)",
+      "Bash(gh project close *)",
+      "Bash(gh issue delete *)",
+      "Bash(gh issue transfer *)",
+      "Bash(gh api *merge*)",
+      "Bash(gh api -X DELETE *)",
+      "Bash(gh api --method DELETE *)",
+      "Bash(gh api graphql *)"
     ]
   },
   "hooks": {
