@@ -6,7 +6,7 @@ Data: 2026-11-12
 
 ## Contexto
 
-O projeto é escrito em grande parte com apoio de IA, que produz código rápido e plausível, mas sem critério próprio de qualidade. Sem um padrão escrito, cada fatia pode usar nomes, tamanhos de método e responsabilidades diferentes. Os critérios de aceite (CA1, CB2 etc.) também tendem a vazar para nomes de classe, método e variável, o que prende o código a um documento que muda por PR próprio.
+O projeto é escrito em grande parte com apoio de IA, que produz código rápido e plausível, mas sem critério próprio de qualidade. Sem um padrão escrito, cada fatia pode usar nomes, tamanhos de método e responsabilidades diferentes. Os critérios de aceite (CA1, CB2 etc.) também tendem a vazar para nomes de classe, método e variável, o que prende o código a um documento que muda por PR próprio. A regra da PR própria para a spec foi substituída pela ADR 0015: hoje a spec muda na PR do código, nas seções que o card lista.
 
 ## Decisão
 

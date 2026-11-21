@@ -1,6 +1,6 @@
 # 0015: Fluxo de desenvolvimento com agentes a partir do card
 
-Status: aceita. Substitui em parte a ADR 0006, no que é fluxo de trabalho e papel do revisor; o harness técnico da 0006 continua.
+Status: aceita. Substitui em parte a ADR 0006, no que é fluxo de trabalho e papel do revisor; o harness técnico da 0006 continua, com as permissões ampliadas por esta ADR.
 
 Data: 2026-11-21
 
@@ -45,9 +45,11 @@ O `.claude/settings.json` passa a liberar `gh issue create`, `edit` e `comment`,
 ## Consequências
 
 - Uma PR por card, com spec e código juntos. O card é a autorização para mudar a spec.
-- O revisor depende de receber o texto do card no prompt. Sem o card, ele não revisa o escopo.
+- O revisor depende de receber o texto do card no prompt. Sem o card, ele pede o card antes de continuar.
 - `docs/design/` fica como histórico.
-- O bloqueio de `gh pr merge` continua valendo, mas liberar `gh api`, mesmo restrito, amplia o que dá para fazer por texto de comando. A proteção real continua sendo a regra de branch no GitHub (ADR 0006).
+- Riscos conhecidos:
+  - O `gh project item-edit` também permite alterar a Situação do card. Hoje só a instrução do `CLAUDE.md` impede o agente de fazer isso.
+  - O bloqueio das permissões é por texto de comando e pode ser contornado. O bloqueio de `gh pr merge` continua valendo, mas liberar `gh api`, mesmo restrito, amplia o que dá para fazer. A proteção real continua sendo a regra de branch no GitHub (ADR 0006).
 
 ## Trade-offs
 
