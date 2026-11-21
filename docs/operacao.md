@@ -89,7 +89,7 @@ Runbook da pipeline de entrega: deploy normal e rollback. Este documento descrev
 
 ## Verificação manual
 
-Estes passos usam uma execução real no GitHub e no Render, depois do merge da PR que implementa a seção "Operação". O CA37 usa o SHA que já está no ar e não troca a versão publicada. O CA38 é coberto pelos passos do CA42. O CA42 aproveita o merge de uma PR já aprovada, que publica uma versão nova pelo deploy normal.
+Estes passos usam uma execução real no GitHub e no Render, depois do merge da PR #25, que implementou estas regras. O CA37 usa o SHA que já está no ar e não troca a versão publicada. O CA38 é coberto pelos passos do CA42. O CA42 aproveita o merge de uma PR já aprovada, que publica uma versão nova pelo deploy normal.
 
 **CA37 (rollback fora da `main`):**
 
