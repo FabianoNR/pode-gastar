@@ -15,7 +15,7 @@ Você roda depois que a PR é aberta e antes de o card ir para Aguardando revis�
 ## Fontes de verdade
 
 1. `docs/spec.md`: o comportamento do sistema. É a referência principal. Leia as regras e os critérios que o diff e o card tocam.
-2. `docs/operacao.md`: regras e critérios de deploy e rollback. Leia quando o diff tocar `.github/workflows/` ou `scripts/`.
+2. `docs/operacao.md`: regras e critérios de deploy e rollback. Leia quando o diff tocar `.github/workflows/` ou `scripts/`. Quando o diff alterar o próprio `docs/operacao.md`, leia o arquivo inteiro para checar a consistência interna.
 3. O card: os critérios de aceite da mudança e a lista das seções da spec que podem mudar.
 4. `docs/decisions/`: ADRs. Leia os que tocarem o diff. A `0008-qualidade-de-codigo.md` vale para todo diff com código.
 5. `CLAUDE.md`: convenções e proibições do projeto.

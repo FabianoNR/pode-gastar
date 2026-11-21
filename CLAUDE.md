@@ -5,7 +5,7 @@ API HTTP que diz se uma compra cabe no orçamento do mês.
 ## Três camadas
 
 - Card (efêmero): o que fazer agora e por quê.
-- Spec (viva): o que o sistema faz hoje.
+- Spec (viva): o que o sistema faz hoje, em `docs/spec.md` e `docs/operacao.md`.
 - `CLAUDE.md` (estável): como o agente trabalha.
 
 O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-partir-do-card.md`).
@@ -22,11 +22,11 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 ## Trabalho a partir do card
 
 1. Trabalhe a partir do card indicado. Só comece se o card tiver Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e a lista das seções da spec. Se faltar algo, pare e avise.
-2. Mova o card para Refinamento ao começar o plano e para Desenvolvimento ao começar a codar.
+2. Se o card estiver em Pronto p/ Refinamento, mova-o para Refinamento ao começar o plano. Mova-o para Desenvolvimento ao começar a codar. Nunca mova um card para trás.
 3. Crie a branch `<tipo>/<N>-slug` a partir da `main`, com o número do card (`feat`, `fix`, `docs` ou `chore`). Um card por PR.
 4. Leia a spec antes de escrever código, e o `docs/operacao.md` quando o card tocar workflows ou scripts. Escreva os testes dos critérios do card antes da implementação. Rode e confirme que falham.
-5. Atualize, na mesma PR do código, só as seções da spec que o card lista.
-6. Se o card não cobre o caso, pare: comente no card e devolva ao Fabiano.
+5. Atualize, na mesma PR do código, só as seções de `docs/spec.md` e `docs/operacao.md` que o card lista.
+6. Se o card não cobre o caso, pare e devolva ao Fabiano: comente no card o que parou e espere. O Status não muda. Se a dúvida muda o comportamento visível do sistema, o Fabiano decide se ela volta à Concepção como card novo.
 7. Faça commits pequenos com Conventional Commits. Nunca faça push na `main`. Abra a PR com "Closes #N".
 8. Depois de abrir a PR, chame o subagent revisor com o diff e o texto do card. Poste o relatório dele como comentário na PR, com `gh pr comment`.
 9. Mova o card para Aguardando revisão só quando a PR tiver o CI verde e o relatório do revisor não tiver pendência.
@@ -56,7 +56,7 @@ Limites do agente:
 
 - Valores monetários usam `BigDecimal`, nunca `double` ou `float` (ver `docs/decisions/0002-dinheiro-com-bigdecimal.md`).
 - Não adicione dependência nova sem perguntar.
-- A spec só muda na PR do código, nas seções que o card lista. Diga na descrição da PR quais seções mudaram.
+- `docs/spec.md` e `docs/operacao.md` só mudam na PR do código, nas seções que o card lista. Diga na descrição da PR quais seções mudaram.
 
 ## Qualidade de código
 
@@ -69,5 +69,5 @@ Clean Code e SOLID são critério obrigatório para todo código de produção e
 ## Proibido
 
 - Ler ou escrever `.env`, credenciais e chaves.
-- Implementar regra de negócio que não esteja na spec ou no card.
+- Implementar regra que não esteja em `docs/spec.md`, em `docs/operacao.md` ou no card.
 - Mesclar PR com `./mvnw verify` falhando.
