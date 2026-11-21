@@ -24,7 +24,7 @@ O revisor apontou essa diferença na PR #20. O Fabiano decidiu, em 17/11/2026, n
 ## Consequências
 
 - Um item em discussão de valor zero nunca é escolhido na sugestão, porque não ajuda a cobrir a falta e só aumentaria a soma das intensidades. Ele pode, porém, aparecer na lista completa.
-- Quando a spec decidir, a mudança vem em PR própria, com teste para os três casos.
+- Quando a spec decidir, a mudança vem em PR própria, com teste para os três casos. A regra da PR própria para a spec foi substituída pela ADR 0015: a spec muda na PR do código, nas seções que o card lista.
 
 ## Trade-offs
 

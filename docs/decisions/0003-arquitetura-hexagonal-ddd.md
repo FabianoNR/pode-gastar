@@ -14,7 +14,7 @@ O design aprovado (`docs/design/design-pode-gastar.md`) tem regras de domínio q
 - A porta de entrada é o agregado `Mes`, lido de uma porta de saída. Nesta fase, essa porta é mockada em memória.
 - Os adaptadores de entrada (web, e depois mobile) traduzem DTOs para o domínio e de volta.
 - Banco de dados e repositório real entram depois, como novo adaptador de saída. O domínio não muda.
-- Testes de arquitetura com ArchUnit são desejáveis para proteger essas fronteiras, mas são dependência nova. Ficam como sugestão pendente de autorização do Fabiano.
+- Testes de arquitetura com ArchUnit protegem essas fronteiras. A dependência foi autorizada pelo Fabiano e entrou na PR #22, com o `ArquiteturaHexagonalTest`.
 
 ## Consequências
 

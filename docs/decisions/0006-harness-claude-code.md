@@ -1,6 +1,6 @@
 # 0006: Harness mínimo do Claude Code
 
-Status: aceita
+Status: aceita; substituída em parte pela ADR 0015 (fluxo de trabalho e papel do revisor; o harness técnico continua, com as permissões ampliadas pela ADR 0015)
 
 Data: 2026-11-11
 

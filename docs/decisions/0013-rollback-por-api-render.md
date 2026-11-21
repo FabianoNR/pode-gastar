@@ -10,9 +10,9 @@ A ADR 0009 hospeda a API no Render e deixou o procedimento de rollback para depo
 
 ## Decisão
 
-A regra do rollback é a de `docs/spec.md`, seção "Operação".
+A regra do rollback é a de `docs/operacao.md`.
 
 ## Consequências
 
-- O rollback passa a depender da chave da API do Render e do id do serviço. Os dois ficam nos segredos do repositório no GitHub (spec, O14), com os nomes `RENDER_API_KEY` (chave da API) e `RENDER_SERVICE_ID` (id do serviço).
-- A necessidade da publicação no GHCR fica em aberto (spec, "Abertos").
+- O rollback passa a depender da chave da API do Render e do id do serviço. Os dois ficam nos segredos do repositório no GitHub (`docs/operacao.md`, O14), com os nomes `RENDER_API_KEY` (chave da API) e `RENDER_SERVICE_ID` (id do serviço).
+- A necessidade da publicação no GHCR, que ficava nos Abertos da spec, foi resolvida pela ADR 0014.

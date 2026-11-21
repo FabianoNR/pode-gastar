@@ -6,7 +6,7 @@ API HTTP que diz se uma compra cabe no orçamento do mês.
 
 - Spec: [docs/spec.md](docs/spec.md)
 - Deploy e rollback: [docs/operacao.md](docs/operacao.md)
-- Design aprovado: [docs/design/](docs/design/)
+- Design congelado, histórico: [docs/design/](docs/design/)
 - Decisões de arquitetura: [docs/decisions/](docs/decisions/)
 
 ## Como rodar
