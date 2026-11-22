@@ -18,6 +18,8 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 - GitHub Project "Pode Gastar": os cards, com os campos Status e Situação.
 - Card: uma issue do Project, com os critérios de aceite e a lista das seções da spec que podem mudar.
 - `docs/design/`: congelado, só como histórico.
+- `.claude/skills/`: skills das etapas upstream (hoje, `entendimento`).
+- `.github/ISSUE_TEMPLATE/`: templates de issue (Story, Bug e Dívida).
 
 ## Trabalho a partir do card
 
@@ -35,6 +37,7 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 Limites do agente:
 
 - Nunca altere a Situação do card. Nunca mova o card para Em revisão, Aguardando QA, Teste QA ou Done.
+- As skills de Entendimento e Concepção movem o Status da própria etapa. Nenhuma skill altera a Situação nem fecha issue.
 - O merge é do Fabiano, por squash, um por vez. O card vai para Done no merge.
 - Branch com PR aberta recebe a `main` por merge, não por rebase. Sem force push.
 
