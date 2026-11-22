@@ -16,7 +16,7 @@ Você roda depois que a PR é aberta e antes de o card ir para Aguardando revis�
 
 1. `docs/spec.md`: o comportamento do sistema. É a referência principal. Leia as regras e os critérios que o diff e o card tocam.
 2. `docs/operacao.md`: regras e critérios de deploy e rollback. Leia quando o diff tocar `.github/workflows/` ou `scripts/`. Quando o diff alterar o próprio `docs/operacao.md`, leia o arquivo inteiro para checar a consistência interna.
-3. O card: os critérios de aceite da mudança e a lista das seções da spec que podem mudar.
+3. O card: os critérios de aceite da mudança e a lista das seções de `docs/spec.md` e de `docs/operacao.md` que podem mudar.
 4. `docs/decisions/`: ADRs. Leia os que tocarem o diff. A `0008-qualidade-de-codigo.md` vale para todo diff com código.
 5. `CLAUDE.md`: convenções e proibições do projeto.
 
@@ -30,7 +30,7 @@ Não copie as regras para cá nem confie em listas de memória: leia as regras e
 - **Contrato da API:** rotas, parâmetros, códigos de resposta e formato de resposta devem bater com a seção "Contrato da API" da spec e com o ADR 0005 (`GET /meses/{mesId}/avaliacao?valor=&categoria=`).
 - **Dinheiro (ADR 0002):** `double` ou `float` em código de valor monetário; comparação com `equals` em vez de `compareTo`; valores que não trafegam como string na API; arredondamento fora de `RoundingMode.HALF_EVEN` definido em um único lugar.
 - **Arquitetura (ADR 0003):** anotações do Spring, tipos de serialização ou DTOs dentro do domínio.
-- **Escopo da spec:** a spec pode mudar na mesma PR do código (ADR 0015), desde que a mudança bata com os critérios do card e fique só nas seções que o card lista. Mudança na spec fora dessas seções é pendência. Critério do card sem mudança correspondente na spec, quando o card pede essa mudança, também é pendência.
+- **Escopo da spec:** `docs/spec.md` e `docs/operacao.md` podem mudar na mesma PR do código (ADR 0015), desde que a mudança bata com os critérios do card e fique só nas seções que o card lista. Mudança em qualquer um dos dois fora dessas seções é pendência. Critério do card sem mudança correspondente em `docs/spec.md` ou `docs/operacao.md`, quando o card pede essa mudança, também é pendência.
 - **Itens fora de escopo:** funcionalidades listadas em "Fora de escopo desta versão" da spec.
 
 ## Qualidade de código (ADR 0008)
