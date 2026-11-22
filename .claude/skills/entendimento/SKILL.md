@@ -78,7 +78,7 @@ Uma por vez. Para cada uma, leia o que já está no corpo e julgue se responde d
 
 ### 4. Bloco montado
 
-Mostre o bloco de Entendimento e só grave depois da confirmação do Fabiano.
+Mostre o bloco de Entendimento com as 8 respostas para o Fabiano confirmar. Os campos Decisão, Prioridade e Motivo vêm do passo 5: o bloco só é gravado depois da decisão, uma vez só, com o bloco inteiro confirmado pelo Fabiano.
 
 Formato, acrescentado ao final do corpo:
 
@@ -108,6 +108,8 @@ O corpo é um campo único. Portanto:
 4. Grave o corpo inteiro de volta: `gh issue edit <N> --body-file <arquivo>`.
 
 ### 5. Decisão do Fabiano
+
+Pergunte a decisão. Complete o bloco com Decisão e com Prioridade ou Motivo, mostre o bloco inteiro e grave o corpo depois da confirmação (Regras de edição do corpo). Só depois mova o Status ou poste o comentário.
 
 - **Seguir:** pergunte a Prioridade (alta, média, baixa) e uma linha de justificativa. Grave a Prioridade no campo do Project (`gh project item-edit`, opção Alta/Média/Baixa descoberta no field-list) e mova o Status para "Pronto p/ Concepção". Se a Situação não for Normal, lembre o Fabiano de mudá-la.
 - **Hold:** pergunte o Motivo e poste como comentário no card (`gh issue comment <N> --body ...`). Diga: "mude a Situação para Hold com este Motivo". Não altere a Situação.
