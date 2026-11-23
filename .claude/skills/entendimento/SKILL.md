@@ -36,7 +36,7 @@ O resultado fica em dois lugares:
 5. NÃO copie o texto original para o card: só um resumo. O original só entra se o Fabiano confirmar que não tem dado pessoal nem segredo.
 6. Mostre o corpo montado e só crie depois da confirmação. Leia o template com a ferramenta Read e escreva com a ferramenta Write o corpo montado, sem o front matter (do segundo `---` em diante), em `/tmp/pode-gastar-card/<slug>-corpo.md`. Crie a issue:
    `gh issue create --title "<título>" --body-file /tmp/pode-gastar-card/<slug>-corpo.md`
-7. Aplique o Issue type (o gh 2.45 não tem `--type`). O valor é Story, Bug ou Dívida:
+7. Aplique o Issue type (o gh instalado é o 2.105.0 e tem `--type` em `gh issue create` e `gh issue edit`; esta skill usa o PATCH abaixo). O valor é Story, Bug ou Dívida:
    `gh api -X PATCH repos/FabianoNR/pode-gastar/issues/<N> -f type=<tipo>`
    Confira na resposta que o campo `type` voltou com o nome certo. O PATCH em issue pode fechar a issue se `state` for enviado: nunca envie `state`.
 8. A issue entra sozinha no Project em Backlog, pela automação. Confirme com `gh project item-list` antes de mover. A Fonte da Demanda confirmada no passo 1 desta entrada é gravada no passo 3 do Passo a passo, com os IDs descobertos no passo 1 do Passo a passo.
@@ -83,12 +83,12 @@ O conjunto depende do tipo (Issue type). Uma pergunta por vez. Para cada uma, le
 - Se há dúvida: traga a dúvida e pergunte.
 - Se não há resposta: pergunte e espere.
 
-Pesquisa da pergunta "O produto já resolve" (vale para todos os tipos): pesquise por palavras-chave do corpo em `docs/spec.md`, `docs/operacao.md`, `docs/decisions/` (com a ferramenta Grep) e nas issues, abertas e fechadas como "not planned". Relate o que cobre e o que não cobre. Sintaxe que funciona no gh 2.45:
+Pesquisa da pergunta "O produto já resolve" (vale para todos os tipos): pesquise por palavras-chave do corpo em `docs/spec.md`, `docs/operacao.md`, `docs/decisions/` (com a ferramenta Grep) e nas issues, abertas e fechadas como "not planned". Relate o que cobre e o que não cobre. Sintaxe que funciona no gh 2.105.0:
 
 - `gh issue list --state all --search "<palavra> in:title,body" --json number,title,state`
 - `gh issue list --state closed --search "reason:\"not planned\" <palavra>" --json number,title`
 
-(`--json stateReason` não existe no gh 2.45. Pesquise uma palavra por vez.)
+(`--json stateReason` continua não existindo no gh 2.105.0. Pesquise uma palavra por vez.)
 
 #### Story: 8 perguntas
 
@@ -122,32 +122,47 @@ Escreva com a ferramenta Write em `/tmp/pode-gastar-card/<N>-entendimento.md`. U
 # Entendimento (chapéu PM)
 
 **Tipo:** Story | Bug | Dívida
+
 **Solução sugerida no pedido:** [se o pedido já trouxe uma solução, guardada para a Concepção; senão "nenhuma"]
 
 ## Respostas
 
 (Story)
 **Problema real:** ...
+
 **Situação e evidência:** ...
+
 **O produto já resolve?** ...
+
 **Impacto no produto:** ...
+
 **Impacto no negócio:** ...
+
 **Faz sentido agora?** ...
+
 **Como saberemos que deu certo:** ... (ou "sem métrica definida")
+
 **Se esperar:** ...
 
 (Bug e Dívida)
 **Problema real:** ...
+
 **Onde aparece e evidência:** ...
+
 **O produto já resolve?** ...
+
 **O que se perde se esperar (produto e negócio):** ...
+
 **Faz sentido agora?** ...
+
 **Como saberemos que deu certo:** ... (ou "sem métrica definida")
 
 ## Decisão
 
 **Decisão:** Seguir | Hold | Descartar
+
 **Prioridade:** alta | média | baixa — justificativa em uma linha (só se Seguir)
+
 **Motivo:** ... (só se Hold ou Descartar)
 ```
 
