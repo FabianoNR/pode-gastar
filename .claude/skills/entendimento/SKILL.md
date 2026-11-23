@@ -16,6 +16,8 @@ Etapa do GitHub Project "Pode Gastar" que transforma um pedido em um card entend
 - Não use o termo "Job Story".
 - Nunca preencha lacuna com palpite.
 - Você NUNCA altera a Situação do card e NUNCA fecha issue.
+- Arquivos temporários: use a ferramenta Write, num diretório fora do repositório (`/tmp/pode-gastar-card/`). Não use `sed`, `tail`, `mktemp` nem redirecionamento `>`.
+- Buscas em `docs/`: use a ferramenta Grep, não `grep` pelo Bash.
 
 ## Entradas
 
@@ -26,8 +28,8 @@ Etapa do GitHub Project "Pode Gastar" que transforma um pedido em um card entend
 3. Distribua o texto nos campos do template do tipo (`.github/ISSUE_TEMPLATE/story.md`, `bug.md` ou `divida.md`), sem inventar. O que o texto não responde vira lacuna: pergunte, uma por vez.
 4. Coloque o canal e a data em "Contexto" (ex.: "veio por WhatsApp em 22/11").
 5. NÃO copie o texto original para o card: só um resumo. O original só entra se o Fabiano confirmar que não tem dado pessoal nem segredo.
-6. Mostre o corpo montado e só crie depois da confirmação. Monte o corpo a partir do arquivo do template, sem o front matter (do segundo `---` em diante), num arquivo temporário. Crie a issue:
-   `gh issue create --title "<título>" --body-file <arquivo>`
+6. Mostre o corpo montado e só crie depois da confirmação. Leia o template com a ferramenta Read e escreva com a ferramenta Write o corpo montado, sem o front matter (do segundo `---` em diante), em `/tmp/pode-gastar-card/<slug>-corpo.md`. Crie a issue:
+   `gh issue create --title "<título>" --body-file /tmp/pode-gastar-card/<slug>-corpo.md`
 7. Aplique o Issue type (o gh 2.45 não tem `--type`). O valor é Story, Bug ou Dívida:
    `gh api -X PATCH repos/FabianoNR/pode-gastar/issues/<N> -f type=<tipo>`
    Confira na resposta que o campo `type` voltou com o nome certo. O PATCH em issue pode fechar a issue se `state` for enviado: nunca envie `state`.
@@ -66,7 +68,7 @@ Uma por vez. Para cada uma, leia o que já está no corpo e julgue se responde d
 
 1. Qual é o problema real por trás do pedido?
 2. Em que situação ele aparece e que evidência temos de que é real? Quando aconteceu, quantas vezes?
-3. O produto já resolve, mesmo de outro jeito? Pesquise por palavras-chave do corpo em `docs/spec.md`, `docs/operacao.md`, `docs/decisions/` (com grep) e nas issues, abertas e fechadas como "not planned". Relate o que cobre e o que não cobre. Sintaxe que funciona no gh 2.45:
+3. O produto já resolve, mesmo de outro jeito? Pesquise por palavras-chave do corpo em `docs/spec.md`, `docs/operacao.md`, `docs/decisions/` (com a ferramenta Grep) e nas issues, abertas e fechadas como "not planned". Relate o que cobre e o que não cobre. Sintaxe que funciona no gh 2.45:
    - `gh issue list --state all --search "<palavra> in:title,body" --json number,title,state`
    - `gh issue list --state closed --search "reason:\"not planned\" <palavra>" --json number,title`
    (`--json stateReason` não existe no gh 2.45. Pesquise uma palavra por vez.)
@@ -102,10 +104,10 @@ Formato, acrescentado ao final do corpo:
 
 O corpo é um campo único. Portanto:
 
-1. Leia o corpo atual: `gh issue view <N> --json body --jq .body > <arquivo>`.
+1. Leia o corpo atual: `gh issue view <N> --json body --jq .body` (a saída vem para a conversa). Com a ferramenta Write, grave a cópia exata em `/tmp/pode-gastar-card/<N>-antigo.md`.
 2. Nunca altere a parte escrita na criação. Só acrescente o bloco ou substitua o próprio bloco (do título "## Entendimento" até o próximo "## " de outra etapa, ou o fim do corpo). Se o bloco já existir (Entendimento refeito), substitua só ele.
-3. Antes de gravar, compare o novo corpo com o antigo (`diff`): tudo fora do bloco tem de estar idêntico. Se não estiver, pare e não grave.
-4. Grave o corpo inteiro de volta: `gh issue edit <N> --body-file <arquivo>`.
+3. Escreva o corpo novo com a ferramenta Write em `/tmp/pode-gastar-card/<N>-novo.md`. Antes de gravar, compare: `diff /tmp/pode-gastar-card/<N>-antigo.md /tmp/pode-gastar-card/<N>-novo.md`. Tudo fora do bloco tem de estar idêntico. Se não estiver, pare e não grave.
+4. Grave o corpo inteiro de volta: `gh issue edit <N> --body-file /tmp/pode-gastar-card/<N>-novo.md`.
 
 ### 5. Decisão do Fabiano
 
