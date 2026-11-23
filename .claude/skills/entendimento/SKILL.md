@@ -21,7 +21,7 @@ O resultado fica em dois lugares:
 - Não use o termo "Job Story".
 - Nunca preencha lacuna com palpite.
 - Você NUNCA altera a Situação do card e NUNCA fecha issue.
-- Nunca use `gh issue artifact delete`. Para refazer, edite o artefato: o GitHub guarda as versões.
+- Nunca use `gh issue artifact delete`. Para refazer, edite o artefato. Pelo `--help`, o GitHub guarda as versões (a verificar no piloto).
 - Arquivos temporários: use a ferramenta Write, num diretório fora do repositório (`/tmp/pode-gastar-card/`). Não use `sed`, `tail`, `mktemp` nem redirecionamento `>`.
 - Buscas em `docs/`: use a ferramenta Grep, não `grep` pelo Bash.
 
@@ -29,7 +29,7 @@ O resultado fica em dois lugares:
 
 ### (a) Texto solto
 
-1. Proponha o tipo (Story, Bug ou Dívida) e, se o campo "Fonte da Demanda" existir no Project (passo 3), proponha também a Fonte da Demanda. Espere o Fabiano confirmar os dois.
+1. Proponha o tipo (Story, Bug ou Dívida). Antes, rode o `gh project list` e o `gh project field-list` (comandos no passo 1 do Passo a passo). Se o campo "Fonte da Demanda" existir, proponha também a Fonte da Demanda, escolhida entre as opções do campo. Se não existir, avise. Espere o Fabiano confirmar.
 2. Se houver vários pedidos no texto, proponha um card por pedido e o Fabiano decide um por vez.
 3. Distribua o texto nos campos do template do tipo (`.github/ISSUE_TEMPLATE/story.md`, `bug.md` ou `divida.md`), sem inventar. O que o texto não responde vira lacuna: pergunte, uma por vez.
 4. Coloque o canal e a data em "Contexto" (ex.: "veio por WhatsApp em 22/11").
@@ -39,7 +39,7 @@ O resultado fica em dois lugares:
 7. Aplique o Issue type (o gh 2.45 não tem `--type`). O valor é Story, Bug ou Dívida:
    `gh api -X PATCH repos/FabianoNR/pode-gastar/issues/<N> -f type=<tipo>`
    Confira na resposta que o campo `type` voltou com o nome certo. O PATCH em issue pode fechar a issue se `state` for enviado: nunca envie `state`.
-8. A issue entra sozinha no Project em Backlog, pela automação. Confirme com `gh project item-list` antes de mover. Grave a Fonte da Demanda confirmada no passo 1 (passo 3 do Passo a passo).
+8. A issue entra sozinha no Project em Backlog, pela automação. Confirme com `gh project item-list` antes de mover. A Fonte da Demanda confirmada no passo 1 desta entrada é gravada no passo 3 do Passo a passo, com os IDs descobertos no passo 1 do Passo a passo.
 
 ### (b) Card existente
 
@@ -112,7 +112,7 @@ Pesquisa da pergunta "O produto já resolve" (vale para todos os tipos): pesquis
 
 ### 5. Artefato e resumo montados
 
-Monte os dois textos com as respostas confirmadas. Os campos de decisão vêm do passo 6: nada é gravado antes da decisão.
+Monte os dois textos com as respostas confirmadas. Os campos de decisão vêm do passo 6: o artefato e o resumo só são gravados depois da decisão.
 
 #### Artefato "Entendimento"
 
