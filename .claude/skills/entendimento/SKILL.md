@@ -40,6 +40,7 @@ Etapa do GitHub Project "Pode Gastar" que transforma um pedido em um card entend
 Receba o número. Leia título, corpo e Issue type:
 `gh issue view <N> --json title,body,number`
 `gh api repos/FabianoNR/pode-gastar/issues/<N> --jq .type.name`
+Esse comando pode pedir permissão; o Fabiano aprova na hora.
 
 ## Passo a passo
 

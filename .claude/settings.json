@@ -34,7 +34,6 @@
       "Bash(gh project item-add *)",
       "Bash(gh project item-edit *)",
       "Bash(gh api -X PATCH repos/FabianoNR/pode-gastar/issues/*)",
-      "Bash(gh api repos/FabianoNR/pode-gastar/issues/* --jq .type.name)",
       "Bash(diff *)",
       "Bash(gh repo view *)"
     ],
