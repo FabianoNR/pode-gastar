@@ -9,8 +9,8 @@ Etapa do GitHub Project "Pode Gastar" que transforma um card entendido (decisão
 
 O resultado fica em dois lugares:
 
-- A Concepção completa vira um artefato da issue, em Markdown, chamado "Concepção".
-- O corpo do card recebe um bloco "## Concepção", depois do "## Resumo do Entendimento".
+- O detalhe da Concepção (CSD, investigações, riscos, INVEST, fatiamento, decisões) vira um artefato da issue, em Markdown, chamado "Concepção".
+- O corpo do card recebe um bloco "## Concepção", depois do "## Resumo do Entendimento", com o que o downstream usa: solução, critérios de aceite, porte, riscos que afetam o agente, seções da spec autorizadas e cenários.
 
 ## Princípios
 
@@ -46,7 +46,7 @@ Leia o artefato "Entendimento":
 - `gh issue artifact list <N> --json number,name` (procure `"name": "Entendimento"`)
 - `gh issue artifact view <N> <número-do-artefato>`
 
-Confira, antes de começar:
+Confira, antes de começar (Status e Situação vêm do `gh project item-list`, com os comandos do passo 1):
 
 - O Status é "Pronto p/ Concepção" (ou já "Concepção", quando for retomada). Se for outro, pare e avise.
 - O artefato "Entendimento" existe e traz a decisão Seguir. Se não, pare e avise.
@@ -134,7 +134,7 @@ Determinísticos, com exemplo de entrada e saída. Exemplo de forma (não de con
 
 ```
 CA: com orçamento X e gasto Y, GET /meses/{mesId}/avaliacao?valor=Z&categoria=W
-responde 200 com decisão "..." e motivo "..."
+responde 200 com o corpo "..." (só os campos que a spec define para esse caso)
 ```
 
 Valores monetários com duas casas decimais, como nos exemplos da spec (ADR 0002: BigDecimal). Se um critério depende de uma regra que não está na spec, ela entra como regra nova na lista de seções autorizadas (item i).
@@ -151,7 +151,7 @@ O que não resolve o problema é candidato a fora de escopo. Junte aqui as dúvi
 
 Proponha o porte com uma linha de justificativa. O Fabiano decide.
 
-Rato e cachorro: grave o Porte no campo "Porte" do Project com `gh project item-edit`, descobrindo o campo e as opções (Rato, Cachorro) no `gh project field-list`, sem fixar IDs. Se as opções do campo forem diferentes, pare e avise o Fabiano. Elefante: não grave nada; o campo não tem essa opção e o card não sai da Concepção.
+Rato e cachorro: o Porte é gravado no campo "Porte" do Project no passo 5, junto com o Status. Confira já aqui, no `gh project field-list`, que o campo tem as opções Rato e Cachorro. Se as opções forem diferentes, pare e avise o Fabiano. Elefante: não grave nada; o campo não tem essa opção e o card não sai da Concepção.
 
 - **Rato:** pergunte "isso gera valor para quem usa (Story), é tarefa de outra entrega, ou é Dívida tratada como Story?". O Fabiano decide. Se for Dívida, ele troca o Issue type (você não troca). Se for tarefa de outra entrega, o destino do card é dele (a definir).
 - **Cachorro:** segue.
@@ -179,7 +179,12 @@ Monte os dois textos com as respostas confirmadas. Mostre-os ao Fabiano e só gr
 
 1. Grave o artefato (Gravar o artefato).
 2. Grave o corpo (Regras de edição do corpo).
-3. Só então mova o Status para "Pronto p/ Refinamento".
+3. Só então grave o Porte no campo "Porte" do Project e mova o Status para "Pronto p/ Refinamento", com `gh project item-edit` e os IDs descobertos no `gh project field-list`, sem fixar IDs.
+
+Exceções ao passo 3, em que o Status fica em Concepção e o Porte não é gravado:
+
+- **Elefante:** grave o artefato com o fatiamento e a sequência. Se o bloco do corpo é gravado no card original: decidir no primeiro elefante (pergunte ao Fabiano).
+- **Rato que é tarefa de outra entrega:** grave o artefato e espere a decisão do Fabiano sobre o destino do card (a definir).
 
 Depois de gravar, diga o que foi feito e o que ficou para o Fabiano (Situação, Issue type, criação de cards, se for o caso).
 
