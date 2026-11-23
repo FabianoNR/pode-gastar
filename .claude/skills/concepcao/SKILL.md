@@ -46,6 +46,8 @@ Leia o artefato "Entendimento":
 - `gh issue artifact list <N> --json number,name` (procure `"name": "Entendimento"`)
 - `gh issue artifact view <N> <número-do-artefato>`
 
+Retomada: na mesma lista, veja se já existe um artefato "Concepção" (`"name": "Concepção"`). Se existir, leia-o com `gh issue artifact view <N> <número-do-artefato>` e parta do que já está decidido. Pergunte só o que falta e diga ao Fabiano o que foi retomado.
+
 Confira, antes de começar (Status e Situação vêm do `gh project item-list`, com os comandos do passo 1):
 
 - O Status é "Pronto p/ Concepção" (ou já "Concepção", quando for retomada). Se for outro, pare e avise.
@@ -281,7 +283,7 @@ O corpo é um campo único e só o bloco "## Concepção" é desta skill. Portan
 
 1. Veja se o artefato já existe: `gh issue artifact list <N> --json number,name`. A saída é uma lista JSON (`[]` se não houver artefato). Procure `"name": "Concepção"`.
 2. Se não existir, crie: `gh issue artifact create <N> /tmp/pode-gastar-card/<N>-concepcao.md#Concepção`. O `create` devolve o número do artefato na própria saída: use esse número nos passos seguintes.
-3. Se já existir, substitua o conteúdo: `gh issue artifact edit <N> <número-do-artefato> --body-file /tmp/pode-gastar-card/<N>-concepcao.md`.
+3. Se já existir, substitua o conteúdo: `gh issue artifact edit <N> <número-do-artefato> --body-file /tmp/pode-gastar-card/<N>-concepcao.md`. O `edit` substitui o conteúdo inteiro: na retomada, o arquivo novo tem de trazer o que já estava decidido no artefato, mais o que foi decidido agora.
 4. Confira: `gh issue artifact view <N> <número-do-artefato>`.
 
 Pelo `--help` do gh 2.105.0, o `edit` guarda as versões: o `view` mostra o histórico de edições e o `edit --restore-version` recupera uma versão anterior. A verificar no piloto.
