@@ -34,6 +34,7 @@
       "Bash(gh project item-add *)",
       "Bash(gh project item-edit *)",
       "Bash(gh api -X PATCH repos/FabianoNR/pode-gastar/issues/*)",
+      "Bash(diff *)",
       "Bash(gh repo view *)"
     ],
     "deny": [
