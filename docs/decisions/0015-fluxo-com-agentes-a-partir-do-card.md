@@ -27,7 +27,7 @@ Até aqui, o `CLAUDE.md` exigia um design aprovado em `docs/design/` antes de mu
 - O campo Status segue o fluxo. O agente move o card para Refinamento ao começar o plano, para Desenvolvimento ao começar a codar e para Aguardando revisão quando a PR tem CI verde e o relatório do revisor não tem pendência.
 - O agente nunca move para Em revisão, Aguardando QA, Teste QA nem Done.
 - O campo Situação (Normal, Hold, Blocked) é separado do Status e é de responsabilidade do Fabiano. O agente não o altera.
-- Campos do Project: Prioridade, Porte, Origem, Versão e Motivo. O tipo do card é o Issue type nativo da issue, não um campo do Project.
+- Campos do Project: Prioridade, Porte, Fonte da Demanda, Versão e Motivo. O tipo do card é o Issue type nativo da issue, não um campo do Project.
 
 ### Cadência, revisão e merge
 
