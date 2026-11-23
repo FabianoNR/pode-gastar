@@ -18,24 +18,42 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 - GitHub Project "Pode Gastar": os cards, com os campos Status e Situação.
 - Card: uma issue do Project, com os critérios de aceite e a lista das seções da spec que podem mudar.
 - `docs/design/`: congelado, só como histórico.
-- `.claude/skills/`: skills das etapas upstream (hoje, `entendimento`).
+- `.claude/skills/`: skills das etapas upstream (hoje, `entendimento` e `concepcao`).
 - Artefatos da issue: o Entendimento (e depois a Concepção) fica num artefato da issue; o corpo do card guarda só o resumo.
 - `.github/ISSUE_TEMPLATE/`: templates de issue (Story, Bug e Dívida).
 
 ## Trabalho a partir do card
 
 1. Trabalhe a partir do card indicado. Só comece se o card tiver Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e a lista das seções da spec. Se faltar algo, pare e avise. Este passo vale para o trabalho de código, depois da Concepção; as skills de Entendimento e Concepção trabalham antes disso, em Backlog e em cards em Hold.
-2. Se o card estiver em Pronto p/ Refinamento, mova-o para Refinamento ao começar o plano. Mova-o para Desenvolvimento ao começar a codar. Nunca mova um card para trás.
+2. Se o card estiver em Pronto p/ Refinamento, mova-o para Refinamento ao começar o plano. Mova-o para Desenvolvimento ao começar a codar. Nunca mova um card para trás. A única exceção é da skill de Entendimento: quando a decisão é Hold, ela devolve o Status para Backlog.
 3. Crie a branch `<tipo>/<N>-slug` a partir da `main`, com o número do card (`feat`, `fix`, `docs` ou `chore`). Um card por PR.
 4. Leia a spec antes de escrever código, e o `docs/operacao.md` quando o card tocar workflows ou scripts. Escreva os testes dos critérios do card antes da implementação. Rode e confirme que falham.
 5. Atualize, na mesma PR do código, só as seções de `docs/spec.md` e `docs/operacao.md` que o card lista.
 6. Se o card não cobre o caso, pare e devolva ao Fabiano: comente no card o que parou e espere. O Status não muda. Se a dúvida muda o comportamento visível do sistema, o Fabiano decide se ela volta à Concepção como card novo.
 7. Faça commits pequenos com Conventional Commits. Nunca faça push na `main`. Abra a PR com "Closes #N".
-8. Depois de abrir a PR, chame o subagent revisor com o diff e o texto do card. Poste o relatório dele como comentário na PR, com `gh pr comment`.
+8. Depois de abrir a PR, chame o subagent revisor com o diff e o texto do card. Poste o relatório dele como comentário na PR, com `gh pr comment`. O relatório separa:
+   - Pendência: contradição com `docs/spec.md`, `docs/operacao.md`, o card ou uma ADR; violação de qualidade (ADR 0008).
+   - Sugestão: todo o resto.
+
+   Só pendência bloqueia a PR. Sugestão nunca vira card sozinha: liste as sugestões e o Fabiano decide. O padrão é descartar.
 9. Mova o card para Aguardando revisão só quando a PR tiver o CI verde e o relatório do revisor não tiver pendência.
 10. Ao terminar, informe o que mudou, o que foi testado e o que não foi.
 
-Limites do agente:
+## Pronto quando
+
+Vale para todo card:
+
+- Os testes dos critérios de aceite foram escritos antes da implementação e passam.
+- O revisor de IA não tem pendência, e o relatório dele está na PR.
+- `docs/spec.md` e `docs/operacao.md` foram atualizados nas seções que o card lista.
+- O Fabiano fez o QA local no Postman.
+- A PR está ligada ao card ("Closes #N") e tem o CI verde.
+
+## Decisões durante o desenvolvimento
+
+Cada decisão tomada durante o desenvolvimento vira um comentário no card, um por decisão, com: data, decisão, chapéu e motivo.
+
+## Limites do agente
 
 - Nunca altere a Situação do card. Nunca mova o card para Em revisão, Aguardando QA, Teste QA ou Done.
 - As skills de Entendimento e Concepção movem o Status da própria etapa. Nenhuma skill altera a Situação nem fecha issue.
