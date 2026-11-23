@@ -43,7 +43,7 @@ Receba o número. Leia título, corpo e Issue type:
 
 ### 1. Status para Entendimento
 
-Só a partir de Backlog; nunca para trás. Descubra IDs em tempo de execução, sem fixar IDs neste arquivo:
+Só a partir de Backlog; nunca para trás. A única exceção é a decisão Hold (passo 5), que devolve o Status para Backlog. Descubra IDs em tempo de execução, sem fixar IDs neste arquivo:
 
 - `gh project list --owner FabianoNR --format json` (id e número do Project "Pode Gastar")
 - `gh project field-list <número> --owner FabianoNR --format json` (id do campo e das opções de Status e Prioridade)
@@ -112,7 +112,7 @@ O corpo é um campo único. Portanto:
 Pergunte a decisão. Complete o bloco com Decisão e com Prioridade ou Motivo, mostre o bloco inteiro e grave o corpo depois da confirmação (Regras de edição do corpo). Só depois mova o Status ou poste o comentário.
 
 - **Seguir:** pergunte a Prioridade (alta, média, baixa) e uma linha de justificativa. Grave a Prioridade no campo do Project (`gh project item-edit`, opção Alta/Média/Baixa descoberta no field-list) e mova o Status para "Pronto p/ Concepção". Se a Situação não for Normal, lembre o Fabiano de mudá-la.
-- **Hold:** pergunte o Motivo e poste como comentário no card (`gh issue comment <N> --body ...`). Diga: "mude a Situação para Hold com este Motivo". Não altere a Situação.
-- **Descartar:** pergunte o Motivo e poste como comentário. Diga ao Fabiano para fechar a issue como "not planned". Não feche a issue.
+- **Hold:** pergunte o Motivo e poste como comentário no card (`gh issue comment <N> --body ...`). Depois do comentário, mova o Status para Backlog (`gh project item-edit`, opção Backlog descoberta no field-list). Esta é a exceção explícita à regra "nunca para trás" do passo 1: Entendimento é estado ativo, e um card parado em Hold não pode contar como tempo ativo. Diga: "mude a Situação para Hold com este Motivo". Não altere a Situação.
+- **Descartar:** pergunte o Motivo e poste como comentário. Diga ao Fabiano para fechar a issue como "not planned". Não feche a issue. O Status não muda: quando o Fabiano fecha a issue, a automação manda o card para Done.
 
 Depois de gravar, diga o que foi feito e o que ficou para o Fabiano.
