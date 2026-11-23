@@ -19,6 +19,7 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 - Card: uma issue do Project, com os critérios de aceite e a lista das seções da spec que podem mudar.
 - `docs/design/`: congelado, só como histórico.
 - `.claude/skills/`: skills das etapas upstream (hoje, `entendimento`).
+- Artefatos da issue: o Entendimento (e depois a Concepção) fica num artefato da issue; o corpo do card guarda só o resumo.
 - `.github/ISSUE_TEMPLATE/`: templates de issue (Story, Bug e Dívida).
 
 ## Trabalho a partir do card
