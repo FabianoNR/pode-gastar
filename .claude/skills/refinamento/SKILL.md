@@ -23,7 +23,7 @@ O resultado fica em dois lugares:
   - No início, mostre os 5 itens; a cada passo, diga o que está ok e o que falta.
   - Dúvida que não muda o desenvolvimento não se discute agora: "fora de escopo" ou "decidir no código, com comentário no card".
   - Se o mesmo tópico voltar pela terceira vez, diga que a conversa está girando nele e proponha uma saída: decidir agora, estacionar (anotar e seguir) ou bloquear com Motivo.
-- Você NUNCA altera a Situação do card, NUNCA move o card para Done, NUNCA fecha issue e NUNCA faz merge. Só move o Status desta etapa.
+- Você NUNCA altera a Situação do card (só o Fabiano muda; você orienta), NUNCA move o card para Done, NUNCA fecha issue e NUNCA faz merge. Só move o Status desta etapa.
 
 ## Regras de ferramentas
 
@@ -48,7 +48,7 @@ Confira antes de começar (Status e Situação vêm do `gh project item-list`, p
 - O Status é "Pronto p/ Refinamento" ou já "Refinamento" (retomada). Se for outro, pare e avise.
 - O corpo tem o bloco "## Concepção" com critérios de aceite e a linha de seções da spec. Se faltar algo, pare e avise.
 - O Porte não é Elefante. Se for, pare e avise: elefante não passa adiante.
-- A Situação. Se não for Normal, pare e avise: o downstream só começa com Situação Normal (CLAUDE.md) e só o Fabiano muda a Situação. Não a altere.
+- A Situação. Normal: siga. Blocked: siga (retomada) e avise o Fabiano de que o card está Blocked; quando a dúvida que bloqueou for respondida na conversa, oriente-o a mudar a Situação para Normal. Hold: pare e avise. Você não altera a Situação.
 
 Retomada: se já existir o artefato "Refinamento", leia-o, parta do que já está decidido, diga ao Fabiano o que foi retomado e pergunte só o que falta.
 
@@ -143,8 +143,8 @@ Com os 5 itens marcados no corpo e a confirmação do Fabiano:
 
 ### 6. Pedidos de ajuste depois do Refinamento
 
-- Antes de o desenvolvimento começar: o card é ajustado, com comentário datado.
-- Depois que o desenvolvimento começa, quem manda é a spec da PR: o ajuste entra nela e o card recebe só um comentário datado (data, ajuste, chapéu e motivo).
+- Enquanto o Status não for Desenvolvimento: o card é ajustado, com comentário datado.
+- Depois que o Status é Desenvolvimento, quem manda é a spec da PR: o ajuste entra nela e o card recebe só um comentário datado (data, ajuste, chapéu e motivo).
 
 ## Artefato "Refinamento"
 
