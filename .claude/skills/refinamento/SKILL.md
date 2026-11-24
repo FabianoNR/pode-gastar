@@ -16,21 +16,19 @@ O resultado fica em dois lugares:
 
 - Português simples. Não use o termo "Job Story".
 - UMA pergunta por vez. Espere a resposta antes da próxima.
-- Você propõe e o Fabiano decide. As respostas finais são dele, nas palavras dele.
-- Toda decisão registra o chapéu (PM, Design, Engenharia, QA etc.) de quem a tomou.
-- Nunca preencha lacuna com palpite. O que faltar vira pergunta.
-- O rigor é proporcional ao tamanho do card. Card pequeno não ganha burocracia: itens simples têm evidência de uma linha.
+- Você propõe e o Fabiano decide, nas palavras dele. Nunca preencha lacuna com palpite.
+- Toda decisão registra o chapéu (PM, Design, Engenharia, QA etc.).
+- Card pequeno não ganha burocracia: item simples tem evidência de uma linha.
 - Você é facilitador de conclusão:
-  - No início, mostre os 5 itens e o que falta para concluir.
-  - A cada passo, diga o que já está ok e o que falta.
-  - Dúvida que não muda o desenvolvimento não se discute agora: anote como "fora de escopo" ou "decidir no código, com comentário no card".
+  - No início, mostre os 5 itens; a cada passo, diga o que está ok e o que falta.
+  - Dúvida que não muda o desenvolvimento não se discute agora: "fora de escopo" ou "decidir no código, com comentário no card".
   - Se o mesmo tópico voltar pela terceira vez, diga que a conversa está girando nele e proponha uma saída: decidir agora, estacionar (anotar e seguir) ou bloquear com Motivo.
 - Você NUNCA altera a Situação do card, NUNCA move o card para Done, NUNCA fecha issue e NUNCA faz merge. Só move o Status desta etapa.
 
 ## Regras de ferramentas
 
-- Arquivos temporários: use a ferramenta Write em `/tmp/pode-gastar-card/`. Se o arquivo já existir, leia-o com a ferramenta Read antes de sobrescrever. Não use `sed`, `tail`, `mktemp` nem redirecionamento `>`.
-- Buscas em `docs/`: use a ferramenta Grep, não `grep` pelo Bash. Leitura de código: Read e Grep.
+- Arquivos temporários: ferramenta Write em `/tmp/pode-gastar-card/` (se o arquivo existir, leia com Read antes). Não use `sed`, `tail`, `mktemp` nem `>`.
+- Buscas em `docs/` e no código: Grep e Read, não `grep` pelo Bash.
 - NUNCA digite IDs do Project de memória nem os fixe neste arquivo. Descubra-os na hora, com os comandos do passo 1, a cada uso.
 - Nunca use `gh issue artifact delete`. Para refazer, edite o artefato.
 - Se precisar usar `gh api -X PATCH` numa issue (alternativa quando o `gh issue edit` falhar), nunca envie `state`: o PATCH pode fechar a issue.
@@ -52,7 +50,7 @@ Confira antes de começar (Status e Situação vêm do `gh project item-list`, p
 - O Porte não é Elefante. Se for, pare e avise: elefante não passa adiante.
 - A Situação. Se não for Normal, avise que só o Fabiano pode mudá-la. Não a altere.
 
-Retomada: se já existir o artefato "Refinamento", leia-o e parta do que já está decidido. Diga ao Fabiano o que foi retomado e pergunte só o que falta. Lembre que o `edit` do artefato substitui o conteúdo inteiro: o arquivo novo traz tudo que já estava decidido, mais o que foi decidido agora.
+Retomada: se já existir o artefato "Refinamento", leia-o, parta do que já está decidido, diga ao Fabiano o que foi retomado e pergunte só o que falta.
 
 ## Passo a passo
 
@@ -85,13 +83,9 @@ Ao começar (não só no fim), crie no corpo os dois blocos, depois do bloco "##
 (a preencher no item 5)
 ```
 
-Aplique as Regras de edição do corpo. As linhas ficam curtas: a evidência vai para o artefato, não para o corpo.
+Aplique as Regras de edição do corpo. A evidência vai para o artefato, não para o corpo.
 
-### 3. Mostre o que falta
-
-Mostre os 5 itens, diga que o Fabiano confirma cada um e que você só marca com a evidência registrada no artefato. Comece pelo item 1.
-
-### 4. Definition of Ready
+### 3. Definition of Ready
 
 Um checklist único para todos os tipos de card (versões por tipo ficam para depois do piloto). Trabalhe os itens nesta ordem, um de cada vez.
 
@@ -99,11 +93,11 @@ Um checklist único para todos os tipos de card (versões por tipo ficam para de
 
 #### 1. Critérios de aceite revisados
 
-Confira cada critério do bloco "Concepção" com a conta, contra as regras da spec (R2 a R7 etc.), lendo as regras no `docs/spec.md`. Mostre a conta e o resultado esperado. Se o critério estiver errado ou incompleto, proponha o ajuste. O Fabiano decide. Critério ajustado atualiza o bloco "Concepção" do corpo e vira comentário datado no card (ver passo 5). Evidência: cada critério, a conta e o resultado (ok ou ajustado).
+Confira cada critério do bloco "Concepção" com a conta, contra as regras da spec (R2 a R7 etc.), lendo as regras no `docs/spec.md`. Se o critério estiver errado ou incompleto, proponha o ajuste. O Fabiano decide. Critério ajustado atualiza o bloco "Concepção" do corpo e vira comentário datado no card (ver passo 4). Evidência: cada critério, a conta e o resultado (ok ou ajustado).
 
 #### 2. Cenários Gherkin garantidos
 
-Proponha cenários (Dado, Quando, Então) que cobrem os critérios e algumas bordas. Cenários não vão para a spec: viram testes. Se a Concepção já trouxe cenários, revise-os e complete. Evidência: os cenários, no artefato, cada um ligado ao critério que cobre.
+Proponha cenários (Dado, Quando, Então) que cobrem os critérios e algumas bordas. Cenários não vão para a spec: viram testes. Evidência: os cenários, no artefato, cada um ligado ao critério que cobre.
 
 #### 3. Seções da spec listadas existem
 
@@ -113,11 +107,11 @@ Para cada seção da linha "Seções da spec autorizadas", confira com Grep, em 
 
 Leia o código e as ADRs que o card toca (domínio, portas, adaptadores, ADR 0003) e diga o que o card exige em tecnologia e estrutura. Classifique cada decisão:
 
-- **ADR:** só para decisão sobre tecnologia, estrutura ou entrega que seja durável, difícil de desfazer e que outro card ou pessoa precise entender depois (stack, hospedagem, camadas, pipeline, limite técnico, ferramenta de processo). O número vem da lista de `docs/decisions/`. A ADR é escrita na PR do código, não nesta skill.
+- **ADR:** só para decisão sobre tecnologia, estrutura ou entrega que seja durável, difícil de desfazer e que outro card ou pessoa precise entender depois (stack, hospedagem, camadas, pipeline, limite técnico, ferramenta de processo). A ADR é escrita na PR do código, não nesta skill.
 - **Regra de negócio:** NÃO vira ADR. Vai para a spec (entra no trecho proposto do item 5).
-- **Decisão local e fácil de desfazer:** comentário no card (passo 5).
+- **Decisão local e fácil de desfazer:** comentário no card (passo 4).
 
-Se não há decisão técnica, marque o item com "sem decisão técnica" e o motivo. Não invente decisão para preencher o item. Evidência: o que foi lido, cada decisão com a classificação, ou "sem decisão técnica" com o motivo. Dependência nova de biblioteca: o CLAUDE.md manda perguntar ao Fabiano; registre a pergunta aqui.
+Se não há decisão técnica, marque o item com "sem decisão técnica" e o motivo. Não invente decisão para preencher o item. Evidência: o que foi lido, cada decisão com a classificação, ou "sem decisão técnica" com o motivo.
 
 #### 5. Roteiro de desenvolvimento claro
 
@@ -128,7 +122,7 @@ Proponha:
 
 O Fabiano ajusta e confirma. Evidência: o trecho da spec proposto no artefato. As subtarefas ficam no bloco "## Roteiro de desenvolvimento" do corpo, como lista de tarefas `- [ ]`.
 
-### 5. Decisões e dúvidas
+### 4. Decisões e dúvidas
 
 Cada decisão tomada vira um comentário no card, um por decisão, com: data, decisão, chapéu e motivo. Comando: `gh issue comment <N> --body-file /tmp/pode-gastar-card/<N>-decisao-<n>.md`. Postar depois da confirmação do Fabiano.
 
@@ -139,35 +133,33 @@ Dúvida que muda o comportamento visível do sistema:
 
 Dúvida que depende de pessoa ou de teste real: o card fica em Refinamento. Grave o artefato com o que já foi decidido e diga ao Fabiano: "mude a Situação para Blocked com este Motivo: <pergunta e quem responde>". Ele executa. Você não altera a Situação. Pare.
 
-### 6. Saída
+### 5. Saída
 
 Com os 5 itens marcados no corpo e a confirmação do Fabiano:
 
-1. Mostre o resumo: o que ficou decidido, as decisões técnicas, o roteiro.
+1. Mostre o resumo: decisões, decisões técnicas e roteiro.
 2. Depois da confirmação, mova o Status para "Desenvolvimento", com os IDs descobertos agora (passo 1). Confira o nome exato da opção no `gh project field-list`.
-3. Diga o que foi feito e o que ficou para o Fabiano (Situação, ADR a escrever na PR, seções da spec).
+3. Diga o que foi feito e o que ficou para o Fabiano (Situação, ADR a escrever na PR).
 
-Você não codifica nesta skill: o código começa a partir do CLAUDE.md, na branch do card.
+### 6. Pedidos de ajuste depois do Refinamento
 
-### 7. Pedidos de ajuste depois do Refinamento
-
-- Antes de o desenvolvimento começar, o Fabiano pede o ajuste e o card é ajustado (bloco "Concepção", "Pronto para desenvolver" ou "Roteiro"), com comentário datado.
-- Depois que o desenvolvimento começa, quem manda é a spec da PR: o ajuste entra na spec da PR e o card recebe só um comentário datado (data, ajuste, chapéu e motivo).
+- Antes de o desenvolvimento começar: o card é ajustado, com comentário datado.
+- Depois que o desenvolvimento começa, quem manda é a spec da PR: o ajuste entra nela e o card recebe só um comentário datado (data, ajuste, chapéu e motivo).
 
 ## Artefato "Refinamento"
 
-Escreva com a ferramenta Write em `/tmp/pode-gastar-card/<N>-refinamento.md`. Linha em branco entre todos os campos. Campo sem conteúdo fica com "não se aplica".
+Escreva com Write em `/tmp/pode-gastar-card/<N>-refinamento.md`. Campo sem conteúdo fica com "não se aplica".
 
 ```
 # Refinamento
 
 ## 1. Critérios de aceite revisados
 
-**Critérios e contas:** cada critério, a conta contra as regras da spec e o resultado (ok ou ajustado)
+**Critérios e contas:** critério, conta e resultado (ok ou ajustado)
 
 ## 2. Cenários Gherkin
 
-**Cenários:** Dado, Quando, Então, cada um com o critério que cobre
+**Cenários:** Dado, Quando, Então, com o critério que cobre
 
 ## 3. Seções da spec
 
@@ -175,9 +167,9 @@ Escreva com a ferramenta Write em `/tmp/pode-gastar-card/<N>-refinamento.md`. Li
 
 ## 4. Tecnologia e arquitetura
 
-**Lido:** o que foi lido no código e nas ADRs
+**Lido:** código e ADRs
 
-**Decisões:** cada uma com a classificação (ADR, spec ou comentário) e o chapéu; ou "sem decisão técnica" com o motivo
+**Decisões:** classificação (ADR, spec ou comentário) e chapéu; ou "sem decisão técnica" e o motivo
 
 ## 5. Roteiro
 
@@ -187,7 +179,7 @@ Escreva com a ferramenta Write em `/tmp/pode-gastar-card/<N>-refinamento.md`. Li
 
 ## Dúvidas e destino
 
-**Dúvidas:** cada uma com o destino (resolvida aqui, fora de escopo, voltou à Concepção, Blocked)
+**Dúvidas:** com o destino (resolvida aqui, fora de escopo, voltou à Concepção, Blocked)
 
 ## Decisões do Fabiano
 
@@ -202,7 +194,7 @@ O corpo é um campo único e a edição grava o corpo inteiro. Só são desta sk
 2. Nunca altere o que não é da skill (texto da criação, "Resumo do Entendimento", o resto da "Concepção"). Acrescente os blocos depois do bloco "## Concepção", ou substitua só o próprio bloco (do título até o próximo "## " ou o fim do corpo).
 3. Escreva o corpo novo com a ferramenta Write em `/tmp/pode-gastar-card/<N>-novo.md`. Antes de gravar, compare: `diff /tmp/pode-gastar-card/<N>-antigo.md /tmp/pode-gastar-card/<N>-novo.md`. O diff só pode mostrar acréscimos ou mudanças nos próprios blocos (e, quando o Fabiano decidiu, nas linhas do critério ajustado). Se mostrar outra coisa, pare e não grave.
 4. Grave o corpo inteiro de volta: `gh issue edit <N> --body-file /tmp/pode-gastar-card/<N>-novo.md`.
-5. Marcar um item é uma edição do corpo: repita os passos 1 a 4.
+5. Marcar um item também é uma edição do corpo: repita 1 a 4.
 
 ## Gravar o artefato
 
