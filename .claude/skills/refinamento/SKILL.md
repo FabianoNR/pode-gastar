@@ -149,7 +149,7 @@ Branch <tipo>/<N>-slug a partir da main.
 2. Implemente. Atualize só as seções da spec que o card lista, com o trecho do artefato "Refinamento". Os números definitivos dos critérios são os próximos livres em docs/spec.md e docs/operacao.md.
 3. Sem merge, sem force push. Commits em Conventional Commits. Dúvida que o card não cobre: pare e comente no card.
 4. Rode JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./mvnw clean verify.
-5. Abra a PR com "Closes #<N>" e as seções O que é, O que mudou, Testes, Uso de IA, Riscos conhecidos. Depois chame o subagente revisor e poste o relatório como comentário na PR.
+5. Abra a PR com "Closes #<N>" e as seções O que é, O que mudou, Testes, Uso de IA, Riscos conhecidos. A descrição traz a correspondência entre o número do card e o número definitivo de cada critério. Depois chame o subagente revisor com o diff, o card e essa correspondência, e poste o relatório como comentário na PR.
 ```
 
 ### 6. Pedidos de ajuste depois do Refinamento
