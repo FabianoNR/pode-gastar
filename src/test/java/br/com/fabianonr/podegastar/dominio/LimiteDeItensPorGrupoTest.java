@@ -36,6 +36,12 @@ class LimiteDeItensPorGrupoTest {
         numero -> pendente(prefixo + numero, "Item " + prefixo + numero, categoria, 1, "10"));
   }
 
+  private static Item cartaoProtegidoDeCorte(String valor) {
+    return ItemDeTeste.umItem("cartao", CARTAO, Categoria.DEVO_FAZER, 5, valor)
+        .protegidoDeCorte()
+        .criar();
+  }
+
   private static List<Item> itens(int quantidade, IntFunction<Item> criarItem) {
     return IntStream.rangeClosed(1, quantidade).mapToObj(criarItem).toList();
   }
@@ -77,7 +83,7 @@ class LimiteDeItensPorGrupoTest {
       "21 itens em discussão respondem itens demais mesmo quando não há combinação a buscar (R6)")
   void itensEmDiscussaoAcimaDoLimiteSaoConferidosAntesDeCombinar() {
     List<Item> itens = new ArrayList<>(itensEmDiscussao(ACIMA_DO_LIMITE));
-    itens.add(pendente("cartao", CARTAO, Categoria.DEVO_FAZER, 5, "500"));
+    itens.add(cartaoProtegidoDeCorte("500"));
 
     // Orçamento 1500, comprometido 710: livre 790; falta 510. Os elegíveis somam 210, então
     // sairia a lista completa, sem busca de combinações.
@@ -92,7 +98,7 @@ class LimiteDeItensPorGrupoTest {
       "21 itens em discussão respondem itens demais na compra SERIA_LEGAL que não teria cortes suficientes (R6)")
   void itensEmDiscussaoAcimaDoLimiteSaoConferidosNaCompraSeriaLegal() {
     List<Item> itens = new ArrayList<>(itensEmDiscussao(ACIMA_DO_LIMITE));
-    itens.add(pendente("cartao", CARTAO, Categoria.DEVO_FAZER, 5, "500"));
+    itens.add(cartaoProtegidoDeCorte("500"));
 
     // Orçamento 1500, comprometido 710: livre 790; falta 510. Os grupos 0 e 1 somam 210, então
     // sem o limite a decisão seria NAO_CABE por falta de itens seria legal.

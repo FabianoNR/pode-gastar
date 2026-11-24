@@ -63,6 +63,11 @@ final class MesExemplo {
     return pendente("item-3", VIAGEM, QUERO_FAZER, 4, "300");
   }
 
+  /** O cartão de crédito do mês de exemplo, protegido de corte (R5). */
+  static Item cartaoProtegidoDeCorte() {
+    return umItem("item-1", CARTAO, DEVO_FAZER, 5, "600").protegidoDeCorte().criar();
+  }
+
   static Item bolsa() {
     return emDiscussao("item-7", BOLSA, QUERO_FAZER, 3, "90", "marido");
   }
@@ -90,7 +95,7 @@ final class MesExemplo {
 
   private static List<Item> itensBase(Item viagem) {
     return Stream.of(
-            pendente("item-1", CARTAO, DEVO_FAZER, 5, "600"),
+            cartaoProtegidoDeCorte(),
             pendente("item-2", MANUTENCAO, DEVO_FAZER, 5, "200"),
             viagem,
             pendente("item-4", ITEM_CASA, QUERO_FAZER, 3, "200"),

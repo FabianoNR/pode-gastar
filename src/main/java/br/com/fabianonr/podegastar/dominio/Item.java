@@ -11,7 +11,8 @@ public record Item(
     StatusItem status,
     BigDecimal valorEstimado,
     BigDecimal valorRealizado,
-    String decisorResponsavel) {
+    String decisorResponsavel,
+    boolean protegidoDeCorte) {
 
   public Item {
     if (id == null || id.isBlank()) {

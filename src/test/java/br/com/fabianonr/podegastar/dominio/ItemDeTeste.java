@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 
 /**
  * Construtor único de itens para os testes. Parte de um item planejado e {@code PENDENTE}, sem
- * valor realizado e sem decisor responsável; cada teste muda só o que importa para ele.
+ * valor realizado, sem decisor responsável e não protegido de corte; cada teste muda só o que
+ * importa para ele.
  */
 public final class ItemDeTeste {
 
@@ -17,6 +18,7 @@ public final class ItemDeTeste {
   private StatusItem status = StatusItem.PENDENTE;
   private BigDecimal valorRealizado;
   private String decisorResponsavel;
+  private boolean protegidoDeCorte;
 
   private ItemDeTeste(
       String id, String nome, Categoria categoria, int intensidade, BigDecimal valorEstimado) {
@@ -50,6 +52,11 @@ public final class ItemDeTeste {
     return this;
   }
 
+  public ItemDeTeste protegidoDeCorte() {
+    this.protegidoDeCorte = true;
+    return this;
+  }
+
   public Item criar() {
     return new Item(
         id,
@@ -60,6 +67,7 @@ public final class ItemDeTeste {
         status,
         valorEstimado,
         valorRealizado,
-        decisorResponsavel);
+        decisorResponsavel,
+        protegidoDeCorte);
   }
 }
