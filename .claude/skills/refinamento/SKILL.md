@@ -48,7 +48,7 @@ Confira antes de começar (Status e Situação vêm do `gh project item-list`, p
 - O Status é "Pronto p/ Refinamento" ou já "Refinamento" (retomada). Se for outro, pare e avise.
 - O corpo tem o bloco "## Concepção" com critérios de aceite e a linha de seções da spec. Se faltar algo, pare e avise.
 - O Porte não é Elefante. Se for, pare e avise: elefante não passa adiante.
-- A Situação. Se não for Normal, avise que só o Fabiano pode mudá-la. Não a altere.
+- A Situação. Se não for Normal, pare e avise: o downstream só começa com Situação Normal (CLAUDE.md) e só o Fabiano muda a Situação. Não a altere.
 
 Retomada: se já existir o artefato "Refinamento", leia-o, parta do que já está decidido, diga ao Fabiano o que foi retomado e pergunte só o que falta.
 
@@ -93,7 +93,7 @@ Um checklist único para todos os tipos de card (versões por tipo ficam para de
 
 #### 1. Critérios de aceite revisados
 
-Confira cada critério do bloco "Concepção" com a conta, contra as regras da spec (R2 a R7 etc.), lendo as regras no `docs/spec.md`. Se o critério estiver errado ou incompleto, proponha o ajuste. O Fabiano decide. Critério ajustado atualiza o bloco "Concepção" do corpo e vira comentário datado no card (ver passo 4). Evidência: cada critério, a conta e o resultado (ok ou ajustado).
+Confira cada critério do bloco "Concepção" com a conta, contra as regras da spec, lendo as regras no `docs/spec.md`. Se o critério estiver errado ou incompleto, proponha o ajuste. O Fabiano decide. Critério ajustado atualiza o bloco "Concepção" do corpo e vira comentário datado no card (ver passo 4). Evidência: cada critério, a conta e o resultado (ok ou ajustado).
 
 #### 2. Cenários Gherkin garantidos
 
@@ -188,11 +188,11 @@ Escreva com Write em `/tmp/pode-gastar-card/<N>-refinamento.md`. Campo sem conte
 
 ## Regras de edição do corpo
 
-O corpo é um campo único e a edição grava o corpo inteiro. Só são desta skill os blocos "## Pronto para desenvolver" e "## Roteiro de desenvolvimento", mais o ajuste dos critérios do bloco "## Concepção" quando o Fabiano decide. Portanto:
+O corpo é um campo único e a edição grava o corpo inteiro. Só são desta skill os blocos "## Pronto para desenvolver" e "## Roteiro de desenvolvimento", mais o ajuste dos critérios e da linha "Seções da spec autorizadas" do bloco "## Concepção" quando o Fabiano decide. Portanto:
 
 1. Leia o corpo atual: `gh issue view <N> --json body --jq .body`. Com a ferramenta Write, grave a cópia exata em `/tmp/pode-gastar-card/<N>-antigo.md`.
 2. Nunca altere o que não é da skill (texto da criação, "Resumo do Entendimento", o resto da "Concepção"). Acrescente os blocos depois do bloco "## Concepção", ou substitua só o próprio bloco (do título até o próximo "## " ou o fim do corpo).
-3. Escreva o corpo novo com a ferramenta Write em `/tmp/pode-gastar-card/<N>-novo.md`. Antes de gravar, compare: `diff /tmp/pode-gastar-card/<N>-antigo.md /tmp/pode-gastar-card/<N>-novo.md`. O diff só pode mostrar acréscimos ou mudanças nos próprios blocos (e, quando o Fabiano decidiu, nas linhas do critério ajustado). Se mostrar outra coisa, pare e não grave.
+3. Escreva o corpo novo com a ferramenta Write em `/tmp/pode-gastar-card/<N>-novo.md`. Antes de gravar, compare: `diff /tmp/pode-gastar-card/<N>-antigo.md /tmp/pode-gastar-card/<N>-novo.md`. O diff só pode mostrar acréscimos ou mudanças nos próprios blocos (e, quando o Fabiano decidiu, nas linhas do critério ajustado ou da linha "Seções da spec autorizadas"). Se mostrar outra coisa, pare e não grave.
 4. Grave o corpo inteiro de volta: `gh issue edit <N> --body-file /tmp/pode-gastar-card/<N>-novo.md`.
 5. Marcar um item também é uma edição do corpo: repita 1 a 4.
 
