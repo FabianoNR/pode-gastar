@@ -1,0 +1,118 @@
+{
+  "data": {
+    "repository": {
+      "pullRequest": {
+        "number": 57,
+        "body": "Closes #31\n\n## O que é\n\nO cartão de crédito deixa de ser reconhecido pelo nome. O item ganha a marcação `protegidoDeCorte` (padrão `false`), e só ela tira o item das sugestões de corte, de qualquer status e categoria, inclusive `EM_DISCUSSAO`. A marcação não muda o que o item reserva, nem o livre, nem o total restante. A resposta da API não muda.\n\n## O que mudou\n\n- `Item`: novo componente `protegidoDeCorte` (último do record). `elegivelParaCorte()` passa a ser `status != REALIZADO && !protegidoDeCorte`. A constante `Item.NOME_CARTAO` saiu.\n- `MesEmMemoriaRepositorio`: o `item-1` (Cartão de crédito) é criado com `protegidoDeCorte = true`.\n- Testes: a criação de itens fica concentrada num único construtor de teste, `ItemDeTeste` (padrões: planejado, `PENDENTE`, sem realizado, sem decisor, não protegido). A `MesExemplo`, `AvaliacaoDevoFazerComItemParcialTest`, `AvisosHttpTest`, `MensagemDoItemHttpTest` e `LimiteDeItensHttpTest` passaram a usá-lo. O cartão é marcado como protegido na `MesExemplo` e nos dois testes do `LimiteDeItensPorGrupoTest` que contavam com a exclusão pelo nome.\n- `docs/spec.md`, só as seções que o card lista:\n  - Conceitos: atributo \"protegido de corte\" do item.\n  - Regras de decisão, R5: \"Nunca o cartão de crédito\" passa a \"Nunca item protegido de corte...\", e o item protegido não entra em grupo de corte nem na contagem do limite de 20.\n  - Mês de exemplo (estado no servidor): só o cartão é protegido.\n  - Critérios de aceite: CA11 reescrito; CA63 no mês base; CA60 e CA61 na nova subseção \"Outros meses (item protegido de corte)\"; CA62 na subseção da bolsa.\n- `docs/operacao.md`: não muda (o card diz \"não se aplica\").\n\n### Correspondência dos critérios (card → definitivo)\n\n| Card | Definitivo |\n|---|---|\n| CA11 (reescrito) | CA11 |\n| CA32 | CA60 |\n| CA33 | CA61 |\n| CA34 | CA62 |\n| CA35 | CA63 |\n\nO artefato \"Refinamento\" previa CA32 a CA35, mas o `docs/operacao.md` já usa do CA22 ao CA59. O próximo livre da série CA é o CA60. A decisão está comentada no card.\n\n## Testes\n\nTestes escritos antes da implementação, um por cenário do artefato \"Refinamento\":\n\n| Cenário | Critério | Teste |\n|---|---|---|\n| C1 | CA11 | `AvaliacaoMesBaseTest.cartaoProtegidoNuncaApareceComoSugestaoDeCorte` (substitui o teste antigo do CA11) |\n| C2 | CA60 | `ItemProtegidoDeCorteTest.nomeSozinhoNaoProtegeOItem` |\n| C3 | CA61 | `ItemProtegidoDeCorteTest.itemProtegidoNaoEntraNaSugestaoNemNaListaCompleta` |\n| C4 | CA62 | `ItemProtegidoDeCorteTest.itemEmDiscussaoProtegidoNaoEntraNoGrupoZero` |\n| C5 | CA63 | `ItemProtegidoDeCorteTest.marcacaoDoCartaoNaoMudaOCalculo` e os testes existentes dos CA1 a CA20 e CB1 a CB5, sem mudar valores |\n| C6 | CA11 (API) | `ItemProtegidoDeCorteHttpTest.cartaoDoMesDoServidorEstaProtegidoDeCorte` |\n| C7 | R5 e R7 | `ItemProtegidoDeCorteTest.itemProtegidoNaoEntraNasOpcoesDaCompraDevoFazer` |\n| C8 | R5 e limite de 20 | `LimiteDeItensPorGrupoTest.itemEmDiscussaoProtegidoNaoContaNoLimite` (os 422 com 21 itens não protegidos continuam cobertos pelos testes existentes) |\n\n- Antes da implementação, falharam C2 (CA60), C4 (CA62) e C8, como previsto no roteiro. Os demais já passavam, porque o cartão era protegido pelo nome.\n- `./mvnw clean verify`: BUILD SUCCESS, 203 testes, 0 falhas.\n- Não testado: QA local no Postman (é do Fabiano).\n\n## Uso de IA\n\nCódigo, testes, texto da spec e esta descrição feitos pelo Claude Code (Claude Opus 5.5), a partir do card e do artefato \"Refinamento\". O revisor de IA roda depois da abertura, e o relatório vai como comentário nesta PR.\n\n## Riscos conhecidos\n\n- Quando o cadastro de itens existir, o cartão precisa nascer com a marcação; sem ela, ele passa a ser sugerido para corte (é o comportamento do CA60). Fica para o card do cadastro de itens, fora deste.\n- O `Item` é um `record`, então o construtor continua público; em produção a criação está só no `MesEmMemoriaRepositorio`. Como um item nasce no domínio é decisão do card do cadastro.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n",
+        "files": {
+          "nodes": [
+            {
+              "path": "docs/spec.md"
+            },
+            {
+              "path": "src/main/java/br/com/fabianonr/podegastar/adaptador/saida/memoria/MesEmMemoriaRepositorio.java"
+            },
+            {
+              "path": "src/main/java/br/com/fabianonr/podegastar/dominio/Item.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/adaptador/entrada/web/AvisosHttpTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/adaptador/entrada/web/ItemProtegidoDeCorteHttpTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/adaptador/entrada/web/LimiteDeItensHttpTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/adaptador/entrada/web/MensagemDoItemHttpTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/dominio/AvaliacaoDevoFazerComItemParcialTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/dominio/AvaliacaoMesBaseTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/dominio/ItemDeTeste.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/dominio/ItemProtegidoDeCorteTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/dominio/LimiteDeItensPorGrupoTest.java"
+            },
+            {
+              "path": "src/test/java/br/com/fabianonr/podegastar/dominio/MesExemplo.java"
+            }
+          ]
+        },
+        "comments": {
+          "nodes": [
+            {
+              "body": "## Relatório do revisor: PR #57 (card #31)\n\n### Pendências\n\nNenhuma pendência.\n\n### Sugestões\n\n- `docs/spec.md:76` (R6, \"Limite de 20 itens\", Grupo 0): o texto ainda diz que \"a contagem inclui todos os itens `EM_DISCUSSAO`\". A nova R5 (`docs/spec.md:58`) tira da contagem o item protegido. As duas leituras se conciliam porque os grupos são formados só por elegíveis (R5), mas a frase da R6, lida sozinha, parece contradizer a R5. Fica só o registro: a R6 não está entre as seções que o card autoriza mudar.\n- `src/test/java/br/com/fabianonr/podegastar/adaptador/entrada/web/ItemProtegidoDeCorteHttpTest.java:38`: depois de `sugestoes` vazia, a asserção `$.sugestoes[*].itens[*].id not hasItem` é redundante. Para `listaCompleta`, o teste confere só que ela não está vazia e não traz `item-1`. O conteúdo completo (jantar, bola, item para casa, viagem e manutenção, nessa ordem) e a falta de 1000 só são conferidos no teste de domínio (`AvaliacaoMesBaseTest`). Pela API, daria para conferir os cinco ids na ordem e a `falta`.\n- `src/test/java/br/com/fabianonr/podegastar/dominio/AvaliacaoMesBaseTest.java:176`: o `@DisplayName` cita \"CA15\" no meio do texto. A convenção põe o identificador entre parênteses no final, e por isso este teste aparece numa busca por \"CA15\" sem ser o teste do CA15. A busca por \"(CA15)\" não é afetada.\n- `src/test/java/br/com/fabianonr/podegastar/dominio/ItemProtegidoDeCorteTest.java:14-24`: os auxiliares `avaliar` e `nomes` repetem auxiliares parecidos de outras classes de teste do domínio (`nomesSugeridos` em `AvaliacaoMesBaseTest`, `nomes` em `AvaliacaoDevoFazerComItemParcialTest`). O padrão já existia antes desta PR.\n\n### Alcance da revisão\n\n**O que li:**\n- O diff completo da PR contra a `main`.\n- `docs/spec.md` inteiro, na versão da branch.\n- `docs/decisions/0008-qualidade-de-codigo.md`.\n- `CLAUDE.md`.\n- `src/test/java/br/com/fabianonr/podegastar/dominio/LimiteDeItensPorGrupoTest.java` inteiro.\n- O trecho de `src/main/java/br/com/fabianonr/podegastar/dominio/PlanoDeCortes.java` que monta os grupos e confere o limite. Ali o grupo 0 e os candidatos já filtram por `elegivelParaCorte()`, então o item protegido fica fora dos grupos e da contagem do limite, como diz a R5.\n- Uma busca em `src/` por `new Item(` e `NOME_CARTAO`. A constante saiu do código de produção. Nos testes, `new Item(` só aparece em `ItemDeTeste`, como pede a decisão 3 do card. Também busquei os DTOs web: `ItemResponse` não está no diff e não ganhou o campo, então a resposta da API não muda.\n\n**O que conferi contra o card:**\n- A correspondência CA32→CA60, CA33→CA61, CA34→CA62 e CA35→CA63. O número definitivo é o próximo livre da série CA, já que o `docs/operacao.md` usa do CA22 ao CA59, segundo o prompt. Não abri o `docs/operacao.md` para confirmar esse intervalo.\n- As mudanças da spec ficam só nas seções autorizadas: Conceitos, R5, Mês de exemplo e Critérios de aceite. Os textos batem com o trecho aprovado no Refinamento. O CA62 está na subseção da bolsa e o CA63 no mês base, como diz a decisão 4.\n- Os testes C1 a C8 existem. As asserções usam valores escritos no teste e conferem decisão, falta, livre, total restante, itens e ordem da sugestão, `cobre`, `listaCompleta`, `aindaFaltaria` e opção.\n- A segunda metade do C8 (21 itens não protegidos continuam dando 422) já estava coberta pelos testes existentes do `LimiteDeItensPorGrupoTest`.\n- Nada do diff entra em \"Fora de escopo desta versão\".\n\n**O que não li ou não verifiquei:**\n- Não li o `docs/operacao.md`, porque o diff não toca workflows, scripts nem o próprio arquivo.\n- Não li as ADRs 0002, 0003, 0005, 0011, 0012 e 0015 na íntegra. O diff não mexe em dinheiro (os novos valores usam `BigDecimal` e comparação com `isEqualByComparingTo`), não muda o contrato da API e não põe import de framework no domínio.\n- Não li por inteiro os arquivos fora do diff (`AvaliacaoMesBaseTest`, `MesExemplo`, `AvaliacaoMapper`, `ArquiteturaHexagonalTest`), só os trechos que aparecem no diff ou na busca.\n- Não executei os testes nem o `./mvnw verify` e não vi o CI. O CA63 (CA1 a CA20 e CB1 a CB5 com os mesmos valores) e a parte do CA35 do card sobre o `./mvnw verify` dependem dessa execução.\n\n---\n_Nota do agente de código: nas três últimas sugestões, o revisor citou as linhas do arquivo de diff; as referências acima foram trocadas pelas linhas reais dos arquivos. O resto do texto é o do revisor. O `./mvnw clean verify` local e o CI da PR (job `verify`) passaram, com 203 testes._\n",
+              "createdAt": "2026-11-24T14:31:58Z"
+            }
+          ]
+        },
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": []
+                }
+              }
+            },
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": []
+                }
+              }
+            },
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": []
+                }
+              }
+            },
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": []
+                }
+              }
+            },
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": [
+                    {
+                      "conclusion": null,
+                      "workflowRun": null
+                    },
+                    {
+                      "conclusion": null,
+                      "workflowRun": null
+                    },
+                    {
+                      "conclusion": "SUCCESS",
+                      "workflowRun": {
+                        "createdAt": "2026-11-24T14:29:34Z",
+                        "workflow": {
+                          "name": "CI"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

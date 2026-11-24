@@ -1,0 +1,176 @@
+{
+  "data": {
+    "repository": {
+      "issue": {
+        "number": 31,
+        "title": "Cartão de crédito reconhecido pelo marcador próprio, não pelo nome",
+        "body": "Hoje qualquer item com o nome 'Cartão de crédito' é tratado como o cartão (R5, CA11). A troca para um marcador próprio do item fica para depois.\nSeções da spec envolvidas: R5, CA11.\nContexto: veio dos Abertos da spec v8, removidos pela PR #30 (texto original no commit 601a4a4).\n\n## Resumo do Entendimento\n**O problema:** O nome do item (\"Cartão de crédito\") está sendo usado para decidir o que fica fora dos cortes. O nome deveria só identificar o item para quem lê.\n**O que se ganha resolvendo:** O cartão passa a ser identificado por um atributo do próprio item, e qualquer nome continua protegido (CA11). O cadastro de itens, que ainda será construído, não nasce com a regra presa ao nome.\n**Decisão:** Seguir — Prioridade média: é barato resolver agora e evita refatorações maiores depois.\n**Detalhe:** artefato \"Entendimento\" desta issue\n\n## Concepção\n\n**Solução definida:** o item ganha o atributo booleano `protegidoDeCorte`, com padrão `false`. `elegivelParaCorte()` passa a ser `status != REALIZADO && !protegidoDeCorte`, e a constante `Item.NOME_CARTAO` sai do código de produção. O mês de exemplo marca o item \"Cartão de crédito\" com `protegidoDeCorte = true`. A flag só tira o item das sugestões de corte (vale para qualquer status, inclusive `EM_DISCUSSAO`): o item continua reservando valor, e o `livre` e o `total restante` não mudam. A resposta da API não muda.\n\n**Critérios de aceite:**\n- CA11 (reescrito): no mês de exemplo base, com o \"Cartão de crédito\" protegido, `valor=1100.00&categoria=QUERO_FAZER` dá o mesmo resultado do CA15, e nem `sugestoes` nem `listaCompleta` trazem o cartão. Item protegido nunca aparece, qualquer que seja o nome.\n- CA32: mês com orçamento variável 500 e dois itens, sem a flag (padrão `false`): jantar fora (`SERIA_LEGAL`, `PENDENTE`, 100) e um item chamado Cartão de crédito (`QUERO_FAZER`, `PENDENTE`, 300). Livre 100, total restante 500. `valor=300.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 200, sugestão só com o item chamado Cartão de crédito (300), que cobre a falta sozinho. O jantar fora não entra, porque não é necessário. O nome sozinho não protege o item.\n- CA33: o mesmo mês do CA32, com `protegidoDeCorte = true` no item chamado Cartão de crédito. `valor=300.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 200, `sugestoes` vazia, `listaCompleta` só com jantar fora, e ainda faltariam 100.\n- CA34: mês de exemplo com a bolsa (`EM_DISCUSSAO`, 90) com `protegidoDeCorte = true`. `valor=150.00&categoria=SERIA_LEGAL`: `CABE_COM_CORTES`, falta 140, sugestão com jantar fora e bola de futebol, que somam 200. A bolsa não aparece.\n- CA35: com o cartão marcado como protegido no mês de exemplo, os CA1 a CA20 e os CB1 a CB5 seguem com os mesmos valores (livre 100 e total restante 1600 no mês base). `./mvnw verify` passa, com a criação de itens nos testes concentrada num único construtor de teste.\n\n**Porte:** rato\n\n**Riscos que afetam o agente:**\n- Mudar a assinatura do `Item` quebra os usos atuais (repositório e testes): o agente atualiza todos na mesma PR, e o `./mvnw verify` fecha verde (CA35).\n- Regressão no cálculo: os critérios atuais seguem com os mesmos valores (CA35).\n- Esquecer a flag no cartão quando o cadastro existir: fica para o card do cadastro de itens, fora deste card.\n\n**Seções da spec autorizadas:** spec.md: Conceitos (atributo `protegidoDeCorte` do item), Regras de decisão (R5), Mês de exemplo (estado no servidor) e Critérios de aceite (CA11 reescrito, CA32 a CA35 novos); operacao.md: não se aplica\n\n**Cenários (desejável):**\n- Item protegido nunca é sugerido (CA11, CA33): dado um mês em que o item chamado Cartão de crédito tem `protegidoDeCorte = true` e a compra não cabe no livre nem na soma dos itens cortáveis, quando a avaliação é pedida, então o cartão não aparece em `sugestoes` nem em `listaCompleta`.\n- O nome sozinho não protege (CA32): dado um mês em que o item chamado Cartão de crédito não tem a flag e a compra só cabe se ele for cortado, quando a avaliação é pedida, então ele pode aparecer em `sugestoes`.\n- A flag vale para item em discussão (CA34): dado um item `EM_DISCUSSAO` com `protegidoDeCorte = true` e uma compra que precisa de corte, quando a avaliação é pedida, então ele não aparece nas sugestões, mesmo sendo do grupo 0.\n\n**Detalhe:** artefato \"Concepção\" desta issue\n\n## Pronto para desenvolver\n\n- [x] 1. Critérios de aceite revisados\n- [x] 2. Cenários Gherkin garantidos\n- [x] 3. Seções da spec existem\n- [x] 4. Tecnologia e arquitetura vistas\n- [x] 5. Roteiro de desenvolvimento claro\n\n## Roteiro de desenvolvimento\n\nBranch `chore/31-protegido-de-corte` a partir da `main`.\n\n- [x] 1. Criar o construtor único de itens para teste e migrar a `MesExemplo`, `AvaliacaoDevoFazerComItemParcialTest`, `AvisosHttpTest`, `MensagemDoItemHttpTest` e `LimiteDeItensHttpTest`; `./mvnw test` verde (só refatoração)\n- [x] 2. Acrescentar `protegidoDeCorte` como último componente do `Item` (padrão `false` no construtor de teste); marcar o `item-1` no repositório e na `MesExemplo`, e o item do cartão nos dois testes do `LimiteDeItensPorGrupoTest`; regra ainda sem mudança\n- [x] 3. Escrever os testes dos cenários C1 a C8 do artefato \"Refinamento\" (C6 pela API); rodar e ver falhar C2/CA32, C4/CA34 e C8\n- [x] 4. Implementar: `elegivelParaCorte()` = `status != REALIZADO && !protegidoDeCorte`; remover `Item.NOME_CARTAO`; testes verdes\n- [x] 5. Atualizar `docs/spec.md` (Conceitos, R5, Mês de exemplo, Critérios de aceite) com o trecho do artefato; confirmar os números definitivos\n- [x] 6. Rodar `./mvnw clean verify`\n- [x] 7. Abrir a PR com \"Closes #31\" e a correspondência dos critérios; chamar o revisor e postar o relatório na PR\n\n",
+        "issueType": {
+          "name": "Dívida"
+        },
+        "comments": {
+          "pageInfo": {
+            "hasNextPage": false
+          },
+          "nodes": [
+            {
+              "body": "**Decisão (Refinamento)**\n\n- **Data:** 2026-11-24\n- **Decisão:** CA32 reescrito. Com `valor=300.00&categoria=QUERO_FAZER`, a sugestão traz só o item chamado Cartão de crédito (300), que cobre a falta de 200 sozinho. O jantar fora não entra.\n- **Chapéu:** QA\n- **Motivo:** pela regra de corte (R6), o grupo `QUERO_FAZER` entra porque o jantar (100) não cobre a falta; o cartão (300) cobre sozinho, e \"nenhum item entra na sugestão sem ser necessário\". O texto da Concepção incluía o jantar por engano. Conferido também em `PlanoDeCortes.regraDeCorte`.\n",
+              "createdAt": "2026-11-24T13:55:30Z"
+            },
+            {
+              "body": "**Decisão (Refinamento)**\n\n- **Data:** 2026-11-24\n- **Decisão:** item com `protegidoDeCorte = true` não é elegível para corte, então não entra em nenhum grupo de corte nem na contagem do limite de 20 itens (inclusive no grupo 0, quando está `EM_DISCUSSAO`). Mês com 21 itens em discussão, um deles protegido, não dá 422. A regra fica explícita na R5.\n- **Chapéu:** QA\n- **Motivo:** a R6 forma os grupos só com os itens elegíveis (R5), mas o texto do limite diz \"todos os itens `EM_DISCUSSAO`\", o que deixava dúvida. É o comportamento que o código já tem, porque o grupo 0 é filtrado pela elegibilidade antes da contagem.\n",
+              "createdAt": "2026-11-24T13:59:43Z"
+            },
+            {
+              "body": "**Decisão (Refinamento)**\n\n- **Data:** 2026-11-24\n- **Decisão:** a criação de itens nos testes fica concentrada num único construtor de teste, visível a todos os pacotes de teste, com valores padrão (planejado, `PENDENTE`, sem realizado, sem decisor, `protegidoDeCorte = false`). A `MesExemplo` e os testes que hoje chamam `new Item(...)` direto (`AvaliacaoDevoFazerComItemParcialTest`, `AvisosHttpTest`, `MensagemDoItemHttpTest`, `LimiteDeItensHttpTest`) passam a usá-lo. Produção fica como está: o repositório em memória já cria itens num só lugar, e não se cria fábrica no domínio agora. O CA35 passa a dizer \"com a criação de itens nos testes concentrada num único construtor de teste\".\n- **Chapéu:** Engenharia\n- **Motivo:** espalhar `new Item(...)` faz cada campo novo quebrar vários arquivos. Como o `Item` é um `record`, o construtor é sempre público, mas ninguém precisa chamá-lo direto. Como um item nasce no domínio, com validações por status, é decisão do card do cadastro de itens.\n",
+              "createdAt": "2026-11-24T14:13:36Z"
+            },
+            {
+              "body": "**Decisão (Desenvolvimento)**\n\n- **Data:** 2026-11-24\n- **Decisão:** os critérios novos ficam com os números CA60 a CA63: CA32 → CA60, CA33 → CA61, CA34 → CA62, CA35 → CA63. O CA11 continua CA11 (reescrito).\n- **Chapéu:** Engenharia\n- **Motivo:** o artefato \"Refinamento\" previa CA32 a CA35, mas o `docs/operacao.md` já usa do CA22 ao CA59 (deploy e rollback). Pelo CLAUDE.md, o número definitivo é o próximo livre da série CA, conferindo `docs/spec.md` e `docs/operacao.md`; o próximo livre é o CA60.\n",
+              "createdAt": "2026-11-24T14:27:29Z"
+            }
+          ]
+        },
+        "timelineItems": {
+          "pageInfo": {
+            "hasNextPage": false
+          },
+          "nodes": [
+            {
+              "createdAt": "2026-11-20T20:41:43Z",
+              "previousStatus": "",
+              "status": "Backlog",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-23T01:20:45Z",
+              "previousStatus": "Backlog",
+              "status": "Entendimento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-23T01:48:43Z",
+              "previousStatus": "Entendimento",
+              "status": "Pronto p/ Concepção",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-24T01:33:08Z",
+              "previousStatus": "Pronto p/ Concepção",
+              "status": "Concepção",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-24T02:38:02Z",
+              "previousStatus": "Concepção",
+              "status": "Pronto p/ Refinamento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-24T03:01:59Z",
+              "previousStatus": "Pronto p/ Refinamento",
+              "status": "Refinamento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-24T14:17:08Z",
+              "previousStatus": "Refinamento",
+              "status": "Desenvolvimento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-24T14:32:08Z",
+              "previousStatus": "Desenvolvimento",
+              "status": "Aguardando revisão",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-11-24T14:38:58Z",
+              "previousStatus": "Aguardando revisão",
+              "status": "Done",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            }
+          ]
+        },
+        "projectItems": {
+          "nodes": [
+            {
+              "project": {
+                "title": "Pode Gastar",
+                "field": {
+                  "options": [
+                    {
+                      "name": "Backlog"
+                    },
+                    {
+                      "name": "Entendimento"
+                    },
+                    {
+                      "name": "Pronto p/ Concepção"
+                    },
+                    {
+                      "name": "Concepção"
+                    },
+                    {
+                      "name": "Pronto p/ Refinamento"
+                    },
+                    {
+                      "name": "Refinamento"
+                    },
+                    {
+                      "name": "Desenvolvimento"
+                    },
+                    {
+                      "name": "Aguardando revisão"
+                    },
+                    {
+                      "name": "Em revisão"
+                    },
+                    {
+                      "name": "Aguardando QA"
+                    },
+                    {
+                      "name": "Teste QA"
+                    },
+                    {
+                      "name": "Done"
+                    }
+                  ]
+                }
+              },
+              "fieldValueByName": {
+                "name": "Done"
+              }
+            }
+          ]
+        },
+        "closedByPullRequestsReferences": {
+          "nodes": [
+            {
+              "number": 57,
+              "merged": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}
