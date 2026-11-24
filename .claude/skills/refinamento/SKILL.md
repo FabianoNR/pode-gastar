@@ -23,7 +23,7 @@ O resultado fica em dois lugares:
   - No início, mostre os 5 itens; a cada passo, diga o que está ok e o que falta.
   - Dúvida que não muda o desenvolvimento não se discute agora: "fora de escopo" ou "decidir no código, com comentário no card".
   - Se o mesmo tópico voltar pela terceira vez, diga que a conversa está girando nele e proponha uma saída: decidir agora, estacionar (anotar e seguir) ou bloquear com Motivo.
-- Você NUNCA altera a Situação do card (só o Fabiano muda; você orienta), NUNCA move o card para Done, NUNCA fecha issue e NUNCA faz merge. Só move o Status desta etapa.
+- Você NUNCA altera a Situação do card (só o Fabiano muda; você orienta), NUNCA move o card para Done, NUNCA fecha issue e NUNCA faz merge. O Status só muda assim: para Refinamento ao começar, para Desenvolvimento ao concluir e, só por decisão do Fabiano, para "Pronto p/ Concepção" quando o card volta à Concepção. Nada além disso.
 
 ## Regras de ferramentas
 
@@ -140,6 +140,17 @@ Com os 5 itens marcados no corpo e a confirmação do Fabiano:
 1. Mostre o resumo: decisões, decisões técnicas e roteiro.
 2. Depois da confirmação, mova o Status para "Desenvolvimento", com os IDs descobertos agora (passo 1). Confira o nome exato da opção no `gh project field-list`.
 3. Diga o que foi feito e o que ficou para o Fabiano (Situação, ADR a escrever na PR).
+4. Você NÃO começa a codar. Entregue ao Fabiano, num bloco de código para copiar e colar numa sessão nova do Claude Code, o prompt abaixo, com `<N>` e `<tipo>/<N>-slug` preenchidos. O tipo da branch segue o Issue type: Story = `feat`, Bug = `fix`, Dívida = `chore`. Você propõe e o Fabiano ajusta se quiser.
+
+```
+Trabalhe a partir do card #<N>. Siga o CLAUDE.md.
+Branch <tipo>/<N>-slug a partir da main.
+1. Escreva os testes dos critérios de aceite e do artefato "Refinamento" antes da implementação. Rode e confirme que falham.
+2. Implemente. Atualize só as seções da spec que o card lista, com o trecho do artefato "Refinamento". Os números definitivos dos critérios são os próximos livres em docs/spec.md e docs/operacao.md.
+3. Sem merge, sem force push. Commits em Conventional Commits. Dúvida que o card não cobre: pare e comente no card.
+4. Rode JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./mvnw clean verify.
+5. Abra a PR com "Closes #<N>" e as seções O que é, O que mudou, Testes, Uso de IA, Riscos conhecidos. Depois chame o subagente revisor e poste o relatório como comentário na PR.
+```
 
 ### 6. Pedidos de ajuste depois do Refinamento
 
