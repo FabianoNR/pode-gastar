@@ -18,14 +18,14 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 - GitHub Project "Pode Gastar": os cards, com os campos Status e Situação.
 - Card: uma issue do Project, com os critérios de aceite e a lista das seções da spec que podem mudar.
 - `docs/design/`: congelado, só como histórico.
-- `.claude/skills/`: skills das etapas upstream (hoje, `entendimento` e `concepcao`).
+- `.claude/skills/`: skills das etapas antes do código (hoje, `entendimento`, `concepcao` e `refinamento`).
 - Artefatos da issue: o Entendimento (e depois a Concepção) fica num artefato da issue; o corpo do card guarda só o resumo.
 - `.github/ISSUE_TEMPLATE/`: templates de issue (Story, Bug e Dívida).
 
 ## Trabalho a partir do card
 
-1. Trabalhe a partir do card indicado. Só comece se o card tiver Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e a lista das seções da spec. Se faltar algo, pare e avise. Este passo vale para o trabalho de código, depois da Concepção; as skills trabalham antes disso: a de Entendimento em Backlog (inclusive em cards em Hold) e a de Concepção em Pronto p/ Concepção e em Concepção (inclusive com Situação Blocked).
-2. Se o card estiver em Pronto p/ Refinamento, mova-o para Refinamento ao começar o plano. Mova-o para Desenvolvimento ao começar a codar. Nunca mova um card para trás. A única exceção é da skill de Entendimento: quando a decisão é Hold, ela devolve o Status para Backlog.
+1. Trabalhe a partir do card indicado. O trabalho de código só começa com Status Desenvolvimento e Situação Normal (quem leva o card até lá é a skill de Refinamento, com a Definition of Ready cumprida), critérios de aceite e a lista das seções da spec. Se faltar algo, pare e avise. As skills trabalham antes disso: a de Entendimento em Backlog (inclusive em cards em Hold), a de Concepção em Pronto p/ Concepção e em Concepção (inclusive com Situação Blocked) e a de Refinamento em Pronto p/ Refinamento e em Refinamento (inclusive com Situação Blocked).
+2. Os Status Refinamento e Desenvolvimento são movidos pela skill de Refinamento: para Refinamento ao começar e para Desenvolvimento ao concluir, com a confirmação do Fabiano. O agente de código não move o card para Desenvolvimento. Nunca mova um card para trás. Exceções, só por decisão do Fabiano: (a) a skill de Entendimento devolve o Status para Backlog no Hold; (b) a skill de Refinamento move para Pronto p/ Concepção quando o card volta à Concepção.
 3. Crie a branch `<tipo>/<N>-slug` a partir da `main`, com o número do card (`feat`, `fix`, `docs` ou `chore`). Um card por PR.
 4. Leia a spec antes de escrever código, e o `docs/operacao.md` quando o card tocar workflows ou scripts. Escreva os testes dos critérios do card antes da implementação. Rode e confirme que falham.
 5. Atualize, na mesma PR do código, só as seções de `docs/spec.md` e `docs/operacao.md` que o card lista.
@@ -56,7 +56,7 @@ Cada decisão tomada durante o desenvolvimento vira um comentário no card, um p
 ## Limites do agente
 
 - Nunca altere a Situação do card. Nunca mova o card para Em revisão, Aguardando QA, Teste QA ou Done.
-- As skills de Entendimento e Concepção movem o Status da própria etapa. Nenhuma skill altera a Situação nem fecha issue.
+- As skills de Entendimento, Concepção e Refinamento movem o Status da própria etapa. Nenhuma skill altera a Situação nem fecha issue.
 - O merge é do Fabiano, por squash, um por vez. O card vai para Done no merge.
 - Branch com PR aberta recebe a `main` por merge, não por rebase. Sem force push.
 
@@ -79,6 +79,7 @@ Cada decisão tomada durante o desenvolvimento vira um comentário no card, um p
 - Valores monetários usam `BigDecimal`, nunca `double` ou `float` (ver `docs/decisions/0002-dinheiro-com-bigdecimal.md`).
 - Não adicione dependência nova sem perguntar.
 - `docs/spec.md` e `docs/operacao.md` só mudam na PR do código, nas seções que o card lista. Diga na descrição da PR quais seções mudaram.
+- Os critérios de aceite no card e nos artefatos têm numeração provisória. O número definitivo é dado na PR do código, ao escrevê-los na spec: o próximo livre da mesma série (CA ou CB), conferindo `docs/spec.md` e `docs/operacao.md`. A descrição da PR traz a correspondência entre o número do card e o número final (o revisor precisa dela).
 
 ## Qualidade de código
 

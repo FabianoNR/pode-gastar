@@ -2,7 +2,7 @@
 
 Status: aceita. Substitui em parte a ADR 0006, no que é fluxo de trabalho e papel do revisor; o harness técnico da 0006 continua, com as permissões ampliadas por esta ADR.
 
-Data: 2026-11-21
+Data: 2026-11-21. Revisada em 2026-11-24: o Refinamento ganhou skill própria (`refinamento`), o que substitui a decisão anterior de fazer o Refinamento em modo plano, sem skill própria.
 
 ## Contexto
 
@@ -18,29 +18,33 @@ Até aqui, o `CLAUDE.md` exigia um design aprovado em `docs/design/` antes de mu
 
 ### Upstream e downstream
 
-- **Upstream** (Backlog, Entendimento, Pronto p/ Concepção, Concepção, Pronto p/ Refinamento): conversa com o Fabiano. Termina num card pronto para refinar. Duas skills conduzem essa conversa (ver "Skills upstream").
-- **Downstream** (Refinamento em diante): o agente trabalha a partir do card indicado. Só começa por card com Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e lista das seções da spec; senão, para e avisa.
+- **Upstream** (Backlog, Entendimento, Pronto p/ Concepção, Concepção, Pronto p/ Refinamento): conversa com o Fabiano. Termina num card pronto para refinar. Duas skills conduzem essa conversa (ver "Skills").
+- **Downstream** (Refinamento em diante): o Refinamento é conduzido pela skill `refinamento` (ver "Skills"). O trabalho de código parte do card indicado e só começa com Status Desenvolvimento, Situação Normal, critérios de aceite e lista das seções da spec; senão, para e avisa.
 - O agente escreve primeiro os testes dos critérios e confirma que falham. Muda o código e, na mesma PR, só as seções da spec que o card lista. A lista do card é a autorização para mudar a spec. Se o card não cobre o caso, o agente comenta no card e devolve ao Fabiano.
 
-### Skills upstream
+### Skills
 
-As skills ficam em `.claude/skills/`. Cada uma move o Status só da própria etapa, nunca altera a Situação e nunca fecha issue.
+As skills ficam em `.claude/skills/`. Cada uma move o Status só da própria etapa (com as duas exceções ao "nunca para trás" descritas abaixo, só por decisão do Fabiano), nunca altera a Situação e nunca fecha issue.
 
 - **Entendimento** (`entendimento`, chapéu PM): parte de um pedido solto ou de um card em Backlog. Move o Status de Backlog para Entendimento e termina com a decisão do Fabiano:
   - Seguir: grava a Prioridade e move para Pronto p/ Concepção.
-  - Hold: comenta o Motivo no card e devolve o Status para Backlog. É a única exceção à regra "nunca mover para trás": Entendimento é estado ativo, e um card parado em Hold não pode contar como tempo ativo. O Fabiano muda a Situação para Hold.
+  - Hold: comenta o Motivo no card e devolve o Status para Backlog. É uma das duas exceções à regra "nunca mover para trás": Entendimento é estado ativo, e um card parado em Hold não pode contar como tempo ativo. O Fabiano muda a Situação para Hold.
   - Descartar: comenta o Motivo; o Fabiano fecha a issue como "not planned" e a automação leva o card para Done.
 - **Concepção** (`concepcao`): parte de um card em Pronto p/ Concepção com o Entendimento decidido como Seguir. Move o Status para Concepção, define solução, critérios de aceite, porte, riscos e seções da spec autorizadas, grava o Porte e move para Pronto p/ Refinamento. Elefante não passa adiante: fica em Concepção até o fatiamento.
 - **Retomada de card Blocked em Concepção:** quando uma dúvida crítica depende de pessoa, de teste real ou de outra área, a skill grava o que já foi decidido no artefato "Concepção", o Status continua em Concepção e o Fabiano muda a Situação para Blocked. Ao retomar, a skill lê o artefato "Concepção" existente, parte do que já foi decidido e pergunta só o que falta.
+- **Refinamento** (`refinamento`): parte de um card em Pronto p/ Refinamento (ou em Refinamento, na retomada) e move o Status para Refinamento. Conduz uma Definition of Ready única, de 5 itens: critérios de aceite revisados com a conta, cenários Gherkin, seções da spec conferidas, tecnologia e arquitetura vistas, roteiro de desenvolvimento. Ao concluir, com a confirmação do Fabiano, move o Status para Desenvolvimento e entrega um prompt de desenvolvimento para uma sessão nova; a skill não codifica.
+  - Não há fila entre Refinamento e Desenvolvimento. A medir no piloto: se aparecer espera, acrescentar o Status "Pronto p/ Desenvolvimento".
+  - Blocked: a skill retoma um card Blocked em Refinamento, como a Concepção; quando a dúvida é respondida, orienta o Fabiano a voltar a Situação para Normal. Hold: para.
+  - Dúvida que muda o problema ou a solução, ou que faz o card virar elefante: o Fabiano decide se o card vira card novo ou volta à Concepção. Se voltar, a skill move o Status para Pronto p/ Concepção. É a segunda exceção à regra "nunca mover para trás" e conta como retrabalho.
 - **Fonte da Demanda:** o Entendimento propõe o valor entre as opções do campo do Project e grava depois da confirmação do Fabiano. Em card existente com o campo já preenchido, não mexe. Se o campo não existir, avisa.
 
 ### Artefatos da issue
 
-O detalhe de cada etapa upstream fica num artefato da issue, em Markdown: "Entendimento" e "Concepção". O corpo do card guarda só o resumo que o downstream usa: o bloco "Resumo do Entendimento" e o bloco "Concepção" (solução, critérios de aceite, porte, riscos, seções da spec autorizadas). Cada skill só altera o próprio bloco e não toca o texto da criação. Para refazer, o artefato é editado, nunca apagado.
+O detalhe de cada etapa antes do código fica num artefato da issue, em Markdown: "Entendimento", "Concepção" e "Refinamento" (evidência de cada item da Definition of Ready, cenários Gherkin e trecho da spec proposto). O corpo do card guarda só o resumo que o downstream usa: o bloco "Resumo do Entendimento", o bloco "Concepção" (solução, critérios de aceite, porte, riscos, seções da spec autorizadas) e os blocos "Pronto para desenvolver" e "Roteiro de desenvolvimento", em lista de tarefas. Cada skill só altera o próprio bloco e não toca o texto da criação. Para refazer, o artefato é editado, nunca apagado.
 
 ### Estados
 
-- O campo Status segue o fluxo. O agente move o card para Refinamento ao começar o plano, para Desenvolvimento ao começar a codar e para Aguardando revisão quando a PR tem CI verde e o relatório do revisor não tem pendência.
+- O campo Status segue o fluxo. A skill de Refinamento move o card para Refinamento e para Desenvolvimento. O agente de código move para Aguardando revisão quando a PR tem CI verde e o relatório do revisor não tem pendência.
 - O agente nunca move para Em revisão, Aguardando QA, Teste QA nem Done.
 - O campo Situação (Normal, Hold, Blocked) é separado do Status e é de responsabilidade do Fabiano. O agente não o altera.
 - Campos do Project: Prioridade, Porte, Fonte da Demanda, Versão e Motivo. O tipo do card é o Issue type nativo da issue, não um campo do Project.
@@ -50,6 +54,7 @@ O detalhe de cada etapa upstream fica num artefato da issue, em Markdown: "Enten
 - Cadência card a card: um card por PR, em branch `<tipo>/<N>-slug` com o número do card (`feat`, `fix`, `docs`, `chore`).
 - A cadência fica preparada para versão: todo card tem ID, o gatilho do deploy fica isolado no workflow, o campo Versão já existe e o estado "Pronto para Produção" fica reservado, sem uso por enquanto.
 - O subagent revisor, somente leitura, compara o diff com a spec, com o `docs/operacao.md` e com o card. Ele roda depois de abrir a PR e antes de mover o card para Aguardando revisão. A sessão principal posta o relatório como comentário na PR com `gh pr comment`.
+- Os critérios de aceite do card e dos artefatos têm numeração provisória. O número definitivo é dado na PR do código, na mesma série (CA ou CB), e a descrição da PR traz a correspondência para o revisor.
 - QA local antes do merge.
 - Merge por squash, feito pelo Fabiano (ADR 0007), um por vez. A PR traz "Closes #N", e o card vai para Done no merge.
 - Branch com PR aberta recebe a `main` por merge, não por rebase. Sem force push.
