@@ -23,6 +23,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - valor realizado: o que já foi gasto, quando houver gasto;
   - status: `PENDENTE`, `EM_DISCUSSAO`, `PARCIAL` ou `REALIZADO`;
   - decisor responsável: só para `EM_DISCUSSAO`.
+  - protegido de corte: sim ou não; o padrão é não. Item protegido nunca é sugerido para corte (R5). A marcação não muda o que o item reserva nem o cálculo do livre e do total restante.
   - A identidade do item é o `id`. Dois itens com o mesmo nome continuam sendo itens diferentes: nunca se fundem nem se escondem por causa do nome.
 - **Compra:** simulação de um gasto novo, com valor e categoria. Não vira item do mês.
 
@@ -54,7 +55,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - `PENDENTE` de `SERIA_LEGAL` e `QUERO_FAZER`, conforme R6.
   - `PARCIAL`. Cortar cancela só o restante. O item passa a `REALIZADO` com o valor já gasto.
   - `PENDENTE` ou `PARCIAL` de `DEVO_FAZER`, só como último recurso: último grupo da compra `QUERO_FAZER` (R6) e opções da compra `DEVO_FAZER` (R7).
-  - Nunca `REALIZADO`. Nunca o cartão de crédito.
+  - Nunca `REALIZADO`. Nunca item protegido de corte, de qualquer status e categoria, qualquer que seja o nome. Item protegido não entra em nenhum grupo de corte (R6) nem na contagem do limite de 20 itens.
 - **R6.** Grupos de corte e regra de corte.
   - Os itens elegíveis (R5) formam grupos, do menos importante para o mais importante:
     - Grupo 0: itens `EM_DISCUSSAO`, de qualquer categoria.
@@ -190,6 +191,8 @@ Renda 6000. Custo fixo 3400. Investimento 1000, `APLICADO`. Orçamento variável
 | Jantar fora no mês | SERIA_LEGAL | 2 | sim | PENDENTE | 120 | — |
 | Bola de futebol | SERIA_LEGAL | 2 | sim | PENDENTE | 80 | — |
 
+Só o cartão de crédito é protegido de corte. Os demais itens, inclusive a bolsa, não são.
+
 Sem a bolsa: total restante 1600, livre 100.
 
 Com a bolsa em discussão (item adicional):
@@ -214,18 +217,24 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA8.** Viagem `REALIZADO` com realizado de 250: total restante 1350, livre 150. `valor=150.00&categoria=QUERO_FAZER`: `APROVADO`, saldo restante 0.
 - **CA9.** Caso CA8 com `valor=200.00&categoria=QUERO_FAZER`: falta 50, sugestão bola de futebol. A viagem, realizada, nunca aparece.
 - **CA10.** Viagem `PARCIAL` com realizado de 150 e `valor=200.00&categoria=QUERO_FAZER` com livre insuficiente: a viagem é candidata a corte, cancelando só o restante de 150. Se for cortada, o item vira `REALIZADO` com valor 150. Reforço (v8): com a mesma viagem e `valor=600.00&categoria=QUERO_FAZER`, falta 500. Os `SERIA_LEGAL` (200) não bastam; a sugestão traz jantar fora, bola de futebol, item para casa e a viagem, que cobre 550. A viagem vira `REALIZADO` com 150.
-- **CA11.** O cartão de crédito nunca aparece como sugestão de corte.
+- **CA11.** Com o cartão de crédito protegido de corte, `valor=1100.00&categoria=QUERO_FAZER` dá o mesmo resultado do CA15, e nem `sugestoes` nem `listaCompleta` trazem o cartão. Item protegido nunca aparece como sugestão de corte, qualquer que seja o nome.
 - **CA12.** `valor=0` ou negativo: 400.
 - **CA14.** `valor=900.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 800, uma sugestão com jantar fora, item para casa, viagem e manutenção do carro, que somam 820. Os grupos menos importantes somam 700, então a manutenção do carro (200) é necessária. Depois dela e dos dois `QUERO_FAZER` (500), faltam 100, e o jantar fora (120) cobre sozinho. A bola de futebol fica de fora.
 - **CA15.** `valor=1100.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 1000, `sugestoes` vazia, `listaCompleta` com jantar fora, bola de futebol, item para casa, viagem e manutenção do carro, nessa ordem, e ainda faltariam 100.
 - **CA16.** `valor=500.00&categoria=SERIA_LEGAL`: `NAO_CABE`, motivo "não há itens seria legal suficientes para cobrir a compra", falta 200.
 - **CA19.** `valor=600.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 500, uma sugestão com jantar fora (120), bola de futebol (80) e viagem (300), que somam 500. Os `SERIA_LEGAL` somam 200, então do `QUERO_FAZER` entra só o mínimo que cobre os 300 restantes: a viagem. O item para casa não entra, mesmo tendo menor intensidade que a viagem.
 - **CA20.** `valor=400.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 300, uma sugestão com jantar fora (120) e item para casa (200), que somam 320. Os `SERIA_LEGAL` somam 200, então do `QUERO_FAZER` entra só o mínimo que cobre os 100 restantes: o item para casa. Depois dele faltam 100, e o jantar fora cobre sozinho. A viagem (300) cobriria a falta sozinha, mas é `QUERO_FAZER` e só entra depois dos `SERIA_LEGAL`.
+- **CA63.** A marcação do cartão não muda o cálculo: no mês base, livre 100 e total restante 1600, e os CA1 a CA20 e os CB1 a CB5 seguem com os mesmos valores.
 
 ### Outros meses (compra `DEVO_FAZER` com item `PARCIAL`)
 
 - **CA17.** Mês com orçamento variável 700 e só três itens: jantar fora (`SERIA_LEGAL`, `PENDENTE`, 200), bola de futebol (`QUERO_FAZER`, `PENDENTE`, 100) e dentista (`DEVO_FAZER`, `PARCIAL`, planejado 300, realizado 100, cortável 200). Livre 100, total restante 600. `valor=600.00&categoria=DEVO_FAZER`: `CABE_COM_CORTES`, falta 500, uma sugestão com jantar fora, bola de futebol e dentista, que somam 500. `listaCompleta` vazia.
 - **CA18.** Mês com orçamento variável 800 e só três itens: jantar fora (`SERIA_LEGAL`, `PENDENTE`, 200, intensidade 2), manutenção do carro (`DEVO_FAZER`, `PENDENTE`, 200, intensidade 5) e dentista (`DEVO_FAZER`, `PARCIAL`, planejado 300, realizado 100, cortável 200, intensidade 2). Livre 100, total restante 700. `valor=400.00&categoria=DEVO_FAZER`: `CABE_COM_CORTES`, falta 300, uma sugestão com jantar fora e dentista, que somam 400. O dentista entra no lugar da manutenção pela menor intensidade (2 contra 5), já que os dois cortam 200.
+
+### Outros meses (item protegido de corte)
+
+- **CA60.** Mês com orçamento variável 500 e dois itens, nenhum protegido: jantar fora (`SERIA_LEGAL`, `PENDENTE`, 100) e um item chamado Cartão de crédito (`QUERO_FAZER`, `PENDENTE`, 300). Livre 100, total restante 500. `valor=300.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 200, sugestão só com o item chamado Cartão de crédito (300), que cobre a falta sozinho. O jantar fora não entra, porque não é necessário. O nome sozinho não protege o item.
+- **CA61.** O mesmo mês do CA60, com o item chamado Cartão de crédito protegido de corte. `valor=300.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 200, `sugestoes` vazia, `listaCompleta` só com jantar fora, e ainda faltariam 100.
 
 ### Com a bolsa em discussão
 
@@ -234,6 +243,7 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CB3.** A bolsa reclassificada como `DEVO_FAZER`, intensidade 2, ainda `EM_DISCUSSAO`: continua elegível e aparece primeiro na sugestão de `valor=150.00&categoria=SERIA_LEGAL`.
 - **CB4.** Dois itens `EM_DISCUSSAO`, um `QUERO_FAZER` de intensidade 5 e um `DEVO_FAZER` de intensidade 2: o `QUERO_FAZER` vem antes na sugestão, porque a categoria pesa antes da intensidade.
 - **CB5.** `valor=130.00&categoria=SERIA_LEGAL`: `CABE_COM_CORTES`, falta 120. Sugestão: bolsa (90) mais bola de futebol (80). Somam 170. O jantar fora (120) cobriria a falta sozinho, mas a bolsa, em discussão, sai primeiro; depois dela faltam 30, e a bola é o menor corte que cobre.
+- **CA62.** Bolsa protegida de corte. `valor=150.00&categoria=SERIA_LEGAL`: `CABE_COM_CORTES`, livre 10, falta 140, sugestão com jantar fora e bola de futebol, que somam 200. A bolsa não aparece.
 
 ### `/health`
 

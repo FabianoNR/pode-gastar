@@ -1,5 +1,6 @@
 package br.com.fabianonr.podegastar.adaptador.entrada.web;
 
+import static br.com.fabianonr.podegastar.dominio.ItemDeTeste.umItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -10,8 +11,6 @@ import br.com.fabianonr.podegastar.aplicacao.porta.entrada.AvaliarCompra;
 import br.com.fabianonr.podegastar.dominio.Categoria;
 import br.com.fabianonr.podegastar.dominio.Item;
 import br.com.fabianonr.podegastar.dominio.Mes;
-import br.com.fabianonr.podegastar.dominio.StatusItem;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,16 +40,9 @@ class MensagemDoItemHttpTest {
               .orElseThrow();
       List<Item> itens = new ArrayList<>(mesDeExemplo.itens());
       itens.add(
-          new Item(
-              "item-7",
-              "Bolsa",
-              Categoria.QUERO_FAZER,
-              3,
-              false,
-              StatusItem.EM_DISCUSSAO,
-              new BigDecimal("90"),
-              null,
-              "marido"));
+          umItem("item-7", "Bolsa", Categoria.QUERO_FAZER, 3, "90")
+              .emDiscussaoAguardando("marido")
+              .criar());
       return new Mes(
           mesDeExemplo.id(),
           mesDeExemplo.renda(),

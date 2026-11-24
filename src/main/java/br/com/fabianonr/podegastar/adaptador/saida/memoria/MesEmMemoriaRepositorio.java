@@ -33,7 +33,7 @@ public class MesEmMemoriaRepositorio implements MesRepositorio {
         new BigDecimal("3400"),
         new BigDecimal("1000"),
         List.of(
-            pendente("item-1", Item.NOME_CARTAO, DEVO_FAZER, 5, "600"),
+            pendenteProtegidoDeCorte("item-1", "Cartão de crédito", DEVO_FAZER, 5, "600"),
             pendente("item-2", "Manutenção do carro", DEVO_FAZER, 5, "200"),
             pendente("item-3", "Viagem de fim de semana", QUERO_FAZER, 4, "300"),
             pendente("item-4", "Item para casa", QUERO_FAZER, 3, "200"),
@@ -43,6 +43,21 @@ public class MesEmMemoriaRepositorio implements MesRepositorio {
 
   private static Item pendente(
       String id, String nome, Categoria categoria, int intensidade, String valor) {
+    return item(id, nome, categoria, intensidade, valor, false);
+  }
+
+  private static Item pendenteProtegidoDeCorte(
+      String id, String nome, Categoria categoria, int intensidade, String valor) {
+    return item(id, nome, categoria, intensidade, valor, true);
+  }
+
+  private static Item item(
+      String id,
+      String nome,
+      Categoria categoria,
+      int intensidade,
+      String valor,
+      boolean protegidoDeCorte) {
     return new Item(
         id,
         nome,
@@ -52,6 +67,7 @@ public class MesEmMemoriaRepositorio implements MesRepositorio {
         StatusItem.PENDENTE,
         new BigDecimal(valor),
         null,
-        null);
+        null,
+        protegidoDeCorte);
   }
 }

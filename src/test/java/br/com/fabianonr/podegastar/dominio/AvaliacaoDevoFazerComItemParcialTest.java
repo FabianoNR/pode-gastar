@@ -17,16 +17,10 @@ class AvaliacaoDevoFazerComItemParcialTest {
   }
 
   private static Item dentistaParcial(String id) {
-    return new Item(
-        id,
-        DENTISTA,
-        Categoria.DEVO_FAZER,
-        2,
-        true,
-        StatusItem.PARCIAL,
-        valor("300"),
-        valor("100"),
-        null);
+    return ItemDeTeste.umItem(id, DENTISTA, Categoria.DEVO_FAZER, 2, "300")
+        .comStatus(StatusItem.PARCIAL)
+        .comValorRealizado("100")
+        .criar();
   }
 
   private static List<String> nomes(Sugestao sugestao) {

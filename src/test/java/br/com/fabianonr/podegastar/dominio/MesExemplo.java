@@ -3,8 +3,7 @@ package br.com.fabianonr.podegastar.dominio;
 import static br.com.fabianonr.podegastar.dominio.Categoria.DEVO_FAZER;
 import static br.com.fabianonr.podegastar.dominio.Categoria.QUERO_FAZER;
 import static br.com.fabianonr.podegastar.dominio.Categoria.SERIA_LEGAL;
-import static br.com.fabianonr.podegastar.dominio.StatusItem.EM_DISCUSSAO;
-import static br.com.fabianonr.podegastar.dominio.StatusItem.PENDENTE;
+import static br.com.fabianonr.podegastar.dominio.ItemDeTeste.umItem;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ final class MesExemplo {
 
   static Item pendente(
       String id, String nome, Categoria categoria, int intensidade, String estimado) {
-    return new Item(id, nome, categoria, intensidade, true, PENDENTE, valor(estimado), null, null);
+    return umItem(id, nome, categoria, intensidade, estimado).criar();
   }
 
   /** Item em discussão cujo id é o próprio nome, para testes que não precisam de id. */
@@ -48,17 +47,25 @@ final class MesExemplo {
       int intensidade,
       String estimado,
       String decisor) {
-    return new Item(
-        id, nome, categoria, intensidade, false, EM_DISCUSSAO, valor(estimado), null, decisor);
+    return umItem(id, nome, categoria, intensidade, estimado)
+        .emDiscussaoAguardando(decisor)
+        .criar();
   }
 
   static Item viagem(StatusItem status, String realizado) {
-    return new Item(
-        "item-3", VIAGEM, QUERO_FAZER, 4, true, status, valor("300"), valor(realizado), null);
+    return umItem("item-3", VIAGEM, QUERO_FAZER, 4, "300")
+        .comStatus(status)
+        .comValorRealizado(realizado)
+        .criar();
   }
 
   static Item viagemPendente() {
     return pendente("item-3", VIAGEM, QUERO_FAZER, 4, "300");
+  }
+
+  /** O cartão de crédito do mês de exemplo, protegido de corte (R5). */
+  static Item cartaoProtegidoDeCorte() {
+    return umItem("item-1", CARTAO, DEVO_FAZER, 5, "600").protegidoDeCorte().criar();
   }
 
   static Item bolsa() {
@@ -88,7 +95,7 @@ final class MesExemplo {
 
   private static List<Item> itensBase(Item viagem) {
     return Stream.of(
-            pendente("item-1", CARTAO, DEVO_FAZER, 5, "600"),
+            cartaoProtegidoDeCorte(),
             pendente("item-2", MANUTENCAO, DEVO_FAZER, 5, "200"),
             viagem,
             pendente("item-4", ITEM_CASA, QUERO_FAZER, 3, "200"),

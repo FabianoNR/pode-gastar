@@ -11,16 +11,14 @@ public record Item(
     StatusItem status,
     BigDecimal valorEstimado,
     BigDecimal valorRealizado,
-    String decisorResponsavel) {
+    String decisorResponsavel,
+    boolean protegidoDeCorte) {
 
   public Item {
     if (id == null || id.isBlank()) {
       throw new IllegalArgumentException("item sem id");
     }
   }
-
-  /** O cartão de crédito nunca é sugerido para corte (design aprovado, R5). */
-  public static final String NOME_CARTAO = "Cartão de crédito";
 
   /** Valor que o item reserva no mês. */
   public BigDecimal comprometido() {
@@ -44,9 +42,9 @@ public record Item(
     return comprometido().subtract(jaSaiu());
   }
 
-  /** Nunca REALIZADO, nunca o cartão de crédito (R5). */
+  /** Nunca REALIZADO, nunca item protegido de corte, qualquer que seja o nome (R5). */
   public boolean elegivelParaCorte() {
-    return status != StatusItem.REALIZADO && !NOME_CARTAO.equals(nome);
+    return status != StatusItem.REALIZADO && !protegidoDeCorte;
   }
 
   private BigDecimal estimado() {

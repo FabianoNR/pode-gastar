@@ -1,5 +1,6 @@
 package br.com.fabianonr.podegastar.adaptador.entrada.web;
 
+import static br.com.fabianonr.podegastar.dominio.ItemDeTeste.umItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -9,7 +10,6 @@ import br.com.fabianonr.podegastar.aplicacao.porta.entrada.AvaliarCompra;
 import br.com.fabianonr.podegastar.dominio.Categoria;
 import br.com.fabianonr.podegastar.dominio.Item;
 import br.com.fabianonr.podegastar.dominio.Mes;
-import br.com.fabianonr.podegastar.dominio.StatusItem;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -44,16 +44,9 @@ class LimiteDeItensHttpTest {
       List<Item> itens =
           IntStream.rangeClosed(1, 64)
               .mapToObj(numero ->
-                  new Item(
-                      "item-" + numero,
-                      "Pedido " + numero,
-                      Categoria.SERIA_LEGAL,
-                      1,
-                      false,
-                      StatusItem.EM_DISCUSSAO,
-                      new BigDecimal("10"),
-                      null,
-                      "marido"))
+                  umItem("item-" + numero, "Pedido " + numero, Categoria.SERIA_LEGAL, 1, "10")
+                      .emDiscussaoAguardando("marido")
+                      .criar())
               .toList();
       // Orçamento 1000, comprometido 640: livre 360, então uma compra de 400 exige cortes.
       return new Mes(
@@ -64,16 +57,8 @@ class LimiteDeItensHttpTest {
       List<Item> itens =
           IntStream.rangeClosed(1, 21)
               .mapToObj(numero ->
-                  new Item(
-                      "item-" + numero,
-                      "Item " + numero,
-                      Categoria.SERIA_LEGAL,
-                      1,
-                      true,
-                      StatusItem.PENDENTE,
-                      new BigDecimal("10"),
-                      null,
-                      null))
+                  umItem("item-" + numero, "Item " + numero, Categoria.SERIA_LEGAL, 1, "10")
+                      .criar())
               .toList();
       // Orçamento 1000, comprometido 210: livre 790, então uma compra de 800 exige cortes.
       return new Mes(
