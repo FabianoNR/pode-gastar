@@ -19,7 +19,7 @@ Até aqui, o `CLAUDE.md` exigia um design aprovado em `docs/design/` antes de mu
 ### Upstream e downstream
 
 - **Upstream** (Backlog, Entendimento, Pronto p/ Concepção, Concepção, Pronto p/ Refinamento): conversa com o Fabiano. Termina num card pronto para refinar. Duas skills conduzem essa conversa (ver "Skills").
-- **Downstream** (Refinamento em diante): o Refinamento é conduzido pela skill `refinamento` (ver "Skills"). O trabalho de código parte do card indicado e só começa com Status Desenvolvimento, Situação Normal, critérios de aceite e lista das seções da spec; senão, para e avisa.
+- **Downstream** (Refinamento em diante): o Refinamento é conduzido pela skill `refinamento` (ver "Skills"). O trabalho de código parte do card indicado e só começa com Status Desenvolvimento ou adiante, Situação Normal, critérios de aceite e lista das seções da spec; senão, para e avisa.
 - O agente escreve primeiro os testes dos critérios e confirma que falham. Muda o código e, na mesma PR, só as seções da spec que o card lista. A lista do card é a autorização para mudar a spec. Se o card não cobre o caso, o agente comenta no card e devolve ao Fabiano.
 
 ### Skills
@@ -54,7 +54,7 @@ O detalhe de cada etapa antes do código fica num artefato da issue, em Markdown
 - Cadência card a card: um card por PR, em branch `<tipo>/<N>-slug` com o número do card (`feat`, `fix`, `docs`, `chore`).
 - A cadência fica preparada para versão: todo card tem ID, o gatilho do deploy fica isolado no workflow, o campo Versão já existe e o estado "Pronto para Produção" fica reservado, sem uso por enquanto.
 - O subagent revisor, somente leitura, compara o diff com a spec, com o `docs/operacao.md` e com o card. Ele roda depois de abrir a PR e antes de mover o card para Aguardando revisão. A sessão principal posta o relatório como comentário na PR com `gh pr comment`.
-- Os critérios de aceite do card e dos artefatos têm numeração provisória. O número definitivo é dado na PR do código, na mesma série (CA ou CB), e a descrição da PR traz a correspondência para o revisor.
+- Os critérios de aceite do card e dos artefatos têm numeração provisória. O número definitivo é dado na PR do código, na mesma série (CA ou CB), a descrição da PR traz a correspondência, e a sessão principal a passa ao revisor junto com o diff e o card.
 - QA local antes do merge.
 - Merge por squash, feito pelo Fabiano (ADR 0007), um por vez. A PR traz "Closes #N", e o card vai para Done no merge.
 - Branch com PR aberta recebe a `main` por merge, não por rebase. Sem force push.
