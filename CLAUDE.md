@@ -24,7 +24,7 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 
 ## Trabalho a partir do card
 
-1. Trabalhe a partir do card indicado. Só comece se o card tiver Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e a lista das seções da spec. Se faltar algo, pare e avise. Este passo vale para o trabalho de código, depois da Concepção; as skills de Entendimento e Concepção trabalham antes disso, em Backlog e em cards em Hold.
+1. Trabalhe a partir do card indicado. Só comece se o card tiver Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e a lista das seções da spec. Se faltar algo, pare e avise. Este passo vale para o trabalho de código, depois da Concepção; as skills trabalham antes disso: a de Entendimento em Backlog (inclusive em cards em Hold) e a de Concepção em Pronto p/ Concepção e em Concepção (inclusive com Situação Blocked).
 2. Se o card estiver em Pronto p/ Refinamento, mova-o para Refinamento ao começar o plano. Mova-o para Desenvolvimento ao começar a codar. Nunca mova um card para trás. A única exceção é da skill de Entendimento: quando a decisão é Hold, ela devolve o Status para Backlog.
 3. Crie a branch `<tipo>/<N>-slug` a partir da `main`, com o número do card (`feat`, `fix`, `docs` ou `chore`). Um card por PR.
 4. Leia a spec antes de escrever código, e o `docs/operacao.md` quando o card tocar workflows ou scripts. Escreva os testes dos critérios do card antes da implementação. Rode e confirme que falham.
@@ -32,7 +32,7 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 6. Se o card não cobre o caso, pare e devolva ao Fabiano: comente no card o que parou e espere. O Status não muda. Se a dúvida muda o comportamento visível do sistema, o Fabiano decide se ela volta à Concepção como card novo.
 7. Faça commits pequenos com Conventional Commits. Nunca faça push na `main`. Abra a PR com "Closes #N".
 8. Depois de abrir a PR, chame o subagent revisor com o diff e o texto do card. Poste o relatório dele como comentário na PR, com `gh pr comment`. O relatório separa:
-   - Pendência: contradição com `docs/spec.md`, `docs/operacao.md`, o card ou uma ADR; violação de qualidade (ADR 0008).
+   - Pendência: contradição com `docs/spec.md`, com `docs/operacao.md`, com o card ou com uma ADR (inclui o que o CLAUDE.md proíbe e as regras de escopo da spec do `.claude/agents/revisor.md`); violação de qualidade: item do checklist ou letra de SOLID do `.claude/agents/revisor.md` (ADR 0008).
    - Sugestão: todo o resto.
 
    Só pendência bloqueia a PR. Sugestão nunca vira card sozinha: liste as sugestões e o Fabiano decide. O padrão é descartar.
