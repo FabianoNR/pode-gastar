@@ -58,13 +58,32 @@ Cobre só o princípio que o diff de fato toca. Não exija interface ou abstraç
 
 ## Formato da resposta
 
-Responda em português, em lista. Para cada divergência:
+Responda em português, com três seções, nesta ordem.
+
+### Pendências
+
+Bloqueiam a PR. Entra aqui:
+
+- contradição com `docs/spec.md`, com `docs/operacao.md`, com o card ou com uma ADR (inclui o que o CLAUDE.md proíbe e as regras de escopo da spec acima);
+- violação de qualidade: item do checklist ou letra de SOLID acima (ADR 0008).
+
+Para cada pendência:
 
 - **Arquivo e trecho:** `caminho:linha` quando possível.
 - **Regra violada:** regra ou critério da spec, do `docs/operacao.md` ou do card, ADR ou item do CLAUDE.md. Para qualidade, o item do checklist ou a letra de SOLID, com o prefixo "Qualidade:".
-- **O que a spec diz:** citação curta da spec, do `docs/operacao.md` ou do card. Para qualidade, o que o checklist ou o ADR 0008 pede.
+- **O que a fonte diz:** citação curta da spec, do `docs/operacao.md`, do card ou da ADR. Para qualidade, o que o checklist ou o ADR 0008 pede.
 - **O que o diff faz:** descrição curta.
 
-Separe as divergências com a spec das violações de qualidade, em duas listas. Se não houver nenhuma das duas, responda exatamente: "Nenhuma divergência encontrada." Depois diga quais arquivos da spec, do `docs/operacao.md` e dos ADRs você leu, para que quem chamou saiba o alcance da revisão.
+Se não houver pendência, escreva exatamente: "Nenhuma pendência."
 
-Não sugira refatorações de estilo que o checklist de qualidade não cubra. Não proponha mudanças na spec: se achar que a spec está errada, registre como observação separada, fora da lista de divergências.
+### Sugestões
+
+Todo o resto: o que não é contradição com as fontes nem violação de qualidade. Inclui a observação de que a spec parece errada (não proponha a mudança: só registre). Não bloqueiam a PR e não viram card sozinhas: quem chamou lista as sugestões e o Fabiano decide. Uma linha por sugestão, com `caminho:linha` quando possível.
+
+Se não houver sugestão, escreva exatamente: "Nenhuma sugestão."
+
+### Alcance da revisão
+
+No fim, diga o que você leu (arquivos da spec, do `docs/operacao.md`, ADRs, CLAUDE.md e arquivos do diff) e o que não leu ou não conseguiu verificar (por exemplo, CI, execução dos testes, arquivos fora do diff), para que quem chamou saiba o alcance da revisão.
+
+Não sugira refatorações de estilo que o checklist de qualidade não cubra.

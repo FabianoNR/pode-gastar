@@ -18,9 +18,25 @@ Até aqui, o `CLAUDE.md` exigia um design aprovado em `docs/design/` antes de mu
 
 ### Upstream e downstream
 
-- **Upstream** (Backlog, Entendimento, Pronto p/ Concepção, Concepção, Pronto p/ Refinamento): conversa com o Fabiano. Termina num card pronto para refinar. As skills de Entendimento e Concepção ficam para a PR seguinte.
+- **Upstream** (Backlog, Entendimento, Pronto p/ Concepção, Concepção, Pronto p/ Refinamento): conversa com o Fabiano. Termina num card pronto para refinar. Duas skills conduzem essa conversa (ver "Skills upstream").
 - **Downstream** (Refinamento em diante): o agente trabalha a partir do card indicado. Só começa por card com Situação Normal, Status Pronto p/ Refinamento ou adiante, critérios de aceite e lista das seções da spec; senão, para e avisa.
 - O agente escreve primeiro os testes dos critérios e confirma que falham. Muda o código e, na mesma PR, só as seções da spec que o card lista. A lista do card é a autorização para mudar a spec. Se o card não cobre o caso, o agente comenta no card e devolve ao Fabiano.
+
+### Skills upstream
+
+As skills ficam em `.claude/skills/`. Cada uma move o Status só da própria etapa, nunca altera a Situação e nunca fecha issue.
+
+- **Entendimento** (`entendimento`, chapéu PM): parte de um pedido solto ou de um card em Backlog. Move o Status de Backlog para Entendimento e termina com a decisão do Fabiano:
+  - Seguir: grava a Prioridade e move para Pronto p/ Concepção.
+  - Hold: comenta o Motivo no card e devolve o Status para Backlog. É a única exceção à regra "nunca mover para trás": Entendimento é estado ativo, e um card parado em Hold não pode contar como tempo ativo. O Fabiano muda a Situação para Hold.
+  - Descartar: comenta o Motivo; o Fabiano fecha a issue como "not planned" e a automação leva o card para Done.
+- **Concepção** (`concepcao`): parte de um card em Pronto p/ Concepção com o Entendimento decidido como Seguir. Move o Status para Concepção, define solução, critérios de aceite, porte, riscos e seções da spec autorizadas, grava o Porte e move para Pronto p/ Refinamento. Elefante não passa adiante: fica em Concepção até o fatiamento.
+- **Retomada de card Blocked em Concepção:** quando uma dúvida crítica depende de pessoa, de teste real ou de outra área, a skill grava o que já foi decidido no artefato "Concepção", o Status continua em Concepção e o Fabiano muda a Situação para Blocked. Ao retomar, a skill lê o artefato "Concepção" existente, parte do que já foi decidido e pergunta só o que falta.
+- **Fonte da Demanda:** o Entendimento propõe o valor entre as opções do campo do Project e grava depois da confirmação do Fabiano. Em card existente com o campo já preenchido, não mexe. Se o campo não existir, avisa.
+
+### Artefatos da issue
+
+O detalhe de cada etapa upstream fica num artefato da issue, em Markdown: "Entendimento" e "Concepção". O corpo do card guarda só o resumo que o downstream usa: o bloco "Resumo do Entendimento" e o bloco "Concepção" (solução, critérios de aceite, porte, riscos, seções da spec autorizadas). Cada skill só altera o próprio bloco e não toca o texto da criação. Para refazer, o artefato é editado, nunca apagado.
 
 ### Estados
 
@@ -40,7 +56,7 @@ Até aqui, o `CLAUDE.md` exigia um design aprovado em `docs/design/` antes de mu
 
 ### Permissões
 
-O `.claude/settings.json` passa a liberar `gh issue create`, `edit` e `comment`, `gh pr comment`, leitura e escrita de itens no Project e `gh api -X PATCH` em issues do repositório. O PATCH existe para o Issue type, porque o `gh` 2.45 não tem a opção `--type`, e como alternativa se `gh issue edit` falhar. Ficam negados `gh api graphql`, `gh api` com merge ou DELETE, e a exclusão de Project, campo, item e issue.
+O `.claude/settings.json` passa a liberar `gh issue create`, `edit` e `comment`, `gh pr comment`, leitura e escrita de itens no Project, `gh issue artifact create`, `edit`, `view` e `list`, e `gh api -X PATCH` em issues do repositório. O `gh` instalado (2.105.0) tem `--type` em `gh issue create` e `gh issue edit`. O PATCH continua em uso na skill de Entendimento para aplicar o Issue type e fica como alternativa se `gh issue edit` falhar. Ficam negados `gh api graphql`, `gh api` com merge ou DELETE, `gh issue artifact delete`, e a exclusão de Project, campo, item e issue.
 
 ## Consequências
 
@@ -48,8 +64,11 @@ O `.claude/settings.json` passa a liberar `gh issue create`, `edit` e `comment`,
 - O revisor depende de receber o texto do card no prompt. Sem o card, ele pede o card antes de continuar.
 - `docs/design/` fica como histórico.
 - Riscos conhecidos:
-  - O `gh project item-edit` também permite alterar a Situação do card. Hoje só a instrução do `CLAUDE.md` impede o agente de fazer isso.
-  - O bloqueio das permissões é por texto de comando e pode ser contornado. O bloqueio de `gh pr merge` continua valendo, mas liberar `gh api`, mesmo restrito, amplia o que dá para fazer. A proteção real continua sendo a regra de branch no GitHub (ADR 0006).
+  - O `gh project item-edit` também permite alterar a Situação do card. Hoje só a instrução do `CLAUDE.md` e das skills impede o agente de fazer isso.
+  - O bloqueio das permissões é por texto de comando e pode ser contornado. O deny de DELETE só pega o `-X` (ou `--method`) logo depois de `api`; com a opção em outra posição, ele não casa. E o `*` no allow do PATCH aceita opções extras no fim do comando. O bloqueio de `gh pr merge` continua valendo, mas a proteção real é a regra de branch no GitHub (ADR 0006).
+  - O PATCH em issue pode fechar a issue se `state` for enviado, e a automação "Item closed" do Project manda o card para Done. As skills proíbem enviar `state`.
+  - A edição do corpo do card grava o corpo inteiro, não só o bloco da skill. As skills comparam o corpo antigo com o novo antes de gravar; o backup é o histórico de edições da issue no GitHub.
+  - Os artefatos da issue estão em public preview: o comando e o comportamento podem mudar. Eles ficam visíveis para quem vê a issue.
 
 ## Trade-offs
 
