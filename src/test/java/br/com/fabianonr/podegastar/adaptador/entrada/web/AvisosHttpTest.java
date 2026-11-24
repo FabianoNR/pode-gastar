@@ -1,5 +1,6 @@
 package br.com.fabianonr.podegastar.adaptador.entrada.web;
 
+import static br.com.fabianonr.podegastar.dominio.ItemDeTeste.umItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,7 +11,6 @@ import br.com.fabianonr.podegastar.aplicacao.porta.entrada.AvaliarCompra;
 import br.com.fabianonr.podegastar.dominio.Categoria;
 import br.com.fabianonr.podegastar.dominio.Item;
 import br.com.fabianonr.podegastar.dominio.Mes;
-import br.com.fabianonr.podegastar.dominio.StatusItem;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -45,16 +45,7 @@ class AvisosHttpTest {
     }
 
     private static Item item(String id, String nome) {
-      return new Item(
-          id,
-          nome,
-          Categoria.SERIA_LEGAL,
-          2,
-          true,
-          StatusItem.PENDENTE,
-          new BigDecimal("100"),
-          null,
-          null);
+      return umItem(id, nome, Categoria.SERIA_LEGAL, 2, "100").criar();
     }
 
     private static Mes mes(String mesId, Item... itens) {
