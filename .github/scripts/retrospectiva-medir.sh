@@ -9,6 +9,8 @@
 # guarda ("nao_encontrado"), os contados por heurística ("estimado") e os que vêm da conversa
 # ("da_conversa"). Nada é inventado nem estimado sem marcação: célula sem dado fica vazia.
 #
+# A chamada a gh api graphql é a exceção da ADR 0016 à ADR 0015: só query, nunca mutation.
+#
 # Fontes (todas só leitura):
 #   - Issue, via GraphQL: título, Issue type, corpo (caixas do "Roteiro de desenvolvimento"),
 #     comentários, eventos ProjectV2ItemStatusChangedEvent (createdAt, previousStatus, status),
@@ -187,121 +189,176 @@ avaliar_evidencia_qa() {
   esac
 }
 
-# Recebe o JSON de entrada montado em principal() e imprime o JSON de saída.
-calcular() {
-  jq --argjson colunas "$(printf '%s\n' "${COLUNAS[@]}" | jq -R . | jq -s .)" \
-    --arg projeto "$PROJETO" '
-    def minutos(segundos): (segundos / 60 * 100 | round) / 100;
-    def legivel(segundos):
-      (segundos | floor) as $s
-      | ($s / 86400 | floor) as $d | (($s % 86400) / 3600 | floor) as $h
-      | (($s % 3600) / 60 | floor) as $m | ($s % 60) as $r
-      | (if $d > 0 then "\($d)d" else "" end) + (if $d > 0 or $h > 0 then "\($h)h" else "" end)
-        + "\($m)m" + ("0\($r)" | .[-2:]) + "s";
-    def instante: fromdateiso8601;
-    def fila: . == "Backlog" or startswith("Pronto p/") or startswith("Aguardando");
-    def ativo: IN("Entendimento", "Concepção", "Refinamento", "Desenvolvimento", "Teste QA");
-    def contar_itens(secao):
-      [ split("\n") | foreach .[] as $linha ({dentro: false, item: false};
-          if ($linha | test("^#{2,3} ")) then {dentro: ($linha | test("^### " + secao)), item: false}
-          else {dentro: .dentro, item: (.dentro and ($linha | test("^- ")))} end;
-          .item) | select(.) ] | length;
-    def coluna_de: {
-      "Backlog": "min_backlog", "Entendimento": "min_entendimento",
-      "Pronto p/ Concepção": "min_pronto_concepcao", "Concepção": "min_concepcao",
-      "Pronto p/ Refinamento": "min_pronto_refinamento", "Refinamento": "min_refinamento",
-      "Desenvolvimento": "min_desenvolvimento", "Aguardando revisão": "min_aguardando_revisao",
-      "Aguardando QA": "min_aguardando_qa", "Teste QA": "min_teste_qa" };
+# Programa jq do cálculo. Cada def faz uma tarefa; o corpo no fim só junta as partes.
+# Entrada: {issue, pr, agora, evidencia_qa, edicoes_refinamento}, montada em principal().
+PROGRAMA_DE_CALCULO='
+  def minutos(segundos): (segundos / 60 * 100 | round) / 100;
+  def dois_digitos: "0\(.)" | .[-2:];
 
-    .issue.data.repository.issue as $issue
-    | .agora as $agora
-    | ($issue.projectItems.nodes | map(select(.project.title == $projeto)) | first) as $item
-    | ($item.project.field.options // [] | map(.name)) as $ordem
-    | ($issue.timelineItems.nodes
-        | map(select(.project.title == $projeto and .status != null))
-        | sort_by(.createdAt)) as $eventos
-    | ([ range(0; $eventos | length) as $i
-         | { status: $eventos[$i].status,
-             inicio: ($eventos[$i].createdAt | instante),
-             fim: (($eventos[$i + 1].createdAt // $agora) | instante) } ]
-       | map(select(.status != "Done"))) as $intervalos
-    | ($eventos | map(select(.status == "Entendimento")) | first | .createdAt) as $entrada_entendimento
-    | ($eventos | map(select(.status == "Done")) | last | .createdAt) as $entrada_done
-    | (if $entrada_entendimento and $entrada_done
-       then [($entrada_entendimento | instante), ($entrada_done | instante)] else null end) as $janela
-    | def dentro_da_janela(filtro):
-        if $janela == null then null
-        else [ $intervalos[] | select(.status | filtro)
-               | ([.fim, $janela[1]] | min) - ([.inicio, $janela[0]] | max)
-               | select(. > 0) ] | add // 0 end;
-    ($intervalos | group_by(.status)
-      | map({ key: .[0].status, value: (map(.fim - .inicio) | add) }) | from_entries) as $segundos
-    | ([ range(1; $eventos | length) as $i
-         | ($ordem | index($eventos[$i].previousStatus)) as $de
-         | ($ordem | index($eventos[$i].status)) as $para
-         | select($de != null and $para != null and $para < $de) ] | length) as $voltas
-    | ($issue.body // "" | gsub("\r"; "") | split("\n")
-        | (map(test("^## Roteiro de desenvolvimento\\s*$")) | index(true)) as $inicio
-        | if $inicio == null then null
-          else .[$inicio + 1:] | (map(test("^## ")) | index(true)) as $fim
-            | (if $fim == null then . else .[:$fim] end)
-            | { total: map(select(test("^\\s*- \\[[ xX]\\]"))) | length,
-                marcados: map(select(test("^\\s*- \\[[xX]\\]"))) | length } end) as $roteiro
-    | ($issue.comments.nodes | map(.body)) as $comentarios
-    | (.pr.data.repository.pullRequest // null) as $pr
-    | ($pr.comments.nodes // [] | map(.body | gsub("\r"; ""))
-        | map(select(test("(^|\\n)### Pend[eê]ncias") and test("(^|\\n)### Sugest[oõ]es"))) | last) as $relatorio
-    | ([ $pr.commits.nodes[]?.commit.checkSuites.nodes[]
-         | select(.workflowRun.workflow.name == "CI") ] | sort_by(.workflowRun.createdAt) | first) as $primeiro_ci
-    | ($item.fieldValueByName.name // null) as $status_atual
-    | {
-        id_card: $issue.number,
-        titulo: $issue.title,
-        tipo: ($issue.issueType.name // null),
-        data_done: $entrada_done,
-        tempo_total_min: (if $janela then minutos($janela[1] - $janela[0]) else null end),
-        fila_total_min: (dentro_da_janela(fila) | if . == null then null else minutos(.) end),
-        ativo_total_min: (dentro_da_janela(ativo) | if . == null then null else minutos(.) end),
-        voltas_status: (if ($ordem | length) > 0 then $voltas else null end),
-        vezes_blocked_hold: null,
-        pendencias_revisor: (if $relatorio then $relatorio | contar_itens("Pend") else null end),
-        sugestoes_revisor: (if $relatorio then $relatorio | contar_itens("Sugest") else null end),
-        ci_verde_primeira: (if $primeiro_ci then (if $primeiro_ci.conclusion == "SUCCESS" then "sim" else "nao" end) else null end),
-        evidencia_qa: (if .evidencia_qa == "" then null else .evidencia_qa end),
-        roteiro_marcado_pct: (if $roteiro and $roteiro.total > 0 then ($roteiro.marcados * 100 / $roteiro.total | round) else null end),
-        desvios_roteiro: ($comentarios | map(select(test("desvio"; "i"))) | length),
-        edicoes_refinamento: .edicoes_refinamento,
-        comentarios_decisao: ($comentarios | map(gsub("\\*"; "")) | map(select(test("Decisão:") and test("Chapéu:"))) | length),
-        achados_skill: null, achados_fabiano: null, achados_agente: null, nota_atrito: null
-      }
-      + (coluna_de | to_entries | map({ key: .value, value: minutos($segundos[.key] // 0) }) | from_entries)
-      | . as $metricas
-      | {
-          card: $metricas.id_card,
-          status_atual: $status_atual,
-          pr: ($pr.number // null),
-          medido_em: $agora,
-          tempos: ($segundos | to_entries | sort_by(.key as $status | $ordem | index($status))
-                   | map({ status: .key, min: minutos(.value), legivel: legivel(.value) })),
-          fora_de_fila_e_ativo: ($segundos | keys | map(select((fila or ativo) | not))),
-          roteiro: $roteiro,
-          artefatos: $ARGS.named.artefatos,
-          metricas: ([ $colunas[] as $c | { key: $c, value: $metricas[$c] } ] | from_entries),
-          estimado: ["desvios_roteiro", "comentarios_decisao"],
-          da_conversa: ["achados_skill", "achados_fabiano", "achados_agente", "nota_atrito"],
-          nao_encontrado: [ $colunas[] as $c
-            | select($metricas[$c] == null and ($c | IN("achados_skill", "achados_fabiano", "achados_agente", "nota_atrito") | not))
-            | $c ],
-          avisos: ([ (if $issue.comments.pageInfo.hasNextPage then "o card tem mais de 100 comentários; só os 100 primeiros foram lidos" else empty end),
-                     (if $issue.timelineItems.pageInfo.hasNextPage then "a linha do tempo tem mais de 200 eventos; só os 200 primeiros foram lidos" else empty end),
-                     (if $status_atual != "Done" then "o card não está em Done; o último Status conta até medido_em" else empty end) ]),
-          csv_cabecalho: ($colunas | join(",")),
-          csv_linha: ([ $colunas[] as $c | $metricas[$c]
-                        | if . == null then ""
-                          elif type == "string" then "\"" + gsub("\""; "\"\"") + "\""
-                          else tostring end ] | join(","))
-        }
-  ' --argjson artefatos "$1" <<<"$2"
+  # 2d4h39m02s, 1h04m54s, 15m00s.
+  def legivel(segundos):
+    (segundos | floor) as $total
+    | ($total / 86400 | floor) as $dias
+    | (($total % 86400) / 3600 | floor) as $horas
+    | (($total % 3600) / 60 | floor) as $minutos
+    | ($total % 60) as $segundos
+    | if $dias > 0 or $horas > 0
+      then (if $dias > 0 then "\($dias)d" else "" end) + "\($horas)h" + ($minutos | dois_digitos) + "m"
+      else "\($minutos)m" end
+      + ($segundos | dois_digitos) + "s";
+
+  def instante: fromdateiso8601;
+  def fila: . == "Backlog" or startswith("Pronto p/") or startswith("Aguardando");
+  def ativo: IN("Entendimento", "Concepção", "Refinamento", "Desenvolvimento", "Teste QA");
+  def coluna_de: {
+    "Backlog": "min_backlog", "Entendimento": "min_entendimento",
+    "Pronto p/ Concepção": "min_pronto_concepcao", "Concepção": "min_concepcao",
+    "Pronto p/ Refinamento": "min_pronto_refinamento", "Refinamento": "min_refinamento",
+    "Desenvolvimento": "min_desenvolvimento", "Aguardando revisão": "min_aguardando_revisao",
+    "Aguardando QA": "min_aguardando_qa", "Teste QA": "min_teste_qa" };
+  def colunas_da_conversa: ["achados_skill", "achados_fabiano", "achados_agente", "nota_atrito"];
+
+  # Eventos de Status do projeto, em ordem de data.
+  def eventos_de_status(projeto):
+    .timelineItems.nodes
+    | map(select(.project.title == projeto and .status != null))
+    | sort_by(.createdAt);
+
+  # Um intervalo por passagem num Status (menos Done): {status, inicio, fim}, em segundos.
+  def intervalos(agora):
+    . as $eventos
+    | [ range(0; $eventos | length) as $i
+        | { status: $eventos[$i].status,
+            inicio: ($eventos[$i].createdAt | instante),
+            fim: (($eventos[$i + 1].createdAt // agora) | instante) } ]
+    | map(select(.status != "Done"));
+
+  # Segundos dos intervalos cujo Status passa no filtro, recortados pela janela [inicio, fim].
+  def segundos_na_janela(janela; filtro):
+    if janela == null then null
+    else [ .[] | select(.status | filtro)
+           | ([.fim, janela[1]] | min) - ([.inicio, janela[0]] | max)
+           | select(. > 0) ] | add // 0 end;
+
+  def segundos_por_status:
+    group_by(.status) | map({ key: .[0].status, value: (map(.fim - .inicio) | add) }) | from_entries;
+
+  def voltas(ordem):
+    . as $eventos
+    | [ range(1; $eventos | length) as $i
+        | (ordem | index($eventos[$i].previousStatus)) as $posicao_anterior
+        | (ordem | index($eventos[$i].status)) as $posicao_nova
+        | select($posicao_anterior != null and $posicao_nova != null and $posicao_nova < $posicao_anterior) ]
+    | length;
+
+  # Caixas do bloco "## Roteiro de desenvolvimento" do corpo: {total, marcados} ou null.
+  def roteiro:
+    gsub("\r"; "") | split("\n")
+    | (map(test("^## Roteiro de desenvolvimento\\s*$")) | index(true)) as $inicio
+    | if $inicio == null then null
+      else .[$inicio + 1:]
+        | (map(test("^## ")) | index(true)) as $fim
+        | (if $fim == null then . else .[:$fim] end)
+        | { total: map(select(test("^\\s*- \\[[ xX]\\]"))) | length,
+            marcados: map(select(test("^\\s*- \\[[xX]\\]"))) | length } end;
+
+  # Último comentário com as seções "### Pendências" e "### Sugestões".
+  def relatorio_do_revisor:
+    map(.body | gsub("\r"; ""))
+    | map(select(test("(^|\\n)### Pend[eê]ncias") and test("(^|\\n)### Sugest[oõ]es")))
+    | last;
+
+  # Itens de lista de primeiro nível ("- ") dentro da seção "### <secao>".
+  def contar_itens(secao):
+    [ split("\n")
+      | foreach .[] as $linha ({ dentro: false, item: false };
+          if ($linha | test("^#{2,3} ")) then { dentro: ($linha | test("^### " + secao)), item: false }
+          else { dentro: .dentro, item: (.dentro and ($linha | test("^- "))) } end;
+          .item)
+      | select(.) ]
+    | length;
+
+  # A execução mais antiga do workflow "CI" entre os commits da PR.
+  def primeiro_ci:
+    [ .commits.nodes[]?.commit.checkSuites.nodes[] | select(.workflowRun.workflow.name == "CI") ]
+    | sort_by(.workflowRun.createdAt) | first;
+
+  def celula_csv:
+    if . == null then ""
+    elif type == "string" then "\"" + gsub("\""; "\"\"") + "\""
+    else tostring end;
+
+  def ou_nulo(filtro): if . == null then null else filtro end;
+
+  .issue.data.repository.issue as $issue
+  | .agora as $agora
+  | (.pr.data.repository.pullRequest // null) as $pr
+  | ($issue.projectItems.nodes | map(select(.project.title == $projeto)) | first) as $item_do_projeto
+  | ($item_do_projeto.project.field.options // [] | map(.name)) as $ordem
+  | ($issue | eventos_de_status($projeto)) as $eventos
+  | ($eventos | intervalos($agora)) as $intervalos
+  | ($intervalos | segundos_por_status) as $segundos
+  | ($eventos | map(select(.status == "Entendimento")) | first | .createdAt) as $entrada_entendimento
+  | ($eventos | map(select(.status == "Done")) | last | .createdAt) as $entrada_done
+  | (if $entrada_entendimento and $entrada_done
+     then [($entrada_entendimento | instante), ($entrada_done | instante)] else null end) as $janela
+  | ($issue.body // "" | roteiro) as $roteiro
+  | ($pr.comments.nodes // [] | relatorio_do_revisor) as $relatorio
+  | ($pr | primeiro_ci) as $execucao_ci
+  | ($issue.comments.nodes | map(.body)) as $comentarios
+  | ($item_do_projeto.fieldValueByName.name // null) as $status_atual
+  | {
+      id_card: $issue.number,
+      titulo: $issue.title,
+      tipo: ($issue.issueType.name // null),
+      data_done: $entrada_done,
+      tempo_total_min: ($janela | ou_nulo(minutos(.[1] - .[0]))),
+      fila_total_min: ($intervalos | segundos_na_janela($janela; fila) | ou_nulo(minutos(.))),
+      ativo_total_min: ($intervalos | segundos_na_janela($janela; ativo) | ou_nulo(minutos(.))),
+      voltas_status: (if ($ordem | length) > 0 then $eventos | voltas($ordem) else null end),
+      vezes_blocked_hold: null,
+      pendencias_revisor: ($relatorio | ou_nulo(contar_itens("Pend"))),
+      sugestoes_revisor: ($relatorio | ou_nulo(contar_itens("Sugest"))),
+      ci_verde_primeira: ($execucao_ci | ou_nulo(if .conclusion == "SUCCESS" then "sim" else "nao" end)),
+      evidencia_qa: (if .evidencia_qa == "" then null else .evidencia_qa end),
+      roteiro_marcado_pct: (if $roteiro and $roteiro.total > 0 then ($roteiro.marcados * 100 / $roteiro.total | round) else null end),
+      desvios_roteiro: ($comentarios | map(select(test("desvio"; "i"))) | length),
+      edicoes_refinamento: .edicoes_refinamento,
+      comentarios_decisao: ($comentarios | map(gsub("\\*"; "")) | map(select(test("Decisão:") and test("Chapéu:"))) | length)
+    }
+    + (colunas_da_conversa | map({ key: ., value: null }) | from_entries)
+    + (coluna_de | to_entries | map({ key: .value, value: minutos($segundos[.key] // 0) }) | from_entries)
+  | . as $metricas
+  | {
+      card: $metricas.id_card,
+      status_atual: $status_atual,
+      pr: ($pr.number // null),
+      medido_em: $agora,
+      tempos: ($segundos | to_entries | sort_by(.key as $status | $ordem | index($status))
+               | map({ status: .key, min: minutos(.value), legivel: legivel(.value) })),
+      fora_de_fila_e_ativo: ($segundos | keys | map(select((fila or ativo) | not))),
+      roteiro: $roteiro,
+      artefatos: $artefatos,
+      metricas: ([ $colunas[] as $coluna | { key: $coluna, value: $metricas[$coluna] } ] | from_entries),
+      estimado: ["desvios_roteiro", "comentarios_decisao"],
+      da_conversa: colunas_da_conversa,
+      nao_encontrado: [ $colunas[] as $coluna
+        | select($metricas[$coluna] == null and (colunas_da_conversa | index($coluna) | not))
+        | $coluna ],
+      avisos: [ (if $issue.comments.pageInfo.hasNextPage then "o card tem mais de 100 comentários; só os 100 primeiros foram lidos" else empty end),
+                (if $issue.timelineItems.pageInfo.hasNextPage then "a linha do tempo tem mais de 200 eventos; só os 200 primeiros foram lidos" else empty end),
+                (if $status_atual != "Done" then "o card não está em Done; o último Status conta até medido_em" else empty end) ],
+      csv_cabecalho: ($colunas | join(",")),
+      csv_linha: ([ $colunas[] as $coluna | $metricas[$coluna] | celula_csv ] | join(","))
+    }
+'
+
+# Recebe a lista de nomes dos artefatos e o JSON de entrada; imprime o JSON de saída.
+calcular() {
+  local artefatos="$1" entrada="$2" colunas_json
+  colunas_json="$(printf '%s\n' "${COLUNAS[@]}" | jq -R . | jq -s .)"
+  jq --argjson colunas "$colunas_json" --arg projeto "$PROJETO" --argjson artefatos "$artefatos" \
+    "$PROGRAMA_DE_CALCULO" <<<"$entrada"
 }
 
 principal() {

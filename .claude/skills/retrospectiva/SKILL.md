@@ -5,7 +5,7 @@ description: Faz a retrospectiva de um card que chegou a Done. Use quando o Fabi
 
 # Retrospectiva
 
-Etapa depois do Done no GitHub Project "Pode Gastar". Quem chama é o Fabiano, numa sessão nova, depois que o card chega a Done. Nada dispara sozinho, e o agente não roda a retrospectiva por conta própria. O fluxo dos cards está na ADR 0015.
+Etapa depois do Done no GitHub Project "Pode Gastar". Quem chama é o Fabiano, numa sessão nova, depois que o card chega a Done. Nada dispara sozinho, e o agente não roda a retrospectiva por conta própria. O fluxo dos cards está na ADR 0015; a decisão desta skill, na ADR 0016.
 
 A retrospectiva é por card: mede o card, conversa com o Fabiano, cruza o que ele diz com os dados e fecha com um plano de ação. A visão do fluxo todo fica para depois.
 
@@ -29,12 +29,13 @@ O resultado fica fora do repositório, na pasta cujo caminho está no `CLAUDE.md
 
 ## Regras de ferramentas
 
-- Medição: só pelo script `.github/scripts/retrospectiva-medir.sh <N>`. Ele só faz consultas (query) e recusa mutation. Não chame `gh api graphql` direto. O Claude Code vai pedir permissão para rodar o script e para acessar a pasta das retrospectivas; o Fabiano aprova na hora.
+- Medição: só pelo script `.github/scripts/retrospectiva-medir.sh <N>`. Ele só faz consultas (query) e recusa mutation. Não chame `gh api graphql` direto: a exceção da ADR 0016 vale só para o script. O Claude Code vai pedir permissão para rodar o script e para acessar a pasta das retrospectivas; o Fabiano aprova na hora.
 - Leitura no GitHub, se precisar de contexto além do script: `gh issue view`, `gh pr view`, `gh issue artifact list` e `gh issue artifact view`. Nada que escreva.
-- Arquivos temporários: ferramenta Write em `/tmp/pode-gastar-card/` (se o arquivo existir, leia com Read antes).
+- Arquivos temporários: ferramenta Write em `/tmp/pode-gastar-card/` (se o arquivo existir, leia com Read antes). Não use `sed`, `tail`, `mktemp` nem `>`.
+- Leitura e busca nos arquivos (CSV, `card-<N>.md`, `CLAUDE.md`): ferramentas Read e Grep, não `cat`, `tail` nem `grep` pelo Bash.
 - Arquivos da pasta das retrospectivas:
   - `card-<N>.md`: ferramenta Write. Se o arquivo já existir, leia com Read antes.
-  - `retrospectivas.csv`: só acréscimo no fim (Gravar, passo 7). Nunca reescreva o arquivo nem linhas antigas.
+  - `retrospectivas.csv`: só acréscimo no fim (Gravar, passo 7). Nunca reescreva o arquivo nem linhas antigas. É a única exceção à regra do `>`: a ferramenta Write reescreveria o arquivo inteiro, então a linha nova entra com `cat <arquivo-da-linha> >> <pasta>/retrospectivas.csv`, e só ali.
 
 ## Entrada
 
@@ -52,9 +53,9 @@ O resultado fica fora do repositório, na pasta cujo caminho está no `CLAUDE.md
    - Crie o CSV com a ferramenta Write, só com o cabeçalho, que é a saída de `.github/scripts/retrospectiva-medir.sh --cabecalho` (e o campo `csv_cabecalho` do JSON).
    Se o CSV existir, confira que o cabeçalho é igual ao do script. Se for diferente, pare e avise: não misture colunas.
 6. Leia as últimas retrospectivas, para comparar e conferir o plano anterior:
-   - As 3 últimas linhas do CSV: `tail -n 3 <pasta>/retrospectivas.csv`.
+   - As 3 últimas linhas do CSV: leia o arquivo com Read.
    - O plano de ação da retrospectiva mais recente: a última linha do CSV dá o `id_card`; leia a seção "Plano de ação" do `card-<id>.md`. Se não houver retrospectiva anterior, diga isso e siga.
-7. Se o card já tem linha no CSV (`grep '^<N>,' <pasta>/retrospectivas.csv`), mostre a linha e pergunte se ele quer refazer. Refazer não apaga nada: a nova linha é acrescentada no fim, vale a mais recente de cada `id_card` e o `card-<N>.md` é substituído (depois de lido).
+7. Se o card já tem linha no CSV (Grep por `^<N>,` no `retrospectivas.csv`), mostre a linha e pergunte se ele quer refazer. Refazer não apaga nada: a nova linha é acrescentada no fim, vale a mais recente de cada `id_card` e o `card-<N>.md` é substituído (depois de lido).
 
 ## Passo a passo
 
@@ -122,9 +123,9 @@ O Fabiano decide o que entra, o que muda e o que vai para "Fica para depois". Na
 4. Grave o `card-<N>.md` com a ferramenta Write.
 5. Acrescente a linha ao CSV, sem reescrever o arquivo:
    - Grave só a linha, com a ferramenta Write, em `/tmp/pode-gastar-card/<N>-retrospectiva-linha.csv`.
-   - Conte as linhas antes: `wc -l <pasta>/retrospectivas.csv`.
-   - Acrescente: `cat /tmp/pode-gastar-card/<N>-retrospectiva-linha.csv >> <pasta>/retrospectivas.csv`.
-   - Confira: `wc -l` deu uma linha a mais e `tail -n 1` mostra a linha nova.
+   - Leia o CSV com Read e anote o número de linhas.
+   - Acrescente (a exceção das Regras de ferramentas): `cat /tmp/pode-gastar-card/<N>-retrospectiva-linha.csv >> <pasta>/retrospectivas.csv`.
+   - Leia o CSV de novo com Read: tem de ter uma linha a mais, e a última é a linha nova. As anteriores, idênticas.
 6. Diga o que foi gravado e onde. Lembre que os dados ficam fora do repositório e sem backup.
 
 ## Modelo do `card-<N>.md`

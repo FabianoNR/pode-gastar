@@ -56,7 +56,7 @@ conferir() {
 medir card-31 31
 registrar "card #31: o script termina sem erro" "$([[ -s "$TEMP/card-31.json" ]] && echo sim || echo nao)" "$(cat "$TEMP/card-31.err")"
 conferir "card #31: tempo em cada Status" card-31 '[.tempos[] | "\(.status)=\(.legivel)"]' \
-  '["Backlog=2d4h39m02s","Entendimento=27m58s","Pronto p/ Concepção=23h44m25s","Concepção=1h4m54s","Pronto p/ Refinamento=23m57s","Refinamento=11h15m09s","Desenvolvimento=15m00s","Aguardando revisão=6m50s"]'
+  '["Backlog=2d4h39m02s","Entendimento=27m58s","Pronto p/ Concepção=23h44m25s","Concepção=1h04m54s","Pronto p/ Refinamento=23m57s","Refinamento=11h15m09s","Desenvolvimento=15m00s","Aguardando revisão=6m50s"]'
 conferir "card #31: total da entrada em Entendimento até o Done" card-31 '.metricas.tempo_total_min' '2238.22'
 conferir "card #31: fila e ativo somam o total" card-31 '.metricas | [.fila_total_min, .ativo_total_min, (.fila_total_min + .ativo_total_min | . * 100 | round / 100)]' '[1455.2,783.02,2238.22]'
 conferir "card #31: sem voltas de Status" card-31 '.metricas.voltas_status' '0'
