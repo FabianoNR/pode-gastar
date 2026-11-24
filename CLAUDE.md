@@ -41,14 +41,22 @@ O fluxo completo está na ADR 0015 (`docs/decisions/0015-fluxo-com-agentes-a-par
 
 ## Pronto quando
 
-Vale para todo card:
+Vale para todo card.
+
+Do agente:
 
 - Os testes dos critérios de aceite foram escritos antes da implementação e passam.
-- O "Roteiro de desenvolvimento" está todo marcado no card antes de ele ir para Aguardando revisão. Quem move o card para Aguardando revisão é o agente, quando isso, o CI verde, o revisor sem pendência e os desvios avisados estão cumpridos (passo 9).
-- O revisor de IA não tem pendência, e o relatório dele está na PR.
+- O "Roteiro de desenvolvimento" está todo marcado no card antes de ele ir para Aguardando revisão.
 - `docs/spec.md` e `docs/operacao.md` foram atualizados nas seções que o card lista.
-- O Fabiano fez o QA local no Postman.
+- O revisor de IA não tem pendência, e o relatório dele está na PR.
 - A PR está ligada ao card ("Closes #N") e tem o CI verde.
+- Os desvios do roteiro foram avisados (comentário no card e resumo final).
+- Quem move o card para Aguardando revisão é o agente, quando todas as condições acima estão cumpridas (passo 9).
+
+Do Fabiano:
+
+- Fez o QA local no Postman.
+- A descrição da PR tem a seção "Evidência de QA" preenchida, com resumo e print. PR só de documentação (só `docs/**`, `.claude/**`, `CLAUDE.md` e `README.md`) não precisa. O check `evidencia-qa` confere a forma (`docs/operacao.md`, CA64).
 
 ## Decisões durante o desenvolvimento
 

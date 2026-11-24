@@ -41,6 +41,10 @@ Runbook da pipeline de entrega: deploy normal e rollback. Este documento descrev
 
 - **O16.** Cada chamada à API do Render (O5) e ao deploy hook (O4) tem tempo limite de 30 segundos, que inclui a conexão e a leitura da resposta. Se a chamada passar desse tempo, o fluxo falha na hora, sem nova tentativa e sem consultar `/health`, com uma mensagem clara de que a chamada passou do tempo limite. Nos testes automatizados, esse tempo limite pode ser reduzido por variável de ambiente, usada só nos testes, como o intervalo e o prazo da O13; os workflows não definem essa variável, e o padrão continua 30 segundos. O job de deploy hook e smoke test do `ci.yml` e o job de rollback têm `timeout-minutes: 15`. A espera pelo `/health` não muda: 5 segundos por consulta (O10), 15 segundos entre consultas e prazo de 10 minutos (O7, O13).
 
+### Evidência de QA na PR
+
+- **O18.** O workflow `evidencia-qa.yml` tem o job `evidencia-qa`, que roda em `pull_request` (abertura, edição da descrição, novo commit e reabertura). Se a PR altera algo fora de `docs/**`, `.claude/**`, `CLAUDE.md` e `README.md`, a descrição precisa ter a seção "## Evidência de QA" preenchida: sem o texto-marcador do modelo (`.github/PULL_REQUEST_TEMPLATE.md`) e com pelo menos uma imagem (`![...](...)` ou `<img>`). Se a PR altera só os caminhos isentos, o check passa e diz que a evidência não se aplica. O check prova a forma da evidência, não a qualidade do teste. Ele só bloqueia o merge quando é exigido no ruleset da `main`.
+
 ### Esclarecimentos da operação
 
 - **O17.** Estes pontos não mudam o comportamento das regras anteriores; só registram o que é aceito:
@@ -86,6 +90,7 @@ Runbook da pipeline de entrega: deploy normal e rollback. Este documento descrev
 - **CA57.** Rollback para `<sha>`: a API do Render aceita a conexão e não responde em 30 segundos. O rollback falha na hora, com uma mensagem clara de tempo limite, depois de uma única tentativa e sem consultar `/health` (O16).
 - **CA58.** Deploy normal: o deploy hook aceita a conexão e não responde em 30 segundos. O job falha na hora, com uma mensagem clara de tempo limite, depois de uma única chamada e sem consultar `/health` (O16).
 - **CA59.** O job de deploy hook e smoke test do `ci.yml` e o job de rollback do `rollback.yml` têm `timeout-minutes: 15`. Verificado por teste estático dos workflows (O16).
+- **CA64.** PR que altera código, com a seção "Evidência de QA" ausente, vazia, só com o texto-marcador ou sem imagem: o job `evidencia-qa` falha com uma mensagem em português que diz o que falta. Com a seção preenchida e com imagem, passa. PR só de caminhos isentos: passa e diz que a evidência não se aplica (O18). Verificado pelo script de testes `.github/scripts/verificar-evidencia-qa-teste.sh`.
 
 ## Verificação manual
 

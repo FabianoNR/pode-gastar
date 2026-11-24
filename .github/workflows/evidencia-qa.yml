@@ -1,0 +1,37 @@
+name: Evidência de QA
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  evidencia-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Testar o script de verificação
+        run: .github/scripts/verificar-evidencia-qa-teste.sh
+
+      - name: Listar os arquivos alterados pela API, sem executar código da PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORIO: ${{ github.repository }}
+          NUMERO_DA_PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh api --paginate "repos/${REPOSITORIO}/pulls/${NUMERO_DA_PR}/files" \
+            --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/caminhos.txt"
+
+      - name: Verificar a evidência de QA na descrição da PR
+        env:
+          CORPO_DA_PR: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$CORPO_DA_PR" > "$RUNNER_TEMP/corpo.md"
+          .github/scripts/verificar-evidencia-qa.sh "$RUNNER_TEMP/corpo.md" "$RUNNER_TEMP/caminhos.txt"
