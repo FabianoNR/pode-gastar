@@ -1,0 +1,83 @@
+{
+  "data": {
+    "repository": {
+      "pullRequest": {
+        "number": 92,
+        "body": "Closes #90\n\n## O que é\n\nalgo\n\n## Evidência de QA\n\nTestei no Postman.\n\n![print](https://exemplo.com/a.png)\n",
+        "files": {
+          "nodes": [
+            {
+              "path": "src/main/java/Exemplo.java"
+            },
+            {
+              "path": "docs/spec.md"
+            }
+          ]
+        },
+        "comments": {
+          "nodes": [
+            {
+              "body": "## Relatório do revisor\n\n### Pendências\n\n- antiga\n\n### Sugestões\n\n- antiga\n",
+              "createdAt": "2026-01-03T10:00:00Z"
+            },
+            {
+              "body": "ok",
+              "createdAt": "2026-01-03T10:30:00Z"
+            },
+            {
+              "body": "## Relatório do revisor\r\n\r\n### Pendências\r\n\r\n- `A.java:1`: falta teste.\r\n  - detalhe que não conta\r\n- `B.java:2`: nome genérico.\r\n\r\n### Sugestões\r\n\r\nNenhuma sugestão.\r\n\r\n### Alcance da revisão\r\n\r\n- li o diff\r\n",
+              "createdAt": "2026-01-03T10:40:00Z"
+            }
+          ]
+        },
+        "commits": {
+          "nodes": [
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": [
+                    {
+                      "conclusion": "SUCCESS",
+                      "workflowRun": {
+                        "createdAt": "2026-01-03T09:00:00Z",
+                        "workflow": {
+                          "name": "Evidência de QA"
+                        }
+                      }
+                    },
+                    {
+                      "conclusion": "FAILURE",
+                      "workflowRun": {
+                        "createdAt": "2026-01-03T09:01:00Z",
+                        "workflow": {
+                          "name": "CI"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "commit": {
+                "checkSuites": {
+                  "nodes": [
+                    {
+                      "conclusion": "SUCCESS",
+                      "workflowRun": {
+                        "createdAt": "2026-01-03T09:30:00Z",
+                        "workflow": {
+                          "name": "CI"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

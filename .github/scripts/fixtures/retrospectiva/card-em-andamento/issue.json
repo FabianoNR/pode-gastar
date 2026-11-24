@@ -1,0 +1,153 @@
+{
+  "data": {
+    "repository": {
+      "issue": {
+        "number": 93,
+        "title": "Card em andamento",
+        "body": "Sem roteiro.",
+        "issueType": {
+          "name": "Story"
+        },
+        "comments": {
+          "pageInfo": {
+            "hasNextPage": false
+          },
+          "nodes": []
+        },
+        "timelineItems": {
+          "pageInfo": {
+            "hasNextPage": false
+          },
+          "nodes": [
+            {
+              "createdAt": "2026-02-01T00:00:00Z",
+              "previousStatus": "",
+              "status": "Backlog",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-02-01T10:00:00Z",
+              "previousStatus": "Backlog",
+              "status": "Entendimento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-02-01T11:00:00Z",
+              "previousStatus": "Entendimento",
+              "status": "Pronto p/ Concepção",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-02-01T12:00:00Z",
+              "previousStatus": "Pronto p/ Concepção",
+              "status": "Concepção",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-02-01T13:00:00Z",
+              "previousStatus": "Concepção",
+              "status": "Pronto p/ Refinamento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-02-01T14:00:00Z",
+              "previousStatus": "Pronto p/ Refinamento",
+              "status": "Refinamento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            },
+            {
+              "createdAt": "2026-02-01T15:00:00Z",
+              "previousStatus": "Refinamento",
+              "status": "Desenvolvimento",
+              "project": {
+                "title": "Pode Gastar"
+              }
+            }
+          ]
+        },
+        "projectItems": {
+          "nodes": [
+            {
+              "project": {
+                "title": "Outro projeto",
+                "field": {
+                  "options": [
+                    {
+                      "name": "Done"
+                    }
+                  ]
+                }
+              },
+              "fieldValueByName": {
+                "name": "Done"
+              }
+            },
+            {
+              "project": {
+                "title": "Pode Gastar",
+                "field": {
+                  "options": [
+                    {
+                      "name": "Backlog"
+                    },
+                    {
+                      "name": "Entendimento"
+                    },
+                    {
+                      "name": "Pronto p/ Concepção"
+                    },
+                    {
+                      "name": "Concepção"
+                    },
+                    {
+                      "name": "Pronto p/ Refinamento"
+                    },
+                    {
+                      "name": "Refinamento"
+                    },
+                    {
+                      "name": "Desenvolvimento"
+                    },
+                    {
+                      "name": "Aguardando revisão"
+                    },
+                    {
+                      "name": "Em revisão"
+                    },
+                    {
+                      "name": "Aguardando QA"
+                    },
+                    {
+                      "name": "Teste QA"
+                    },
+                    {
+                      "name": "Done"
+                    }
+                  ]
+                }
+              },
+              "fieldValueByName": {
+                "name": "Desenvolvimento"
+              }
+            }
+          ]
+        },
+        "closedByPullRequestsReferences": {
+          "nodes": []
+        }
+      }
+    }
+  }
+}
