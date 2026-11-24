@@ -172,17 +172,19 @@ class AvaliacaoMesBaseTest {
   }
 
   @Test
-  @DisplayName("O cartão de crédito nunca aparece como sugestão de corte (CA11)")
-  void cartaoDeCreditoNuncaApareceComoSugestaoDeCorte() {
-    Avaliacao cobertaPelaRegraDeCorte = avaliar(base(), "800.00", Categoria.DEVO_FAZER);
-    // 1600 não é coberto por nenhuma combinação elegível: sai a lista completa.
-    Avaliacao semCobertura = avaliar(base(), "1600.00", Categoria.DEVO_FAZER);
+  @DisplayName(
+      "Cartão protegido, 1100 QUERO_FAZER: mesmo resultado do CA15, sem o cartão nas sugestões nem na lista completa (CA11)")
+  void cartaoProtegidoNuncaApareceComoSugestaoDeCorte() {
+    Avaliacao avaliacao = avaliar(base(), "1100.00", Categoria.QUERO_FAZER);
 
-    assertThat(nomesSugeridos(cobertaPelaRegraDeCorte)).doesNotContain(CARTAO);
-    assertThat(nomesSugeridos(semCobertura)).doesNotContain(CARTAO);
-    assertThat(semCobertura.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
-    assertThat(semCobertura.listaCompleta()).isNotEmpty();
-    assertThat(semCobertura.listaCompleta().stream().map(Item::nome)).doesNotContain(CARTAO);
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(avaliacao.falta()).isEqualByComparingTo("1000");
+    assertThat(avaliacao.sugestoes()).isEmpty();
+    assertThat(nomesSugeridos(avaliacao)).doesNotContain(CARTAO);
+    assertThat(avaliacao.listaCompleta().stream().map(Item::nome))
+        .containsExactly(JANTAR, BOLA, ITEM_CASA, VIAGEM, MANUTENCAO)
+        .doesNotContain(CARTAO);
+    assertThat(avaliacao.aindaFaltaria()).isEqualByComparingTo("100");
   }
 
   @Test

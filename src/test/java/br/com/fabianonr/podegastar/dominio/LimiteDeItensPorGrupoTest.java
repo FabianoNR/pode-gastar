@@ -80,6 +80,25 @@ class LimiteDeItensPorGrupoTest {
 
   @Test
   @DisplayName(
+      "21 itens em discussão, um deles protegido de corte, não passam do limite do grupo 0 (R5)")
+  void itemEmDiscussaoProtegidoNaoContaNoLimite() {
+    List<Item> itens = new ArrayList<>(itensEmDiscussao(ACIMA_DO_LIMITE));
+    itens.set(
+        0,
+        ItemDeTeste.umItem("item-1", "Pedido 1", Categoria.SERIA_LEGAL, 1, "10")
+            .emDiscussaoAguardando("marido")
+            .protegidoDeCorte()
+            .criar());
+
+    // 21 itens de 10: livre 790; falta 10; um dos 20 itens não protegidos cobre.
+    Avaliacao avaliacao = avaliarCompraQueroFazer(itens, "800.00");
+
+    assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(ids(avaliacao.sugestoes().get(0))).containsExactly("item-2");
+  }
+
+  @Test
+  @DisplayName(
       "21 itens em discussão respondem itens demais mesmo quando não há combinação a buscar (R6)")
   void itensEmDiscussaoAcimaDoLimiteSaoConferidosAntesDeCombinar() {
     List<Item> itens = new ArrayList<>(itensEmDiscussao(ACIMA_DO_LIMITE));
