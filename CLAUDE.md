@@ -58,6 +58,7 @@ Do Fabiano:
 
 - Fez o QA local no Postman.
 - A descrição da PR tem a seção "Evidência de QA" preenchida, com resumo e print. PR só de documentação (só `docs/**`, `.claude/**`, `CLAUDE.md` e `README.md`) não precisa. O check `evidencia-qa` confere a forma (`docs/operacao.md`, CA64).
+- Move o card para Em revisão ao começar a revisão e para Teste QA ao começar o QA. O card só é mesclado depois de passar por Teste QA, com a "Evidência de QA" preenchida na PR. O Done vem no merge, pela automação.
 
 ## Decisões durante o desenvolvimento
 
