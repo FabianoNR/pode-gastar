@@ -59,6 +59,7 @@ conferir "card #31: tempo em cada Status" card-31 '[.tempos[] | "\(.status)=\(.l
   '["Backlog=2d4h39m02s","Entendimento=27m58s","Pronto p/ Concepção=23h44m25s","Concepção=1h04m54s","Pronto p/ Refinamento=23m57s","Refinamento=11h15m09s","Desenvolvimento=15m00s","Aguardando revisão=6m50s"]'
 conferir "card #31: total da entrada em Entendimento até o Done" card-31 '.metricas.tempo_total_min' '2238.22'
 conferir "card #31: fila e ativo somam o total" card-31 '.metricas | [.fila_total_min, .ativo_total_min, (.fila_total_min + .ativo_total_min | . * 100 | round / 100)]' '[1455.2,783.02,2238.22]'
+conferir "card #31: não passou por Em revisão, coluna nova com 0" card-31 '.metricas.min_em_revisao' '0'
 conferir "card #31: sem voltas de Status" card-31 '.metricas.voltas_status' '0'
 conferir "card #31: 7 de 7 itens do roteiro marcados" card-31 '[.roteiro.marcados, .roteiro.total, .metricas.roteiro_marcado_pct]' '[7,7,100]'
 conferir "card #31: relatório do revisor sem pendência e com 4 sugestões" card-31 '[.metricas.pendencias_revisor, .metricas.sugestoes_revisor]' '[0,4]'
@@ -67,14 +68,15 @@ conferir "card #31: 4 comentários de decisão, nenhum desvio, 3 edições do Re
 conferir "card #31: Situação Blocked/Hold fica vazia e listada como não encontrada" card-31 '[.metricas.vezes_blocked_hold, .nao_encontrado]' '[null,["vezes_blocked_hold"]]'
 conferir "card #31: heurísticas marcadas como estimadas" card-31 '.estimado' '["desvios_roteiro","comentarios_decisao"]'
 conferir "card #31: linha CSV" card-31 '.csv_linha' \
-  '"31,\"Cartão de crédito reconhecido pelo marcador próprio, não pelo nome\",\"Dívida\",\"2026-11-24T14:38:58Z\",2238.22,1455.2,783.02,3159.03,27.97,1424.42,64.9,23.95,675.15,15,6.83,0,0,0,,0,4,\"sim\",\"nao\",100,0,3,4,,,,"'
+  '"31,\"Cartão de crédito reconhecido pelo marcador próprio, não pelo nome\",\"Dívida\",\"2026-11-24T14:38:58Z\",2238.22,1455.2,783.02,3159.03,27.97,1424.42,64.9,23.95,675.15,15,6.83,0,0,0,0,,0,4,\"sim\",\"nao\",100,0,3,4,,,,"'
 
 # --- Card sintético com voltas, Hold e Em revisão ---
 medir card-com-voltas 90
 conferir "voltas: duas voltas de Status (Hold e volta à Concepção)" card-com-voltas '.metricas.voltas_status' '2'
 conferir "voltas: Backlog soma antes e depois do Hold" card-com-voltas '.metricas.min_backlog' '2820'
-conferir "voltas: total, fila (com o Backlog do Hold) e ativo" card-com-voltas '[.metricas.tempo_total_min, .metricas.fila_total_min, .metricas.ativo_total_min]' '[2160,1650,450]'
-conferir "voltas: Em revisão fica fora de fila e ativo, sem coluna" card-com-voltas '[.fora_de_fila_e_ativo, (.tempos[] | select(.status == "Em revisão") | .min)]' '[["Em revisão"],60]'
+conferir "voltas: total, fila (com o Backlog do Hold) e ativo (com Em revisão)" card-com-voltas '[.metricas.tempo_total_min, .metricas.fila_total_min, .metricas.ativo_total_min]' '[2160,1650,510]'
+conferir "voltas: Em revisão conta como ativo e tem coluna própria" card-com-voltas '[.fora_de_fila_e_ativo, .metricas.min_em_revisao]' '[[],60]'
+conferir "voltas: fila e ativo somam o total" card-com-voltas '.metricas.fila_total_min + .metricas.ativo_total_min' '2160'
 conferir "voltas: eventos de outro projeto são ignorados" card-com-voltas '.metricas.min_entendimento' '90'
 conferir "voltas: PR mesclada escolhida entre as que fecharam o card" card-com-voltas '.pr' '92'
 conferir "voltas: último relatório do revisor, só itens de primeiro nível" card-com-voltas '[.metricas.pendencias_revisor, .metricas.sugestoes_revisor]' '[2,0]'
@@ -97,8 +99,8 @@ conferir "andamento: artefato Refinamento sem edição" card-em-andamento '.metr
 
 # --- Uso, cabeçalho e proteção contra mutation ---
 cabecalho="$("$SCRIPT" --cabecalho)"
-registrar "cabeçalho com as 31 colunas, na ordem combinada" \
-  "$([[ "$cabecalho" == id_card,titulo,tipo,data_done,tempo_total_min,*,achados_agente,nota_atrito && "$(tr ',' '\n' <<<"$cabecalho" | wc -l)" -eq 31 ]] && echo sim || echo nao)" "($cabecalho)"
+registrar "cabeçalho com as 32 colunas, na ordem combinada" \
+  "$([[ "$cabecalho" == id_card,titulo,tipo,data_done,tempo_total_min,*,achados_agente,nota_atrito && "$(tr ',' '\n' <<<"$cabecalho" | wc -l)" -eq 32 ]] && echo sim || echo nao)" "($cabecalho)"
 registrar "cabeçalho igual ao do JSON" "$([[ "$cabecalho" == "$(jq -r .csv_cabecalho "$TEMP/card-31.json")" ]] && echo sim || echo nao)"
 "$SCRIPT" >/dev/null 2>&1
 registrar "sem argumento: erro de uso" "$([[ $? -eq 2 ]] && echo sim || echo nao)"

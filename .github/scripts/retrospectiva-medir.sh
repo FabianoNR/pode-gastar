@@ -25,8 +25,8 @@
 #   - tempo_total: da primeira entrada em Entendimento até a última entrada em Done. O Backlog
 #     antes do Entendimento fica só em min_backlog.
 #   - Fila: Backlog, "Pronto p/ ..." e "Aguardando ...". Ativo: Entendimento, Concepção,
-#     Refinamento, Desenvolvimento e Teste QA. Os dois somam só o que cai dentro do tempo_total.
-#     Status fora das duas listas (hoje, "Em revisão") aparece em "tempos" e em
+#     Refinamento, Desenvolvimento, Em revisão e Teste QA. Os dois somam só o que cai dentro do
+#     tempo_total. Status fora das duas listas (hoje, nenhum) aparece em "tempos" e em
 #     "fora_de_fila_e_ativo", sem coluna no CSV.
 #   - voltas_status: mudanças para uma opção que vem antes da anterior na ordem do campo Status.
 #   - vezes_blocked_hold: o histórico da Situação não aparece na linha do tempo; fica vazio.
@@ -60,7 +60,8 @@ VERIFICADOR_DE_EVIDENCIA="$DIRETORIO_DO_SCRIPT/verificar-evidencia-qa.sh"
 
 COLUNAS=(id_card titulo tipo data_done tempo_total_min fila_total_min ativo_total_min
   min_backlog min_entendimento min_pronto_concepcao min_concepcao min_pronto_refinamento
-  min_refinamento min_desenvolvimento min_aguardando_revisao min_aguardando_qa min_teste_qa
+  min_refinamento min_desenvolvimento min_aguardando_revisao min_em_revisao min_aguardando_qa
+  min_teste_qa
   voltas_status vezes_blocked_hold pendencias_revisor sugestoes_revisor ci_verde_primeira
   evidencia_qa roteiro_marcado_pct desvios_roteiro edicoes_refinamento comentarios_decisao
   achados_skill achados_fabiano achados_agente nota_atrito)
@@ -209,13 +210,13 @@ PROGRAMA_DE_CALCULO='
 
   def instante: fromdateiso8601;
   def fila: . == "Backlog" or startswith("Pronto p/") or startswith("Aguardando");
-  def ativo: IN("Entendimento", "Concepção", "Refinamento", "Desenvolvimento", "Teste QA");
+  def ativo: IN("Entendimento", "Concepção", "Refinamento", "Desenvolvimento", "Em revisão", "Teste QA");
   def coluna_de: {
     "Backlog": "min_backlog", "Entendimento": "min_entendimento",
     "Pronto p/ Concepção": "min_pronto_concepcao", "Concepção": "min_concepcao",
     "Pronto p/ Refinamento": "min_pronto_refinamento", "Refinamento": "min_refinamento",
     "Desenvolvimento": "min_desenvolvimento", "Aguardando revisão": "min_aguardando_revisao",
-    "Aguardando QA": "min_aguardando_qa", "Teste QA": "min_teste_qa" };
+    "Em revisão": "min_em_revisao", "Aguardando QA": "min_aguardando_qa", "Teste QA": "min_teste_qa" };
   def colunas_da_conversa: ["achados_skill", "achados_fabiano", "achados_agente", "nota_atrito"];
 
   # Eventos de Status do projeto, em ordem de data.
