@@ -80,7 +80,7 @@ class ConsultaDeVariosItensEmOutrosMesesHttpTest {
   }
 
   @Test
-  @DisplayName("O aviso de nome repetido do mês vem uma vez no topo e em nenhuma avaliação (CA4)")
+  @DisplayName("O aviso de nome repetido do mês vem uma vez no topo e em nenhuma avaliação (CA77)")
   void avisoDeNomeRepetidoVemUmaVezNoTopo() throws Exception {
     consultar(
             MES_COM_NOME_REPETIDO,
@@ -100,7 +100,7 @@ class ConsultaDeVariosItensEmOutrosMesesHttpTest {
   }
 
   @Test
-  @DisplayName("Um item que cai no limite de 20 itens por grupo derruba a lista com 422 (CA9)")
+  @DisplayName("Um item que cai no limite de 20 itens por grupo derruba a lista com 422 (CA82)")
   void itemNoLimiteDeItensDerrubaAListaCom422() throws Exception {
     consultar(
             MES_COM_21_EM_DISCUSSAO,
@@ -116,7 +116,7 @@ class ConsultaDeVariosItensEmOutrosMesesHttpTest {
   }
 
   @Test
-  @DisplayName("No mesmo mês, um item que cabe no livre é aprovado sem checar o limite (CA9)")
+  @DisplayName("No mesmo mês, um item que cabe no livre é aprovado sem checar o limite (CA82)")
   void itemQueCabeNoLivreNaoChecaOLimite() throws Exception {
     consultar(
             MES_COM_21_EM_DISCUSSAO,

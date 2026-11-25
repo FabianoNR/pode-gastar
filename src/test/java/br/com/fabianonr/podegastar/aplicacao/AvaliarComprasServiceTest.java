@@ -56,7 +56,7 @@ class AvaliarComprasServiceTest {
 
   @Test
   @DisplayName(
-      "Cada compra é avaliada sozinha e a lista vem da maior intensidade para a menor (CA1)")
+      "Cada compra é avaliada sozinha e a lista vem da maior intensidade para a menor (CA74)")
   void avaliaCadaCompraSozinhaEOrdenaPelaIntensidade() {
     ResultadoDaAvaliacaoDeCompras resultado =
         servicoDoMesExemplo.avaliar(
@@ -82,7 +82,7 @@ class AvaliarComprasServiceTest {
   }
 
   @Test
-  @DisplayName("No empate de intensidade, vale a ordem do pedido (CA2)")
+  @DisplayName("No empate de intensidade, vale a ordem do pedido (CA75)")
   void empateDeIntensidadeMantemAOrdemDoPedido() {
     ResultadoDaAvaliacaoDeCompras resultado =
         servicoDoMesExemplo.avaliar(
@@ -96,7 +96,7 @@ class AvaliarComprasServiceTest {
   }
 
   @Test
-  @DisplayName("O aviso de intensidade fica só na avaliação da compra que o gerou (CA3)")
+  @DisplayName("O aviso de intensidade fica só na avaliação da compra que o gerou (CA76)")
   void avisoDeIntensidadeFicaNaPropriaAvaliacao() {
     ResultadoDaAvaliacaoDeCompras resultado =
         servicoDoMesExemplo.avaliar(
@@ -115,7 +115,7 @@ class AvaliarComprasServiceTest {
   }
 
   @Test
-  @DisplayName("O aviso de nome repetido do mês sai uma vez na lista e em nenhuma avaliação (CA4)")
+  @DisplayName("O aviso de nome repetido do mês sai uma vez na lista e em nenhuma avaliação (CA77)")
   void avisoDeNomeRepetidoSaiUmaVezSoNaLista() {
     MesRepositorio mesComNomeRepetido =
         mesId ->
@@ -164,7 +164,7 @@ class AvaliarComprasServiceTest {
   }
 
   @Test
-  @DisplayName("Mês inexistente derruba a lista toda (CA8)")
+  @DisplayName("Mês inexistente derruba a lista toda (CA81)")
   void mesInexistenteDerrubaALista() {
     List<CompraNomeada> compras = List.of(semIntensidade("Livro", "80.00", Categoria.QUERO_FAZER));
 
@@ -174,7 +174,7 @@ class AvaliarComprasServiceTest {
   }
 
   @Test
-  @DisplayName("Qualquer compra no limite de 20 itens por grupo derruba a lista toda (CA9)")
+  @DisplayName("Qualquer compra no limite de 20 itens por grupo derruba a lista toda (CA82)")
   void compraNoLimiteDeItensDerrubaALista() {
     List<Item> vinteEUmEmDiscussao =
         IntStream.rangeClosed(1, 21)

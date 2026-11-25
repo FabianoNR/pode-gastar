@@ -61,7 +61,7 @@ class ConsultaDeVariosItensHttpTest {
 
   @Test
   @DisplayName(
-      "Três itens voltam avaliados como no GET, da maior intensidade para a menor, com o eco (CA1)")
+      "Três itens voltam avaliados como no GET, da maior intensidade para a menor, com o eco (CA74)")
   void avaliaTresItensNaOrdemDeIntensidadeComOEco() throws Exception {
     consultarNoMesExemplo(
             listaCom(
@@ -102,7 +102,7 @@ class ConsultaDeVariosItensHttpTest {
 
   @Test
   @DisplayName(
-      "Cada avaliação da lista é a mesma do GET para o mesmo valor, categoria e intensidade (CA1)")
+      "Cada avaliação da lista é a mesma do GET para o mesmo valor, categoria e intensidade (CA74)")
   void avaliacaoDaListaEIgualADoGet() throws Exception {
     String corpoDaLista =
         consultarNoMesExemplo(
@@ -141,7 +141,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Intensidades empatadas saem na ordem do pedido, e a sem intensidade vale 1 (CA2)")
+  @DisplayName("Intensidades empatadas saem na ordem do pedido, e a sem intensidade vale 1 (CA75)")
   void empateDeIntensidadeSaiNaOrdemDoPedido() throws Exception {
     consultarNoMesExemplo(
             listaCom(
@@ -165,7 +165,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("O aviso de intensidade vem só na avaliação que o gerou, e o topo vem vazio (CA3)")
+  @DisplayName("O aviso de intensidade vem só na avaliação que o gerou, e o topo vem vazio (CA76)")
   void avisoDeIntensidadeVemSoNaPropriaAvaliacao() throws Exception {
     consultarNoMesExemplo(
             listaCom(
@@ -186,7 +186,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Dois itens com o mesmo nome no pedido são avaliados sem aviso (CA5)")
+  @DisplayName("Dois itens com o mesmo nome no pedido são avaliados sem aviso (CA78)")
   void nomeRepetidoNoPedidoNaoGeraAviso() throws Exception {
     consultarNoMesExemplo(listaCom(ITEM_VALIDO, ITEM_VALIDO))
         .andExpect(status().isOk())
@@ -197,7 +197,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("O nome volta como enviado, sem cortar espaços, e o valor com duas casas (CA1)")
+  @DisplayName("O nome volta como enviado, sem cortar espaços, e o valor com duas casas (CA74)")
   void ecoDoNomeComoEnviadoEDoValorComDuasCasas() throws Exception {
     consultarNoMesExemplo(
             listaCom("{\"nome\": \" Livro \", \"valor\": 80, \"categoria\": \"QUERO_FAZER\"}"))
@@ -207,7 +207,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Lista com 20 itens responde 200 com 20 avaliações (CA6)")
+  @DisplayName("Lista com 20 itens responde 200 com 20 avaliações (CA79)")
   void vinteItensRespondem200() throws Exception {
     consultarNoMesExemplo(listaComItensValidos(20))
         .andExpect(status().isOk())
@@ -215,7 +215,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Campos a mais no item são ignorados (CA7)")
+  @DisplayName("Campos a mais no item são ignorados (CA80)")
   void camposAMaisNoItemSaoIgnorados() throws Exception {
     consultarNoMesExemplo(
             listaCom(
@@ -239,7 +239,7 @@ class ConsultaDeVariosItensHttpTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource("listasInvalidas")
   @DisplayName(
-      "Lista ausente, vazia, com mais de 20 itens ou que não é lista dá 400 em itens (CA6)")
+      "Lista ausente, vazia, com mais de 20 itens ou que não é lista dá 400 em itens (CA79)")
   void listaInvalidaDa400ApontandoItens(String caso, String corpo, String mensagem)
       throws Exception {
     consultarNoMesExemplo(corpo)
@@ -250,7 +250,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Corpo que não é JSON válido dá 400 sem campo (CA6)")
+  @DisplayName("Corpo que não é JSON válido dá 400 sem campo (CA79)")
   void corpoQueNaoEJsonDa400SemCampo() throws Exception {
     consultarNoMesExemplo("{\"itens\": [")
         .andExpect(status().isBadRequest())
@@ -259,7 +259,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Item nulo na lista dá 400 apontando a posição do item (CA6)")
+  @DisplayName("Item nulo na lista dá 400 apontando a posição do item (CA79)")
   void itemNuloDa400ApontandoAPosicao() throws Exception {
     consultarNoMesExemplo(listaCom(ITEM_VALIDO, "null"))
         .andExpect(status().isBadRequest())
@@ -369,7 +369,8 @@ class ConsultaDeVariosItensHttpTest {
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("itensInvalidos")
-  @DisplayName("Item inválido derruba a lista com 400 apontando o campo pela posição do item (CA7)")
+  @DisplayName(
+      "Item inválido derruba a lista com 400 apontando o campo pela posição do item (CA80)")
   void itemInvalidoDa400ApontandoOCampoDoItem(
       String caso, String itemInvalido, String campo, String mensagem) throws Exception {
     consultarNoMesExemplo(listaCom(ITEM_VALIDO, itemInvalido))
@@ -380,7 +381,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Com mais de um erro vale o primeiro item com erro, e o 400 vem antes do 404 (CA7)")
+  @DisplayName("Com mais de um erro vale o primeiro item com erro, e o 400 vem antes do 404 (CA80)")
   void primeiroItemComErroVemAntesDoMesInexistente() throws Exception {
     consultar(
             "nao-existe",
@@ -394,7 +395,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Dentro do item, o nome é conferido antes do valor (CA7)")
+  @DisplayName("Dentro do item, o nome é conferido antes do valor (CA80)")
   void nomeEConferidoAntesDoValor() throws Exception {
     consultarNoMesExemplo(
             listaCom("{\"nome\": \"\", \"valor\": 0, \"categoria\": \"QUERO_FAZER\"}"))
@@ -403,7 +404,7 @@ class ConsultaDeVariosItensHttpTest {
   }
 
   @Test
-  @DisplayName("Mês inexistente dá 404 no formato do GET (CA8)")
+  @DisplayName("Mês inexistente dá 404 no formato do GET (CA81)")
   void mesInexistenteDa404() throws Exception {
     consultar("nao-existe", listaCom(ITEM_VALIDO))
         .andExpect(status().isNotFound())
