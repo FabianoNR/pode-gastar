@@ -133,7 +133,7 @@ Mensagem de intensidade da compra (R12), com os nomes de `itensMaisDesejadosQueA
 
 Os erros de formato da requisição (valor inválido, campo obrigatório, categoria fora do conjunto, intensidade fora de 1 a 5 ou não inteira) continuam sendo respondidos pelo adaptador web, com o 400 e o campo apontado.
 
-Exemplo de resposta para `CABE_COM_CORTES` (os ids do exemplo são ilustrativos):
+Exemplo de resposta para `CABE_COM_CORTES`, do pedido `valor=150.00&categoria=SERIA_LEGAL&intensidade=3` (os ids do exemplo são ilustrativos):
 
 ```json
 {
