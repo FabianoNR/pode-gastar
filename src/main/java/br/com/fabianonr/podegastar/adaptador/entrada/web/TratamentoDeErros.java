@@ -15,9 +15,8 @@ class TratamentoDeErros {
 
   @ExceptionHandler(ValorInvalidoException.class)
   ResponseEntity<ErroResponse> valorInvalido(ValorInvalidoException excecao) {
-    // Categoria ausente ou inválida já é recusada pelo Spring; aqui só chega o valor.
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body(new ErroResponse("valor", excecao.getMessage()));
+        .body(new ErroResponse(excecao.campo(), excecao.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
