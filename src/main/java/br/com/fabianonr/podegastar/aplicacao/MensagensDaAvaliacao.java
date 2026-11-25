@@ -1,12 +1,17 @@
 package br.com.fabianonr.podegastar.aplicacao;
 
+import br.com.fabianonr.podegastar.aplicacao.porta.entrada.ResultadoDaAvaliacao;
 import br.com.fabianonr.podegastar.dominio.Avaliacao;
 import br.com.fabianonr.podegastar.dominio.Compra;
 import br.com.fabianonr.podegastar.dominio.Dinheiro;
 import br.com.fabianonr.podegastar.dominio.Item;
 import br.com.fabianonr.podegastar.dominio.NomeRepetido;
 import br.com.fabianonr.podegastar.dominio.StatusItem;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Único lugar que monta os textos de negócio exibidos ao usuário (spec v7, Mensagens ao usuário).
@@ -14,6 +19,12 @@ import java.util.stream.Collectors;
 final class MensagensDaAvaliacao {
 
   private MensagensDaAvaliacao() {}
+
+  /** A avaliação com o motivo, os avisos dados e a mensagem de cada item em discussão. */
+  static ResultadoDaAvaliacao resultado(Avaliacao avaliacao, List<String> avisos) {
+    return new ResultadoDaAvaliacao(
+        avaliacao, motivo(avaliacao), avisos, mensagensDosItensEmDiscussao(avaliacao));
+  }
 
   static String motivo(Avaliacao avaliacao) {
     if (avaliacao.motivo() == null) {
@@ -70,6 +81,23 @@ final class MensagensDaAvaliacao {
       return null;
     }
     return "aguardando decisão de " + item.decisorResponsavel();
+  }
+
+  private static Map<String, String> mensagensDosItensEmDiscussao(Avaliacao avaliacao) {
+    Stream<Item> itensSugeridos =
+        avaliacao.sugestoes().stream().flatMap(sugestao -> sugestao.itens().stream());
+    Map<String, String> mensagensPorIdDoItem = new HashMap<>();
+    Stream.concat(itensSugeridos, avaliacao.listaCompleta().stream())
+        .forEach(item -> guardarMensagemDoItem(mensagensPorIdDoItem, item));
+    return mensagensPorIdDoItem;
+  }
+
+  /** Um item pode aparecer em mais de uma sugestão; a mensagem é a mesma, fica a primeira. */
+  private static void guardarMensagemDoItem(Map<String, String> mensagensPorIdDoItem, Item item) {
+    String mensagem = mensagemDoItem(item);
+    if (mensagem != null) {
+      mensagensPorIdDoItem.putIfAbsent(item.id(), mensagem);
+    }
   }
 
   private static String motivoDeCabeComCortes(Avaliacao avaliacao) {

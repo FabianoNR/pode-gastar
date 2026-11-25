@@ -1,6 +1,6 @@
 # 0017: Intensidade da compra na consulta
 
-Status: aceita. Substitui em parte a ADR 0005, no que é a forma da consulta e as entradas que afetam o resultado.
+Status: aceita. Substitui em parte a ADR 0005, no que é a forma da consulta e as entradas que afetam o resultado. Substituída em parte pela ADR 0018: a consulta de vários itens usa POST.
 
 Data: 2026-11-24
 
