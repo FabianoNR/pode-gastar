@@ -29,9 +29,12 @@ public record Mes(
     return orcamentoVariavel().subtract(somar(Item::jaSaiu));
   }
 
-  /** Decide a compra e acrescenta os nomes repetidos do mês, sem remover nenhum item. */
+  /**
+   * Decide a compra, acrescenta os nomes repetidos do mês, sem remover nenhum item, e os itens mais
+   * desejados que a compra (R12).
+   */
   public Avaliacao avaliar(Compra compra) {
-    return decidir(compra).comNomesRepetidos(nomesRepetidos());
+    return decidir(compra).comNomesRepetidos(nomesRepetidos()).comItensMaisDesejadosQue(compra);
   }
 
   /** Itens com o mesmo nome no mês, ignorando maiúsculas e espaços nas pontas. */
