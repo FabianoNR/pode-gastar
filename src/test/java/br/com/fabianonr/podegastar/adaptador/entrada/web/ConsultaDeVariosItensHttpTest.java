@@ -34,7 +34,7 @@ class ConsultaDeVariosItensHttpTest {
 
   private static final String MES_EXEMPLO = "mes-exemplo";
   private static final String ITEM_VALIDO =
-      "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}";
+      "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}";
 
   @Autowired private MockMvc mockMvc;
 
@@ -65,10 +65,10 @@ class ConsultaDeVariosItensHttpTest {
   void avaliaTresItensNaOrdemDeIntensidadeComOEco() throws Exception {
     consultarNoMesExemplo(
             listaCom(
-                "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
-                "{\"nome\": \"Tênis\", \"valor\": 300.00, \"categoria\": \"QUERO_FAZER\","
+                "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
+                "{\"nome\": \"Tênis\", \"valor\": \"300.00\", \"categoria\": \"QUERO_FAZER\","
                     + " \"intensidade\": 5}",
-                "{\"nome\": \"Viagem extra\", \"valor\": 1700.00, \"categoria\": \"QUERO_FAZER\","
+                "{\"nome\": \"Viagem extra\", \"valor\": \"1700.00\", \"categoria\": \"QUERO_FAZER\","
                     + " \"intensidade\": 3}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.avisos", hasSize(0)))
@@ -107,10 +107,10 @@ class ConsultaDeVariosItensHttpTest {
     String corpoDaLista =
         consultarNoMesExemplo(
                 listaCom(
-                    "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
-                    "{\"nome\": \"Tênis\", \"valor\": 300.00, \"categoria\": \"QUERO_FAZER\","
+                    "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
+                    "{\"nome\": \"Tênis\", \"valor\": \"300.00\", \"categoria\": \"QUERO_FAZER\","
                         + " \"intensidade\": 5}",
-                    "{\"nome\": \"Viagem extra\", \"valor\": 1700.00, \"categoria\":"
+                    "{\"nome\": \"Viagem extra\", \"valor\": \"1700.00\", \"categoria\":"
                         + " \"QUERO_FAZER\", \"intensidade\": 3}"))
             .andReturn()
             .getResponse()
@@ -145,10 +145,10 @@ class ConsultaDeVariosItensHttpTest {
   void empateDeIntensidadeSaiNaOrdemDoPedido() throws Exception {
     consultarNoMesExemplo(
             listaCom(
-                "{\"nome\": \"C\", \"valor\": 50.00, \"categoria\": \"QUERO_FAZER\"}",
-                "{\"nome\": \"A\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+                "{\"nome\": \"C\", \"valor\": \"50.00\", \"categoria\": \"QUERO_FAZER\"}",
+                "{\"nome\": \"A\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                     + " \"intensidade\": 2}",
-                "{\"nome\": \"B\", \"valor\": 150.00, \"categoria\": \"SERIA_LEGAL\","
+                "{\"nome\": \"B\", \"valor\": \"150.00\", \"categoria\": \"SERIA_LEGAL\","
                     + " \"intensidade\": 2}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.avaliacoes[*].nome").value(contains("A", "B", "C")))
@@ -169,8 +169,8 @@ class ConsultaDeVariosItensHttpTest {
   void avisoDeIntensidadeVemSoNaPropriaAvaliacao() throws Exception {
     consultarNoMesExemplo(
             listaCom(
-                "{\"nome\": \"X\", \"valor\": 300.00, \"categoria\": \"QUERO_FAZER\"}",
-                "{\"nome\": \"Y\", \"valor\": 300.00, \"categoria\": \"QUERO_FAZER\","
+                "{\"nome\": \"X\", \"valor\": \"300.00\", \"categoria\": \"QUERO_FAZER\"}",
+                "{\"nome\": \"Y\", \"valor\": \"300.00\", \"categoria\": \"QUERO_FAZER\","
                     + " \"intensidade\": 5}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.avisos", hasSize(0)))
@@ -200,7 +200,7 @@ class ConsultaDeVariosItensHttpTest {
   @DisplayName("O nome volta como enviado, sem cortar espaços, e o valor com duas casas (CA74)")
   void ecoDoNomeComoEnviadoEDoValorComDuasCasas() throws Exception {
     consultarNoMesExemplo(
-            listaCom("{\"nome\": \" Livro \", \"valor\": 80, \"categoria\": \"QUERO_FAZER\"}"))
+            listaCom("{\"nome\": \" Livro \", \"valor\": \"80\", \"categoria\": \"QUERO_FAZER\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.avaliacoes[0].nome").value(" Livro "))
         .andExpect(jsonPath("$.avaliacoes[0].valor").value("80.00"));
@@ -219,7 +219,7 @@ class ConsultaDeVariosItensHttpTest {
   void camposAMaisNoItemSaoIgnorados() throws Exception {
     consultarNoMesExemplo(
             listaCom(
-                "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+                "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                     + " \"loja\": \"centro\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.avaliacoes[0].decisao").value("APROVADO"))
@@ -271,37 +271,37 @@ class ConsultaDeVariosItensHttpTest {
     return Stream.of(
         Arguments.of(
             "nome ausente",
-            "{\"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].nome",
             "nome é obrigatório"),
         Arguments.of(
             "nome vazio",
-            "{\"nome\": \"\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"nome\": \"\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].nome",
             "nome é obrigatório"),
         Arguments.of(
             "nome só com espaços",
-            "{\"nome\": \"   \", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"nome\": \"   \", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].nome",
             "nome é obrigatório"),
         Arguments.of(
             "nome que não é texto",
-            "{\"nome\": 123, \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"nome\": 123, \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].nome",
             "valor inválido para nome"),
         Arguments.of(
             "valor zero",
-            "{\"nome\": \"Livro\", \"valor\": 0, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"nome\": \"Livro\", \"valor\": \"0\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].valor",
             "valor deve ser maior que zero"),
         Arguments.of(
             "valor negativo",
-            "{\"nome\": \"Livro\", \"valor\": -10.00, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"nome\": \"Livro\", \"valor\": \"-10.00\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].valor",
             "valor deve ser maior que zero"),
         Arguments.of(
             "valor com três casas",
-            "{\"nome\": \"Livro\", \"valor\": 80.001, \"categoria\": \"QUERO_FAZER\"}",
+            "{\"nome\": \"Livro\", \"valor\": \"80.001\", \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].valor",
             "valor deve ter no máximo duas casas decimais"),
         Arguments.of(
@@ -310,10 +310,15 @@ class ConsultaDeVariosItensHttpTest {
             "itens[1].valor",
             "valor inválido para valor"),
         Arguments.of(
-            "valor numérico como texto",
-            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
+            "valor como número JSON, sem aspas",
+            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
             "itens[1].valor",
             "valor inválido para valor"),
+        Arguments.of(
+            "valor vazio",
+            "{\"nome\": \"Livro\", \"valor\": \"\", \"categoria\": \"QUERO_FAZER\"}",
+            "itens[1].valor",
+            "valor é obrigatório"),
         Arguments.of(
             "valor ausente",
             "{\"nome\": \"Livro\", \"categoria\": \"QUERO_FAZER\"}",
@@ -321,47 +326,47 @@ class ConsultaDeVariosItensHttpTest {
             "valor é obrigatório"),
         Arguments.of(
             "categoria ausente",
-            "{\"nome\": \"Livro\", \"valor\": 80.00}",
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\"}",
             "itens[1].categoria",
             "categoria é obrigatório"),
         Arguments.of(
             "categoria fora do conjunto",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"XYZ\"}",
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"XYZ\"}",
             "itens[1].categoria",
             "valor inválido para categoria"),
         Arguments.of(
             "intensidade 0",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                 + " \"intensidade\": 0}",
             "itens[1].intensidade",
             "intensidade deve ser um inteiro de 1 a 5"),
         Arguments.of(
             "intensidade 6",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                 + " \"intensidade\": 6}",
             "itens[1].intensidade",
             "intensidade deve ser um inteiro de 1 a 5"),
         Arguments.of(
             "intensidade 2.5",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                 + " \"intensidade\": 2.5}",
             "itens[1].intensidade",
             "valor inválido para intensidade"),
         Arguments.of(
             "intensidade 2.0",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                 + " \"intensidade\": 2.0}",
             "itens[1].intensidade",
             "valor inválido para intensidade"),
         Arguments.of(
             "intensidade não numérica",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                 + " \"intensidade\": \"abc\"}",
             "itens[1].intensidade",
             "valor inválido para intensidade"),
         Arguments.of(
             "intensidade numérica como texto",
-            "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\","
+            "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\","
                 + " \"intensidade\": \"3\"}",
             "itens[1].intensidade",
             "valor inválido para intensidade"));
@@ -386,9 +391,9 @@ class ConsultaDeVariosItensHttpTest {
     consultar(
             "nao-existe",
             listaCom(
-                "{\"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"}",
+                "{\"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"}",
                 ITEM_VALIDO,
-                "{\"nome\": \"Livro\", \"valor\": 0, \"categoria\": \"QUERO_FAZER\"}"))
+                "{\"nome\": \"Livro\", \"valor\": \"0\", \"categoria\": \"QUERO_FAZER\"}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.campo").value("itens[0].nome"))
         .andExpect(jsonPath("$.mensagem").value("nome é obrigatório"));
@@ -398,7 +403,7 @@ class ConsultaDeVariosItensHttpTest {
   @DisplayName("Dentro do item, o nome é conferido antes do valor (CA80)")
   void nomeEConferidoAntesDoValor() throws Exception {
     consultarNoMesExemplo(
-            listaCom("{\"nome\": \"\", \"valor\": 0, \"categoria\": \"QUERO_FAZER\"}"))
+            listaCom("{\"nome\": \"\", \"valor\": \"0\", \"categoria\": \"QUERO_FAZER\"}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.campo").value("itens[0].nome"));
   }

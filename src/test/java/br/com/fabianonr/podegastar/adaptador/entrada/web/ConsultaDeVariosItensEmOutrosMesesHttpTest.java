@@ -85,8 +85,8 @@ class ConsultaDeVariosItensEmOutrosMesesHttpTest {
     consultar(
             MES_COM_NOME_REPETIDO,
             "{\"itens\": ["
-                + "{\"nome\": \"Livro\", \"valor\": 80.00, \"categoria\": \"QUERO_FAZER\"},"
-                + " {\"nome\": \"Caderno\", \"valor\": 30.00, \"categoria\": \"QUERO_FAZER\"}]}")
+                + "{\"nome\": \"Livro\", \"valor\": \"80.00\", \"categoria\": \"QUERO_FAZER\"},"
+                + " {\"nome\": \"Caderno\", \"valor\": \"30.00\", \"categoria\": \"QUERO_FAZER\"}]}")
         .andExpect(status().isOk())
         .andExpect(
             jsonPath("$.avisos")
@@ -105,8 +105,8 @@ class ConsultaDeVariosItensEmOutrosMesesHttpTest {
     consultar(
             MES_COM_21_EM_DISCUSSAO,
             "{\"itens\": ["
-                + "{\"nome\": \"A\", \"valor\": 100.00, \"categoria\": \"QUERO_FAZER\"},"
-                + " {\"nome\": \"B\", \"valor\": 900.00, \"categoria\": \"QUERO_FAZER\"}]}")
+                + "{\"nome\": \"A\", \"valor\": \"100.00\", \"categoria\": \"QUERO_FAZER\"},"
+                + " {\"nome\": \"B\", \"valor\": \"900.00\", \"categoria\": \"QUERO_FAZER\"}]}")
         .andExpect(status().isUnprocessableEntity())
         .andExpect(
             jsonPath("$.mensagem")
@@ -120,7 +120,7 @@ class ConsultaDeVariosItensEmOutrosMesesHttpTest {
   void itemQueCabeNoLivreNaoChecaOLimite() throws Exception {
     consultar(
             MES_COM_21_EM_DISCUSSAO,
-            "{\"itens\": [{\"nome\": \"A\", \"valor\": 100.00, \"categoria\": \"QUERO_FAZER\"}]}")
+            "{\"itens\": [{\"nome\": \"A\", \"valor\": \"100.00\", \"categoria\": \"QUERO_FAZER\"}]}")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.avaliacoes[0].decisao").value("APROVADO"));
   }

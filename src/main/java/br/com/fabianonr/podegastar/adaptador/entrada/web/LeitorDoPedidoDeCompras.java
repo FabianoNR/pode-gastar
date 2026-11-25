@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.util.NumberUtils;
 
 /**
  * Lê e valida o corpo da consulta de vários itens, à mão, sem a conversão automática de tipos do
@@ -22,12 +23,8 @@ final class LeitorDoPedidoDeCompras {
   private static final int MAXIMO_DE_ITENS = 20;
   private static final String CAMPO_ITENS = "itens";
 
-  /** Números com casas decimais viram BigDecimal a partir do texto, nunca double (ADR 0002). */
   private static final JsonMapper LEITOR_DE_JSON =
-      JsonMapper.builder()
-          .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
-          .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
-          .build();
+      JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).build();
 
   private LeitorDoPedidoDeCompras() {}
 
@@ -94,17 +91,29 @@ final class LeitorDoPedidoDeCompras {
     return nome.textValue();
   }
 
+  /**
+   * O valor vem como texto (ADR 0002) e é convertido como o GET converte {@code ?valor=}: texto
+   * vazio é ausente, e os espaços são ignorados.
+   */
   private static BigDecimal valor(JsonNode valor, String prefixo) {
-    if (ausente(valor)) {
+    if (ausente(valor) || (valor.isTextual() && valor.textValue().isBlank())) {
       throw obrigatorio(prefixo, "valor");
     }
-    if (!valor.isNumber()) {
+    if (!valor.isTextual()) {
       throw tipoInvalido(prefixo + "valor", "valor");
     }
-    BigDecimal valorDecimal = valor.decimalValue();
+    BigDecimal valorDecimal = valorDecimal(valor.textValue(), prefixo);
     CasasDecimaisDoValor.exigirNoMaximoDuas(valorDecimal, prefixo + "valor");
     comCampoDoItem(prefixo, () -> Compra.exigirValorPositivo(valorDecimal));
     return valorDecimal;
+  }
+
+  private static BigDecimal valorDecimal(String valor, String prefixo) {
+    try {
+      return NumberUtils.parseNumber(valor, BigDecimal.class);
+    } catch (IllegalArgumentException excecao) {
+      throw tipoInvalido(prefixo + "valor", "valor");
+    }
   }
 
   /** Como no GET, o texto é comparado sem os espaços das pontas. */

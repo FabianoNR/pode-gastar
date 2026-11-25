@@ -14,7 +14,7 @@ Uma lista de objetos na query string é ilegível, sujeita a erro de codificaç�
 
 - A consulta de vários itens é `POST /meses/{mesId}/avaliacoes`, com o pedido no corpo, em JSON: `{"itens": [{"nome", "valor", "categoria", "intensidade"}]}`.
 - O POST não cria nem altera nada. O recurso se chama `avaliacoes` porque devolve uma avaliação por item, como a `avaliacao` do GET.
-- O corpo é lido e validado no adaptador web, sem dependência nova. `valor` e `intensidade` vêm como número JSON, e o `valor` é lido como `BigDecimal` a partir do texto do número (ADR 0002).
+- O corpo é lido e validado no adaptador web, sem dependência nova. `valor` vem como texto, como manda a ADR 0002, e é lido como `BigDecimal`, do mesmo jeito que o GET lê `?valor=`. `intensidade` vem como número JSON.
 - A consulta de uma compra continua `GET /meses/{mesId}/avaliacao` (ADRs 0005 e 0017), sem mudança.
 - Continua valendo da ADR 0005: o mês fica no servidor, identificado por `mesId`.
 
