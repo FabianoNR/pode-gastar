@@ -106,7 +106,8 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Lista completa também entra, sem o cartão protegido, e sugestoes segue vazia (CA72)")
+  @DisplayName(
+      "Lista completa também entra, sem o cartão protegido, e sugestoes segue vazia (CA72)")
   void listaCompletaTambemEntraSemOItemProtegido() {
     Avaliacao avaliacao = avaliar(base(), "1100.00", 3);
 
