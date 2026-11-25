@@ -8,7 +8,8 @@ import java.util.Map;
  * A avaliação do domínio com os textos de negócio já montados pela aplicação. A tela só exibe.
  *
  * @param motivo texto do motivo da decisão; ausente quando a compra é aprovada
- * @param avisos um texto por nome repetido no mês; lista vazia quando não há nada a avisar
+ * @param avisos um texto por nome repetido no mês e, depois, o aviso de intensidade da compra
+ *     (R12), quando há; lista vazia quando não há nada a avisar
  * @param mensagensPorIdDoItem texto de cada item em discussão, pelo id do item
  */
 public record ResultadoDaAvaliacao(

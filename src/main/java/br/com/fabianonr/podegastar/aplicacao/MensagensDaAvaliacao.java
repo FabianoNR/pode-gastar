@@ -1,6 +1,7 @@
 package br.com.fabianonr.podegastar.aplicacao;
 
 import br.com.fabianonr.podegastar.dominio.Avaliacao;
+import br.com.fabianonr.podegastar.dominio.Compra;
 import br.com.fabianonr.podegastar.dominio.Dinheiro;
 import br.com.fabianonr.podegastar.dominio.Item;
 import br.com.fabianonr.podegastar.dominio.NomeRepetido;
@@ -35,6 +36,32 @@ final class MensagensDaAvaliacao {
         + " (ids: "
         + String.join(", ", nomeRepetido.ids())
         + "). São itens diferentes.";
+  }
+
+  /**
+   * Aviso de que a compra é menos desejada que os itens a cortar (R12); nada quando nenhum item é
+   * mais desejado que ela.
+   */
+  static String avisoDeIntensidade(Avaliacao avaliacao, Compra compra) {
+    if (avaliacao.itensMaisDesejadosQueACompra().isEmpty()) {
+      return null;
+    }
+    String nomesEntreAspas =
+        avaliacao.itensMaisDesejadosQueACompra().stream()
+            .map(item -> "\"" + item.nome() + "\"")
+            .collect(Collectors.joining(", "));
+    if (compra.intensidadeInformada()) {
+      return "A compra (intensidade "
+          + compra.intensidade()
+          + ") é menos desejada que os itens a cortar: "
+          + nomesEntreAspas
+          + ".";
+    }
+    return "A intensidade da compra não foi informada e foi considerada "
+        + compra.intensidade()
+        + ". A compra é menos desejada que os itens a cortar: "
+        + nomesEntreAspas
+        + ".";
   }
 
   /** Texto do item em discussão (R8); nada para os demais itens. */
