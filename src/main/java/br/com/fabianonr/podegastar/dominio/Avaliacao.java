@@ -1,7 +1,10 @@
 package br.com.fabianonr.podegastar.dominio;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Resultado da avaliação de uma compra, só com dados. Os textos para o usuário são montados pela
@@ -9,6 +12,8 @@ import java.util.List;
  *
  * @param aindaFaltaria quanto ainda faltaria mesmo cortando todos os itens elegíveis; só quando não
  *     há combinação que cubra a falta e a resposta traz a lista completa
+ * @param itensMaisDesejadosQueACompra itens de {@code sugestoes} e de {@code listaCompleta} com
+ *     intensidade maior que a da compra (R12); vazia fora de {@code CABE_COM_CORTES}
  */
 public record Avaliacao(
     Decisao decisao,
@@ -20,7 +25,8 @@ public record Avaliacao(
     BigDecimal aindaFaltaria,
     List<Sugestao> sugestoes,
     List<Item> listaCompleta,
-    List<NomeRepetido> nomesRepetidos) {
+    List<NomeRepetido> nomesRepetidos,
+    List<Item> itensMaisDesejadosQueACompra) {
 
   static Avaliacao aprovado(BigDecimal livre, BigDecimal totalRestante, BigDecimal saldoRestante) {
     return new Avaliacao(
@@ -31,6 +37,7 @@ public record Avaliacao(
         null,
         null,
         null,
+        List.of(),
         List.of(),
         List.of(),
         List.of());
@@ -46,6 +53,7 @@ public record Avaliacao(
         falta,
         motivo,
         null,
+        List.of(),
         List.of(),
         List.of(),
         List.of());
@@ -68,6 +76,7 @@ public record Avaliacao(
         aindaFaltaria,
         List.copyOf(sugestoes),
         List.copyOf(listaCompleta),
+        List.of(),
         List.of());
   }
 
@@ -83,6 +92,35 @@ public record Avaliacao(
         aindaFaltaria,
         sugestoes,
         listaCompleta,
-        List.copyOf(nomesRepetidosDoMes));
+        List.copyOf(nomesRepetidosDoMes),
+        itensMaisDesejadosQueACompra);
+  }
+
+  /**
+   * A mesma avaliação, com os itens sugeridos ou listados de intensidade estritamente maior que a
+   * da compra (R12). Sem repetição pelo id; só na decisão {@code CABE_COM_CORTES}.
+   */
+  Avaliacao comItensMaisDesejadosQue(Compra compra) {
+    if (decisao != Decisao.CABE_COM_CORTES) {
+      return this;
+    }
+    Map<String, Item> maisDesejadosPorId = new LinkedHashMap<>();
+    Stream.concat(
+            sugestoes.stream().flatMap(sugestao -> sugestao.itens().stream()),
+            listaCompleta.stream())
+        .filter(item -> item.intensidade() > compra.intensidade())
+        .forEach(item -> maisDesejadosPorId.putIfAbsent(item.id(), item));
+    return new Avaliacao(
+        decisao,
+        livre,
+        saldoRestante,
+        totalRestante,
+        falta,
+        motivo,
+        aindaFaltaria,
+        sugestoes,
+        listaCompleta,
+        nomesRepetidos,
+        List.copyOf(maisDesejadosPorId.values()));
   }
 }

@@ -1,6 +1,6 @@
 # 0005: Mês guardado no servidor, consulta por GET
 
-Status: aceita
+Status: aceita; substituída em parte pela ADR 0017 (a consulta ganha o parâmetro opcional `intensidade`, que também afeta o resultado)
 
 Data: 2026-11-11
 

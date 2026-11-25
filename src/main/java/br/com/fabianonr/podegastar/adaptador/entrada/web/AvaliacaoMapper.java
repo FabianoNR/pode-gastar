@@ -30,6 +30,9 @@ final class AvaliacaoMapper {
                   .map(sugestao -> sugestao(sugestao, resultado))
                   .toList(),
               avaliacao.listaCompleta().stream().map(item -> item(item, resultado)).toList(),
+              avaliacao.itensMaisDesejadosQueACompra().stream()
+                  .map(AvaliacaoMapper::itemMaisDesejado)
+                  .toList(),
               resultado.avisos());
       case NAO_CABE ->
           AvaliacaoResponse.naoCabe(
@@ -45,6 +48,10 @@ final class AvaliacaoMapper {
         sugestao.itens().stream().map(item -> item(item, resultado)).toList();
     return new SugestaoResponse(
         sugestao.opcao().name(), itens, Dinheiro.formatar(sugestao.cobre()));
+  }
+
+  private static ItemMaisDesejadoResponse itemMaisDesejado(Item item) {
+    return new ItemMaisDesejadoResponse(item.id(), item.nome(), item.intensidade());
   }
 
   private static ItemResponse item(Item item, ResultadoDaAvaliacao resultado) {

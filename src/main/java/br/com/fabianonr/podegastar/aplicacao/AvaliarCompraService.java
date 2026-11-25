@@ -6,7 +6,9 @@ import br.com.fabianonr.podegastar.aplicacao.porta.saida.MesRepositorio;
 import br.com.fabianonr.podegastar.dominio.Avaliacao;
 import br.com.fabianonr.podegastar.dominio.Compra;
 import br.com.fabianonr.podegastar.dominio.Item;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -28,8 +30,19 @@ public class AvaliarCompraService implements AvaliarCompra {
     return new ResultadoDaAvaliacao(
         avaliacao,
         MensagensDaAvaliacao.motivo(avaliacao),
-        avaliacao.nomesRepetidos().stream().map(MensagensDaAvaliacao::aviso).toList(),
+        avisos(avaliacao, compra),
         mensagensDosItensEmDiscussao(avaliacao));
+  }
+
+  /** Um aviso por nome repetido e, depois, o aviso de intensidade, quando há (R12). */
+  private static List<String> avisos(Avaliacao avaliacao, Compra compra) {
+    List<String> avisos = new ArrayList<>();
+    avaliacao.nomesRepetidos().stream().map(MensagensDaAvaliacao::aviso).forEach(avisos::add);
+    String avisoDeIntensidade = MensagensDaAvaliacao.avisoDeIntensidade(avaliacao, compra);
+    if (avisoDeIntensidade != null) {
+      avisos.add(avisoDeIntensidade);
+    }
+    return avisos;
   }
 
   private static Map<String, String> mensagensDosItensEmDiscussao(Avaliacao avaliacao) {
