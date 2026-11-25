@@ -101,7 +101,7 @@ Destino de cada dúvida:
 
 Na forma que o tipo de mudança pede:
 
-- **API:** o contrato. Rota, parâmetros, códigos de resposta e formato da resposta, com o que muda em relação à seção "Contrato da API" de `docs/spec.md` e à ADR 0005.
+- **API:** o contrato. Rota, parâmetros, códigos de resposta e formato da resposta, com o que muda em relação à seção "Contrato da API" de `docs/spec.md` e às ADRs 0005 (base da consulta: mês no servidor, GET, recurso `avaliacao`) e 0017 (parâmetro `intensidade`, que substitui em parte a forma da consulta da 0005).
 - **Tela** (hoje não há): protótipo ou briefing de Design. Se aparecer, pergunte ao Fabiano como ele quer o protótipo ou o briefing (a definir).
 - **Sem mudança visível** (Dívida, operação): o que muda e onde, em uma ou duas frases.
 
