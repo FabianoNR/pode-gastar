@@ -26,6 +26,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - protegido de corte: sim ou não; o padrão é não. Item protegido nunca é sugerido para corte (R5). A marcação não muda o que o item reserva nem o cálculo do livre e do total restante.
   - A identidade do item é o `id`. Dois itens com o mesmo nome continuam sendo itens diferentes: nunca se fundem nem se escondem por causa do nome.
 - **Compra:** simulação de um gasto novo, com valor, categoria e intensidade (inteiro de 1 a 5, opcional; sem ela vale 1). Não vira item do mês.
+- **Lista de compras:** de 1 a 20 compras consultadas de uma vez, cada uma com um nome, que só identifica a compra na resposta e não muda o resultado. Cada compra é avaliada sozinha contra o mesmo estado do mês: uma não gasta o livre da outra.
 
 ### Status dos itens
 
@@ -104,7 +105,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
 - `categoria`: `DEVO_FAZER`, `QUERO_FAZER` ou `SERIA_LEGAL`.
 - `intensidade`: inteiro de 1 a 5, opcional. Sem ela, vale 1.
 - Não há nome na consulta. O nome só serve para exibição e vai com o registro do item, em uma funcionalidade futura.
-- Como a consulta não altera nada, o método é GET.
+- Como a consulta não altera nada, o método é GET. A consulta de vários itens usa POST (ADR 0018).
 
 Respostas:
 
@@ -121,6 +122,20 @@ Cada sugestão traz `opcao`: `PADRAO`, quando vem da regra de corte (R6); `OPCAO
 
 Todas as respostas 200 trazem `avisos`, uma lista de textos, vazia quando não há nada a avisar. Quando há dois ou mais itens com o mesmo nome no mês, `avisos` traz uma mensagem por nome repetido, citando os nomes e os ids envolvidos. A comparação de nomes ignora maiúsculas e espaços no início e no fim: "Jantar fora" e " jantar FORA " são nomes repetidos. Nenhum item é removido nem escondido por causa disso. Na decisão `CABE_COM_CORTES`, quando `itensMaisDesejadosQueACompra` não está vazia, `avisos` traz também, depois dos avisos de nome repetido, a mensagem de intensidade (R12).
 
+`POST /meses/{mesId}/avaliacoes`
+
+Consulta de vários itens. Nada é criado nem alterado. Pedido:
+`{"itens": [{"nome": "Tênis", "valor": 300.00, "categoria": "QUERO_FAZER", "intensidade": 5}, {"nome": "Livro", "valor": 80.00, "categoria": "QUERO_FAZER"}]}`
+
+- `itens`: lista de 1 a 20 itens.
+- `nome`: texto obrigatório, não vazio. Só identifica o item na resposta.
+- `valor`, `categoria` e `intensidade`: como no GET. `valor` e `intensidade` vêm como número JSON, não como texto. Campos a mais são ignorados.
+
+Respostas:
+
+- **200:** `{"avisos": [...], "avaliacoes": [...]}`. O `avisos` do topo traz os avisos de nome repetido do mês, uma vez só. Cada avaliação traz `nome` (como enviado), `valor` (com duas casas), `categoria` e `intensidade` (1 quando não informada), mais os campos do GET para a mesma decisão. O `avisos` de cada avaliação traz só a mensagem de intensidade (R12), e vem `[]` quando não há. Ordem: maior intensidade primeiro; no empate, a ordem do pedido.
+- **400, 404 e 422:** como no GET, sempre para a lista toda, sem nenhuma avaliação. O `campo` aponta o item pela posição a partir de 0 (por exemplo, `itens[2].valor`). Com mais de um erro, vale o primeiro item com erro e, dentro dele, a ordem nome, valor, categoria, intensidade. A ordem dos códigos é 400, depois 404, depois 422. O 422 vem quando qualquer item cai no limite de 20 itens (R6).
+
 ### Mensagens ao usuário
 
 Os textos exibidos ao usuário (o `motivo` da decisão, os `avisos` e a `mensagem` de item `EM_DISCUSSAO`) são montados pelo serviço de aplicação e vêm prontos na resposta. A tela só exibe.
@@ -132,6 +147,15 @@ Mensagem de intensidade da compra (R12), com os nomes de `itensMaisDesejadosQueA
 - Lista vazia: nenhuma mensagem, com ou sem intensidade informada.
 
 Os erros de formato da requisição (valor inválido, campo obrigatório, categoria fora do conjunto, intensidade fora de 1 a 5 ou não inteira) continuam sendo respondidos pelo adaptador web, com o 400 e o campo apontado.
+
+Na consulta de vários itens, as mensagens de cada campo do item são as do GET. Mensagens próprias da lista:
+
+- `itens` ausente ou corpo vazio: `itens é obrigatório`.
+- `itens` vazia ou com mais de 20 itens: `itens deve ter de 1 a 20 itens`.
+- `itens` que não é lista: `valor inválido para itens`.
+- Item `null`: `item é obrigatório` (campo `itens[i]`).
+- `nome` ausente, vazio ou só com espaços: `nome é obrigatório`; `nome` que não é texto: `valor inválido para nome`.
+- Corpo que não é JSON válido: `corpo da requisição inválido`, sem `campo`.
 
 Exemplo de resposta para `CABE_COM_CORTES`, do pedido `valor=150.00&categoria=SERIA_LEGAL&intensidade=3` (os ids do exemplo são ilustrativos):
 
@@ -247,6 +271,21 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA72.** `valor=1100.00&categoria=QUERO_FAZER&intensidade=3` (lista completa): `itensMaisDesejadosQueACompra` traz viagem (4) e manutenção do carro (5), e `sugestoes` segue vazia. O cartão de crédito, protegido, não aparece.
 - **CA73.** Sem `intensidade` e sem item mais desejado que a compra (`itensMaisDesejadosQueACompra` vazia): `avisos` sem a mensagem de intensidade. Exemplo: `valor=300.00&categoria=QUERO_FAZER` num mês cujos itens a cortar têm intensidade 1.
 
+### Consulta de vários itens (mês base)
+
+Pedidos em `POST /meses/{mesId}/avaliacoes`, no mês base sem a bolsa (livre 100, total restante 1600), salvo quando o critério diz outro mês.
+
+- **CA74.** Itens `Livro` (80.00, `QUERO_FAZER`, sem intensidade), `Tênis` (300.00, `QUERO_FAZER`, 5) e `Viagem extra` (1700.00, `QUERO_FAZER`, 3) respondem 200, `avisos` do topo `[]`, avaliações nesta ordem: Tênis, intensidade 5, `CABE_COM_CORTES`, falta 200, sugestão jantar fora e bola de futebol, `itensMaisDesejadosQueACompra` `[]` (igual ao CA65); Viagem extra, intensidade 3, `NAO_CABE`, falta 100, motivo "compra excede o total que ainda sobra no mês" (igual ao CA6); Livro, intensidade 1, `APROVADO`, livre 100.00, saldo restante 20.00 (igual ao CA1). Cada avaliação repete `nome` (como enviado, sem cortar espaços), `valor` com duas casas (por exemplo `"80.00"`, também quando enviado `80`), `categoria` e `intensidade`.
+- **CA75.** Itens, nesta ordem, `C` (50.00, `QUERO_FAZER`, sem intensidade), `A` (80.00, `QUERO_FAZER`, 2) e `B` (150.00, `SERIA_LEGAL`, 2) respondem na ordem `A` (`APROVADO`, saldo 20.00), `B` (`CABE_COM_CORTES`, falta 50, sugestão bola de futebol) e `C` (`APROVADO`, saldo 50.00, intensidade 1).
+- **CA76.** Itens `X` (300.00, `QUERO_FAZER`, sem intensidade) e `Y` (300.00, `QUERO_FAZER`, 5): o `avisos` de `X` traz `A intensidade da compra não foi informada e foi considerada 1. A compra é menos desejada que os itens a cortar: "Jantar fora no mês", "Bola de futebol".` (igual ao CA67); o de `Y` vem `[]`; o do topo vem `[]`.
+- **CA77.** Mês com dois itens chamados "Jantar fora" (ids `item-5` e `item-9`) e lista de dois itens: o `avisos` do topo traz `Nome repetido neste mês: "Jantar fora" (ids: item-5, item-9). São itens diferentes.` uma vez só; nenhuma avaliação traz esse aviso.
+- **CA78.** Dois itens `Livro` (80.00, `QUERO_FAZER`): 200, duas avaliações `APROVADO`, nenhum aviso.
+- **CA79.** 400 com `campo` `itens` e nenhuma avaliação para: corpo vazio ou sem `itens` (mensagem `itens é obrigatório`); `itens: []` ou 21 itens (mensagem `itens deve ter de 1 a 20 itens`). Corpo que não é JSON válido: 400 sem `campo`, mensagem `corpo da requisição inválido`. Item `null` na lista: 400 com `campo` `itens[i]`, mensagem `item é obrigatório`. `itens` que não é lista: 400 com `campo` `itens`, mensagem `valor inválido para itens`.
+- **CA80.** O segundo item com `valor` 0: 400 com `campo` `itens[1].valor` e nenhuma avaliação. O mesmo, com o campo do item, para `nome` ausente, vazio ou só com espaços (`itens[i].nome`, mensagem `nome é obrigatório`); valor ausente, negativo, com mais de duas casas ou não numérico (`itens[i].valor`); categoria ausente ou fora do conjunto (`itens[i].categoria`); intensidade 0, 6, `2.5`, `2.0` ou `"abc"` (`itens[i].intensidade`). `valor` e `intensidade` só como número JSON: como texto (`"80.00"`, `"3"`) dão `valor inválido para valor` ou `valor inválido para intensidade`. `nome` que não é texto (`123`): `itens[i].nome`, `valor inválido para nome`. Campos a mais no item são ignorados. Posição a partir de 0; mensagens iguais às do GET para o mesmo campo (inclusive `categoria é obrigatório`, como o GET responde hoje). Com mais de um erro, a resposta aponta só o primeiro: o primeiro item da lista com erro e, dentro do item, na ordem nome, valor, categoria, intensidade. A ordem dos códigos é 400, depois 404, depois 422, como no GET (exemplo: item 0 sem nome e item 2 com valor 0, num mês inexistente: 400 com `itens[0].nome`).
+- **CA81.** `mesId` inexistente: 404, no mesmo formato do GET.
+- **CA82.** Mês com orçamento variável 1000 e 21 itens `EM_DISCUSSAO` de 10.00 cada (livre 790, total restante 1000), itens `A` (100.00, `QUERO_FAZER`), que seria `APROVADO`, e `B` (900.00, `QUERO_FAZER`), que cai na checagem de 21 itens no grupo 0 (R6): 422 com a mensagem do GET e nenhuma avaliação.
+- **CA83.** Os critérios do GET (CA1 a CA73 e CB1 a CB5) seguem passando sem alteração.
+
 ### Outros meses (compra `DEVO_FAZER` com item `PARCIAL`)
 
 - **CA17.** Mês com orçamento variável 700 e só três itens: jantar fora (`SERIA_LEGAL`, `PENDENTE`, 200), bola de futebol (`QUERO_FAZER`, `PENDENTE`, 100) e dentista (`DEVO_FAZER`, `PARCIAL`, planejado 300, realizado 100, cortável 200). Livre 100, total restante 600. `valor=600.00&categoria=DEVO_FAZER`: `CABE_COM_CORTES`, falta 500, uma sugestão com jantar fora, bola de futebol e dentista, que somam 500. `listaCompleta` vazia.
@@ -287,3 +326,5 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - Autenticação.
 - Aplicativo mobile.
 - Como o `mesId` é obtido, por usuário ou por grupo: fica para a funcionalidade de grupo.
+- Consulta de vários itens com as compras somadas (cada item é avaliado sozinho).
+- Avaliação parcial da lista: um erro em qualquer item derruba a lista toda.
