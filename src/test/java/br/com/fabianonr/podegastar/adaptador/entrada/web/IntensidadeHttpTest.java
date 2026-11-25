@@ -35,7 +35,7 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("Intensidade 5: o campo novo vem como lista vazia e avisos sem mensagem (CA1)")
+  @DisplayName("Intensidade 5: o campo novo vem como lista vazia e avisos sem mensagem (CA65)")
   void intensidadeCincoTrazOCampoVazio() throws Exception {
     avaliar("300.00", "5")
         .andExpect(status().isOk())
@@ -48,7 +48,7 @@ class IntensidadeHttpTest {
 
   @Test
   @DisplayName(
-      "Intensidade 1: o campo novo lista jantar fora e bola, e avisos traz a mensagem (CA2)")
+      "Intensidade 1: o campo novo lista jantar fora e bola, e avisos traz a mensagem (CA66)")
   void intensidadeUmListaOsItensEAvisa() throws Exception {
     avaliar("300.00", "1")
         .andExpect(status().isOk())
@@ -68,7 +68,7 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("Sem intensidade a resposta é a do CA2, e o aviso diz que valeu 1 (CA3)")
+  @DisplayName("Sem intensidade a resposta é a do CA66, e o aviso diz que valeu 1 (CA67)")
   void semIntensidadeAvisaQueFoiConsideradaUm() throws Exception {
     avaliar("300.00", null)
         .andExpect(status().isOk())
@@ -83,7 +83,7 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("Intensidade 3: o campo novo traz só a viagem, de intensidade 4 (CA4)")
+  @DisplayName("Intensidade 3: o campo novo traz só a viagem, de intensidade 4 (CA68)")
   void intensidadeTresTrazSoAViagem() throws Exception {
     avaliar("600.00", "3")
         .andExpect(status().isOk())
@@ -95,7 +95,7 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("Intensidade 4: a viagem tem intensidade igual e o campo novo vem vazio (CA5)")
+  @DisplayName("Intensidade 4: a viagem tem intensidade igual e o campo novo vem vazio (CA69)")
   void intensidadeQuatroTrazOCampoVazio() throws Exception {
     avaliar("600.00", "4")
         .andExpect(status().isOk())
@@ -105,7 +105,7 @@ class IntensidadeHttpTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"0", "6", "2.5", "abc"})
-  @DisplayName("Intensidade fora de 1 a 5 ou não inteira dá 400 apontando intensidade (CA6)")
+  @DisplayName("Intensidade fora de 1 a 5 ou não inteira dá 400 apontando intensidade (CA70)")
   void intensidadeInvalidaDa400ApontandoOCampo(String intensidade) throws Exception {
     avaliar("300.00", intensidade)
         .andExpect(status().isBadRequest())
@@ -113,7 +113,7 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("APROVADO com intensidade informada não traz o campo novo (CA7)")
+  @DisplayName("APROVADO com intensidade informada não traz o campo novo (CA71)")
   void aprovadoNaoTrazOCampoNovo() throws Exception {
     avaliar("80.00", "1")
         .andExpect(status().isOk())
@@ -123,7 +123,7 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("NAO_CABE com intensidade informada não traz o campo novo (CA7)")
+  @DisplayName("NAO_CABE com intensidade informada não traz o campo novo (CA71)")
   void naoCabeNaoTrazOCampoNovo() throws Exception {
     avaliar("1700.00", "1")
         .andExpect(status().isOk())
@@ -134,7 +134,7 @@ class IntensidadeHttpTest {
 
   @Test
   @DisplayName(
-      "Lista completa: o campo novo traz viagem e manutenção, e sugestoes segue vazia (CA8)")
+      "Lista completa: o campo novo traz viagem e manutenção, e sugestoes segue vazia (CA72)")
   void listaCompletaTrazViagemEManutencao() throws Exception {
     avaliar("1100.00", "3")
         .andExpect(status().isOk())

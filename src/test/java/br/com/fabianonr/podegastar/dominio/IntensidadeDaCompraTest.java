@@ -42,7 +42,7 @@ class IntensidadeDaCompraTest {
 
   @ParameterizedTest
   @ValueSource(ints = {0, 6, -1})
-  @DisplayName("Intensidade fora de 1 a 5 é recusada apontando o campo intensidade (CA6)")
+  @DisplayName("Intensidade fora de 1 a 5 é recusada apontando o campo intensidade (CA70)")
   void intensidadeForaDeUmACincoEhRecusadaApontandoOCampo(int intensidade) {
     assertThatThrownBy(() -> new Compra(valor("300.00"), Categoria.QUERO_FAZER, intensidade))
         .isInstanceOf(ValorInvalidoException.class)
@@ -60,7 +60,7 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Intensidade 5: nenhum item cortado é mais desejado, e a lista vem vazia (CA1)")
+  @DisplayName("Intensidade 5: nenhum item cortado é mais desejado, e a lista vem vazia (CA65)")
   void intensidadeCincoDeixaAListaVazia() {
     Avaliacao avaliacao = avaliar(base(), "300.00", 5);
 
@@ -70,7 +70,7 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Intensidade 1: jantar fora e bola de futebol (2) são mais desejados (CA2)")
+  @DisplayName("Intensidade 1: jantar fora e bola de futebol (2) são mais desejados (CA66)")
   void intensidadeUmListaOsItensDeIntensidadeDois() {
     Avaliacao avaliacao = avaliar(base(), "300.00", 1);
 
@@ -81,7 +81,7 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Sem intensidade informada vale 1 e a lista é a mesma da intensidade 1 (CA3)")
+  @DisplayName("Sem intensidade informada vale 1 e a lista é a mesma da intensidade 1 (CA67)")
   void semIntensidadeAListaEhADaIntensidadeUm() {
     Avaliacao semIntensidade = base().avaliar(new Compra(valor("300.00"), Categoria.QUERO_FAZER));
 
@@ -89,7 +89,7 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Intensidade 3: só a viagem (4) é mais desejada que a compra (CA4)")
+  @DisplayName("Intensidade 3: só a viagem (4) é mais desejada que a compra (CA68)")
   void intensidadeTresListaSoAViagem() {
     Avaliacao avaliacao = avaliar(base(), "600.00", 3);
 
@@ -98,7 +98,7 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Intensidade 4: a viagem tem intensidade igual e não entra (CA5)")
+  @DisplayName("Intensidade 4: a viagem tem intensidade igual e não entra (CA69)")
   void intensidadeIgualNaoEntra() {
     Avaliacao avaliacao = avaliar(base(), "600.00", 4);
 
@@ -106,7 +106,7 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("Lista completa também entra, sem o cartão protegido, e sugestoes segue vazia (CA8)")
+  @DisplayName("Lista completa também entra, sem o cartão protegido, e sugestoes segue vazia (CA72)")
   void listaCompletaTambemEntraSemOItemProtegido() {
     Avaliacao avaliacao = avaliar(base(), "1100.00", 3);
 
@@ -149,14 +149,14 @@ class IntensidadeDaCompraTest {
   }
 
   @Test
-  @DisplayName("APROVADO e NAO_CABE não trazem itens mais desejados, mesmo com intensidade (CA7)")
+  @DisplayName("APROVADO e NAO_CABE não trazem itens mais desejados, mesmo com intensidade (CA71)")
   void aprovadoENaoCabeNaoTrazemItensMaisDesejados() {
     assertThat(avaliar(base(), "80.00", 1).itensMaisDesejadosQueACompra()).isEmpty();
     assertThat(avaliar(base(), "1700.00", 1).itensMaisDesejadosQueACompra()).isEmpty();
   }
 
   @Test
-  @DisplayName("Sem intensidade e sem item mais desejado que a compra, a lista vem vazia (CA9)")
+  @DisplayName("Sem intensidade e sem item mais desejado que a compra, a lista vem vazia (CA73)")
   void semIntensidadeESemItemMaisDesejadoAListaVemVazia() {
     Mes mesComItensDeIntensidadeUm =
         new Mes(

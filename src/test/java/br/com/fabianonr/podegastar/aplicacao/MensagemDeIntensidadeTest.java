@@ -37,7 +37,7 @@ class MensagemDeIntensidadeTest {
   }
 
   @Test
-  @DisplayName("Com intensidade 1 informada, avisos diz que a compra é menos desejada (CA2)")
+  @DisplayName("Com intensidade 1 informada, avisos diz que a compra é menos desejada (CA66)")
   void intensidadeInformadaTrazOAvisoDeMenosDesejada() {
     ResultadoDaAvaliacao resultado = avaliar(compra("300.00", Categoria.QUERO_FAZER, 1));
 
@@ -45,7 +45,7 @@ class MensagemDeIntensidadeTest {
   }
 
   @Test
-  @DisplayName("Sem intensidade, avisos diz que ela foi considerada 1 (CA3)")
+  @DisplayName("Sem intensidade, avisos diz que ela foi considerada 1 (CA67)")
   void semIntensidadeOAvisoDizQueFoiConsideradaUm() {
     ResultadoDaAvaliacao resultado = avaliar(compra("300.00", Categoria.QUERO_FAZER));
 
@@ -57,7 +57,7 @@ class MensagemDeIntensidadeTest {
   }
 
   @Test
-  @DisplayName("Intensidade 5: nenhum item é mais desejado, e avisos não traz mensagem (CA1)")
+  @DisplayName("Intensidade 5: nenhum item é mais desejado, e avisos não traz mensagem (CA65)")
   void semItemMaisDesejadoNaoHaAviso() {
     ResultadoDaAvaliacao resultado = avaliar(compra("300.00", Categoria.QUERO_FAZER, 5));
 
@@ -65,7 +65,7 @@ class MensagemDeIntensidadeTest {
   }
 
   @Test
-  @DisplayName("O aviso cita os nomes dos itens mais desejados, na ordem da lista (CA4)")
+  @DisplayName("O aviso cita os nomes dos itens mais desejados, na ordem da lista (CA68)")
   void oAvisoCitaSoOsItensMaisDesejados() {
     ResultadoDaAvaliacao resultado = avaliar(compra("600.00", Categoria.QUERO_FAZER, 3));
 
@@ -76,7 +76,7 @@ class MensagemDeIntensidadeTest {
   }
 
   @Test
-  @DisplayName("APROVADO e NAO_CABE não trazem o aviso de intensidade (CA7)")
+  @DisplayName("APROVADO e NAO_CABE não trazem o aviso de intensidade (CA71)")
   void aprovadoENaoCabeNaoTrazemAviso() {
     assertThat(avaliar(compra("80.00", Categoria.QUERO_FAZER, 1)).avisos()).isEmpty();
     assertThat(avaliar(compra("1700.00", Categoria.QUERO_FAZER, 1)).avisos()).isEmpty();
@@ -84,7 +84,7 @@ class MensagemDeIntensidadeTest {
 
   @Test
   @DisplayName(
-      "Sem intensidade e sem item mais desejado que a compra, avisos fica sem mensagem (CA9)")
+      "Sem intensidade e sem item mais desejado que a compra, avisos fica sem mensagem (CA73)")
   void semIntensidadeESemItemMaisDesejadoNaoHaAviso() {
     Mes mes =
         new Mes(
