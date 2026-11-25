@@ -25,10 +25,19 @@ public class AvaliacaoController {
   public AvaliacaoResponse avaliar(
       @PathVariable String mesId,
       @RequestParam BigDecimal valor,
-      @RequestParam Categoria categoria) {
+      @RequestParam Categoria categoria,
+      @RequestParam(required = false) Integer intensidade) {
     if (valor.stripTrailingZeros().scale() > CASAS_DECIMAIS) {
-      throw new ValorInvalidoException("valor deve ter no máximo duas casas decimais");
+      throw new ValorInvalidoException("valor", "valor deve ter no máximo duas casas decimais");
     }
-    return AvaliacaoMapper.paraResposta(avaliarCompra.avaliar(mesId, new Compra(valor, categoria)));
+    return AvaliacaoMapper.paraResposta(
+        avaliarCompra.avaliar(mesId, compraDe(valor, categoria, intensidade)));
+  }
+
+  private static Compra compraDe(BigDecimal valor, Categoria categoria, Integer intensidade) {
+    if (intensidade == null) {
+      return new Compra(valor, categoria);
+    }
+    return new Compra(valor, categoria, intensidade);
   }
 }

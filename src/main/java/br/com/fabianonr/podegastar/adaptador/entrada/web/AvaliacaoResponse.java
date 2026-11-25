@@ -15,11 +15,12 @@ public record AvaliacaoResponse(
     String motivo,
     List<SugestaoResponse> sugestoes,
     List<ItemResponse> listaCompleta,
+    List<ItemMaisDesejadoResponse> itensMaisDesejadosQueACompra,
     List<String> avisos) {
 
   static AvaliacaoResponse aprovada(String livre, String saldoRestante, List<String> avisos) {
     return new AvaliacaoResponse(
-        Decisao.APROVADO.name(), null, livre, saldoRestante, null, null, null, null, avisos);
+        Decisao.APROVADO.name(), null, livre, saldoRestante, null, null, null, null, null, avisos);
   }
 
   static AvaliacaoResponse cabeComCortes(
@@ -29,6 +30,7 @@ public record AvaliacaoResponse(
       String motivo,
       List<SugestaoResponse> sugestoes,
       List<ItemResponse> listaCompleta,
+      List<ItemMaisDesejadoResponse> itensMaisDesejadosQueACompra,
       List<String> avisos) {
     return new AvaliacaoResponse(
         Decisao.CABE_COM_CORTES.name(),
@@ -39,12 +41,22 @@ public record AvaliacaoResponse(
         motivo,
         sugestoes,
         listaCompleta,
+        itensMaisDesejadosQueACompra,
         avisos);
   }
 
   static AvaliacaoResponse naoCabe(
       String totalRestante, String falta, String motivo, List<String> avisos) {
     return new AvaliacaoResponse(
-        Decisao.NAO_CABE.name(), totalRestante, null, null, falta, motivo, null, null, avisos);
+        Decisao.NAO_CABE.name(),
+        totalRestante,
+        null,
+        null,
+        falta,
+        motivo,
+        null,
+        null,
+        null,
+        avisos);
   }
 }
