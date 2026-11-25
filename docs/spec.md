@@ -25,7 +25,7 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
   - decisor responsável: só para `EM_DISCUSSAO`.
   - protegido de corte: sim ou não; o padrão é não. Item protegido nunca é sugerido para corte (R5). A marcação não muda o que o item reserva nem o cálculo do livre e do total restante.
   - A identidade do item é o `id`. Dois itens com o mesmo nome continuam sendo itens diferentes: nunca se fundem nem se escondem por causa do nome.
-- **Compra:** simulação de um gasto novo, com valor e categoria. Não vira item do mês.
+- **Compra:** simulação de um gasto novo, com valor, categoria e intensidade (inteiro de 1 a 5, opcional; sem ela vale 1). Não vira item do mês.
 
 ### Status dos itens
 
@@ -93,23 +93,25 @@ Durante o mês, quero saber se uma compra cabe no orçamento sem tirar dinheiro 
 - **R9.** Investimento: `APLICADO` é imutável. `PLANEJADO` pode ser editado, mas a edição fica fora desta fase.
 - **R10.** A decisão só mostra o que sairia. Quem executa o corte fica fora desta fase.
 - **R11.** Compra `SERIA_LEGAL`: só entram nas sugestões itens `SERIA_LEGAL` elegíveis (R5) e itens `EM_DISCUSSAO`, de qualquer categoria, como em R6. Itens `QUERO_FAZER` e `DEVO_FAZER` em qualquer outro status (`PENDENTE` ou `PARCIAL`) nunca entram nesse cálculo, nem quando os demais não cobrem a compra. Nesse caso a decisão é `NAO_CABE`, com o motivo da R6.
+- **R12.** Intensidade da compra. Só a decisão `CABE_COM_CORTES` considera a intensidade. Os itens de `sugestoes` e de `listaCompleta` com intensidade estritamente maior que a da compra (iguais não entram), sem repetição pelo id, formam `itensMaisDesejadosQueACompra`, na ordem em que aparecem primeiro (`sugestoes`, depois `listaCompleta`). A intensidade não muda quais itens são sugeridos nem a ordem (R6, R7). Quando a lista não está vazia, `avisos` ganha uma mensagem (ver "Mensagens ao usuário"). `APROVADO` e `NAO_CABE` não trazem o campo.
 
 ## Contrato da API (rascunho)
 
-`GET /meses/{mesId}/avaliacao?valor={decimal}&categoria={categoria}`
+`GET /meses/{mesId}/avaliacao?valor={decimal}&categoria={categoria}&intensidade={inteiro}`
 
 - `mesId`: identifica o mês guardado no servidor. Como ele é obtido, por usuário ou por grupo, fica para a funcionalidade de grupo.
 - `valor`: decimal positivo com até duas casas, por exemplo `150.00`.
 - `categoria`: `DEVO_FAZER`, `QUERO_FAZER` ou `SERIA_LEGAL`.
+- `intensidade`: inteiro de 1 a 5, opcional. Sem ela, vale 1.
 - Não há nome na consulta. O nome só serve para exibição e vai com o registro do item, em uma funcionalidade futura.
 - Como a consulta não altera nada, o método é GET.
 
 Respostas:
 
 - **200, `APROVADO`:** `livre` antes da compra, `saldoRestante` depois, sem sugestões.
-- **200, `CABE_COM_CORTES`:** `totalRestante`, `livre`, `falta`, `motivo`, `sugestoes` (com itens e o valor que cobrem) e `listaCompleta` (quando não há combinação que cubra).
+- **200, `CABE_COM_CORTES`:** `totalRestante`, `livre`, `falta`, `motivo`, `sugestoes` (com itens e o valor que cobrem) e `listaCompleta` (quando não há combinação que cubra). Traz também `itensMaisDesejadosQueACompra` (R12), sempre presente: lista de `id`, `nome` e `intensidade`, `[]` quando vazia.
 - **200, `NAO_CABE`:** `totalRestante`, `falta` e `motivo`, sem sugestões. `falta` é compra − total restante (R4) ou, na compra `SERIA_LEGAL` sem itens suficientes (R6), o que ainda faltaria depois de cortar todos os elegíveis.
-- **400:** valor inválido ou categoria fora do conjunto. A mensagem aponta o campo.
+- **400:** valor inválido, categoria fora do conjunto ou intensidade fora de 1 a 5 ou não inteira. A mensagem aponta o campo.
 - **404:** `mesId` não existe.
 - **422:** grupo com mais de 20 itens ao calcular as sugestões (R6, "Limite de 20 itens"). A resposta segue o formato dos demais erros (`campo`, quando se aplica, e `mensagem`), por exemplo `"itens demais para calcular sugestões de corte neste mês (máximo 20 por grupo)"`.
 
@@ -117,13 +119,19 @@ Cada item em `sugestoes` e em `listaCompleta` traz `id`, `nome`, `status` e, só
 
 Cada sugestão traz `opcao`: `PADRAO`, quando vem da regra de corte (R6); `OPCAO_1`, `OPCAO_2` ou `OPCAO_3`, quando é uma das opções da compra `DEVO_FAZER` (R7).
 
-Todas as respostas 200 trazem `avisos`, uma lista de textos, vazia quando não há nada a avisar. Quando há dois ou mais itens com o mesmo nome no mês, `avisos` traz uma mensagem por nome repetido, citando os nomes e os ids envolvidos. A comparação de nomes ignora maiúsculas e espaços no início e no fim: "Jantar fora" e " jantar FORA " são nomes repetidos. Nenhum item é removido nem escondido por causa disso.
+Todas as respostas 200 trazem `avisos`, uma lista de textos, vazia quando não há nada a avisar. Quando há dois ou mais itens com o mesmo nome no mês, `avisos` traz uma mensagem por nome repetido, citando os nomes e os ids envolvidos. A comparação de nomes ignora maiúsculas e espaços no início e no fim: "Jantar fora" e " jantar FORA " são nomes repetidos. Nenhum item é removido nem escondido por causa disso. Na decisão `CABE_COM_CORTES`, quando `itensMaisDesejadosQueACompra` não está vazia, `avisos` traz também, depois dos avisos de nome repetido, a mensagem de intensidade (R12).
 
 ### Mensagens ao usuário
 
 Os textos exibidos ao usuário (o `motivo` da decisão, os `avisos` e a `mensagem` de item `EM_DISCUSSAO`) são montados pelo serviço de aplicação e vêm prontos na resposta. A tela só exibe.
 
-Os erros de formato da requisição (valor inválido, campo obrigatório, categoria fora do conjunto) continuam sendo respondidos pelo adaptador web, com o 400 e o campo apontado.
+Mensagem de intensidade da compra (R12), com os nomes de `itensMaisDesejadosQueACompra` entre aspas, separados por vírgula, na ordem da lista:
+
+- Intensidade informada: `A compra (intensidade {N}) é menos desejada que os itens a cortar: {nomes entre aspas}.`
+- Não informada: `A intensidade da compra não foi informada e foi considerada 1. A compra é menos desejada que os itens a cortar: {nomes entre aspas}.`
+- Lista vazia: nenhuma mensagem, com ou sem intensidade informada.
+
+Os erros de formato da requisição (valor inválido, campo obrigatório, categoria fora do conjunto, intensidade fora de 1 a 5 ou não inteira) continuam sendo respondidos pelo adaptador web, com o 400 e o campo apontado.
 
 Exemplo de resposta para `CABE_COM_CORTES` (os ids do exemplo são ilustrativos):
 
@@ -151,6 +159,7 @@ Exemplo de resposta para `CABE_COM_CORTES` (os ids do exemplo são ilustrativos)
     }
   ],
   "listaCompleta": [],
+  "itensMaisDesejadosQueACompra": [],
   "avisos": []
 }
 ```
@@ -225,6 +234,18 @@ Com a bolsa: total restante 1600, livre 10 (1600 − 1500 − 90).
 - **CA19.** `valor=600.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 500, uma sugestão com jantar fora (120), bola de futebol (80) e viagem (300), que somam 500. Os `SERIA_LEGAL` somam 200, então do `QUERO_FAZER` entra só o mínimo que cobre os 300 restantes: a viagem. O item para casa não entra, mesmo tendo menor intensidade que a viagem.
 - **CA20.** `valor=400.00&categoria=QUERO_FAZER`: `CABE_COM_CORTES`, falta 300, uma sugestão com jantar fora (120) e item para casa (200), que somam 320. Os `SERIA_LEGAL` somam 200, então do `QUERO_FAZER` entra só o mínimo que cobre os 100 restantes: o item para casa. Depois dele faltam 100, e o jantar fora cobre sozinho. A viagem (300) cobriria a falta sozinha, mas é `QUERO_FAZER` e só entra depois dos `SERIA_LEGAL`.
 - **CA63.** A marcação do cartão não muda o cálculo: no mês base, livre 100 e total restante 1600, e os CA1 a CA20 e os CB1 a CB5 seguem com os mesmos valores.
+
+### Intensidade da compra (mês base)
+
+- **CA65.** `valor=300.00&categoria=QUERO_FAZER&intensidade=5`: `CABE_COM_CORTES`, falta 200, sugestão com jantar fora e bola de futebol; `itensMaisDesejadosQueACompra` vem `[]` e `avisos` não traz a mensagem de intensidade.
+- **CA66.** `valor=300.00&categoria=QUERO_FAZER&intensidade=1`: mesma sugestão; `itensMaisDesejadosQueACompra` traz jantar fora e bola de futebol (intensidade 2), e `avisos` traz `A compra (intensidade 1) é menos desejada que os itens a cortar: "Jantar fora no mês", "Bola de futebol".`
+- **CA67.** O pedido do CA66 sem `intensidade`: resposta idêntica à do CA66, e a mensagem em `avisos` é `A intensidade da compra não foi informada e foi considerada 1. A compra é menos desejada que os itens a cortar: "Jantar fora no mês", "Bola de futebol".`
+- **CA68.** `valor=600.00&categoria=QUERO_FAZER&intensidade=3`: sugestão com jantar fora, bola de futebol e viagem; `itensMaisDesejadosQueACompra` traz só a viagem (intensidade 4).
+- **CA69.** `valor=600.00&categoria=QUERO_FAZER&intensidade=4`: mesma sugestão; `itensMaisDesejadosQueACompra` vem `[]` (a viagem tem intensidade igual à da compra).
+- **CA70.** `intensidade` 0, 6, `2.5` ou `abc`: 400, com a mensagem apontando o campo `intensidade`.
+- **CA71.** `APROVADO` e `NAO_CABE` com `intensidade` informada: resposta igual à de hoje, sem `itensMaisDesejadosQueACompra`.
+- **CA72.** `valor=1100.00&categoria=QUERO_FAZER&intensidade=3` (lista completa): `itensMaisDesejadosQueACompra` traz viagem (4) e manutenção do carro (5), e `sugestoes` segue vazia. O cartão de crédito, protegido, não aparece.
+- **CA73.** Sem `intensidade` e sem item mais desejado que a compra (`itensMaisDesejadosQueACompra` vazia): `avisos` sem a mensagem de intensidade. Exemplo: `valor=300.00&categoria=QUERO_FAZER` num mês cujos itens a cortar têm intensidade 1.
 
 ### Outros meses (compra `DEVO_FAZER` com item `PARCIAL`)
 
