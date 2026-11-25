@@ -22,6 +22,13 @@ class IntensidadeDaCompraTest {
     return avaliacao.itensMaisDesejadosQueACompra().stream().map(Item::nome).toList();
   }
 
+  private static List<String> nomesSugeridos(Avaliacao avaliacao) {
+    return avaliacao.sugestoes().stream()
+        .flatMap(sugestao -> sugestao.itens().stream())
+        .map(Item::nome)
+        .toList();
+  }
+
   @Test
   @DisplayName("Compra sem intensidade vale 1 e não conta como informada")
   void compraSemIntensidadeValeUmENaoEhInformada() {
@@ -64,6 +71,8 @@ class IntensidadeDaCompraTest {
   void intensidadeCincoDeixaAListaVazia() {
     Avaliacao avaliacao = avaliar(base(), "300.00", 5);
 
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomesSugeridos(avaliacao)).containsExactly(JANTAR, BOLA);
     assertThat(avaliacao.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
     assertThat(avaliacao.falta()).isEqualByComparingTo("200");
     assertThat(avaliacao.itensMaisDesejadosQueACompra()).isEmpty();
@@ -74,6 +83,8 @@ class IntensidadeDaCompraTest {
   void intensidadeUmListaOsItensDeIntensidadeDois() {
     Avaliacao avaliacao = avaliar(base(), "300.00", 1);
 
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomesSugeridos(avaliacao)).containsExactly(JANTAR, BOLA);
     assertThat(nomesMaisDesejados(avaliacao)).containsExactly(JANTAR, BOLA);
     assertThat(avaliacao.itensMaisDesejadosQueACompra())
         .extracting(Item::intensidade)
@@ -85,7 +96,10 @@ class IntensidadeDaCompraTest {
   void semIntensidadeAListaEhADaIntensidadeUm() {
     Avaliacao semIntensidade = base().avaliar(new Compra(valor("300.00"), Categoria.QUERO_FAZER));
 
-    assertThat(semIntensidade).isEqualTo(avaliar(base(), "300.00", 1));
+    assertThat(semIntensidade.decisao()).isEqualTo(Decisao.CABE_COM_CORTES);
+    assertThat(semIntensidade.falta()).isEqualByComparingTo("200");
+    assertThat(nomesSugeridos(semIntensidade)).containsExactly(JANTAR, BOLA);
+    assertThat(nomesMaisDesejados(semIntensidade)).containsExactly(JANTAR, BOLA);
   }
 
   @Test
@@ -93,6 +107,8 @@ class IntensidadeDaCompraTest {
   void intensidadeTresListaSoAViagem() {
     Avaliacao avaliacao = avaliar(base(), "600.00", 3);
 
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomesSugeridos(avaliacao)).containsExactly(JANTAR, BOLA, VIAGEM);
     assertThat(nomesMaisDesejados(avaliacao)).containsExactly(VIAGEM);
     assertThat(avaliacao.itensMaisDesejadosQueACompra().get(0).intensidade()).isEqualTo(4);
   }
@@ -102,6 +118,8 @@ class IntensidadeDaCompraTest {
   void intensidadeIgualNaoEntra() {
     Avaliacao avaliacao = avaliar(base(), "600.00", 4);
 
+    assertThat(avaliacao.sugestoes()).hasSize(1);
+    assertThat(nomesSugeridos(avaliacao)).containsExactly(JANTAR, BOLA, VIAGEM);
     assertThat(avaliacao.itensMaisDesejadosQueACompra()).isEmpty();
   }
 
@@ -121,8 +139,10 @@ class IntensidadeDaCompraTest {
     Avaliacao comIntensidadeUm = avaliar(base(), "600.00", 1);
     Avaliacao comIntensidadeCinco = avaliar(base(), "600.00", 5);
 
-    assertThat(comIntensidadeUm.sugestoes()).isEqualTo(comIntensidadeCinco.sugestoes());
-    assertThat(comIntensidadeUm.falta()).isEqualByComparingTo(comIntensidadeCinco.falta());
+    assertThat(nomesSugeridos(comIntensidadeUm)).containsExactly(JANTAR, BOLA, VIAGEM);
+    assertThat(nomesSugeridos(comIntensidadeCinco)).containsExactly(JANTAR, BOLA, VIAGEM);
+    assertThat(comIntensidadeUm.falta()).isEqualByComparingTo("500");
+    assertThat(comIntensidadeCinco.falta()).isEqualByComparingTo("500");
   }
 
   @Test

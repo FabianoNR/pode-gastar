@@ -41,7 +41,10 @@ class IntensidadeHttpTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("CABE_COM_CORTES"))
         .andExpect(jsonPath("$.falta").value("200.00"))
-        .andExpect(jsonPath("$.sugestoes[0].itens", hasSize(2)))
+        .andExpect(jsonPath("$.sugestoes", hasSize(1)))
+        .andExpect(
+            jsonPath("$.sugestoes[0].itens[*].nome")
+                .value(contains("Jantar fora no mês", "Bola de futebol")))
         .andExpect(jsonPath("$.itensMaisDesejadosQueACompra", hasSize(0)))
         .andExpect(jsonPath("$.avisos", hasSize(0)));
   }
@@ -53,12 +56,17 @@ class IntensidadeHttpTest {
     avaliar("300.00", "1")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("CABE_COM_CORTES"))
-        .andExpect(jsonPath("$.sugestoes[0].itens", hasSize(2)))
+        .andExpect(jsonPath("$.sugestoes", hasSize(1)))
+        .andExpect(
+            jsonPath("$.sugestoes[0].itens[*].nome")
+                .value(contains("Jantar fora no mês", "Bola de futebol")))
         .andExpect(jsonPath("$.itensMaisDesejadosQueACompra", hasSize(2)))
-        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra[0].id").value("item-5"))
-        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra[0].nome").value("Jantar fora no mês"))
-        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra[0].intensidade").value(2))
-        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra[1].nome").value("Bola de futebol"))
+        .andExpect(
+            jsonPath("$.itensMaisDesejadosQueACompra[*].id").value(contains("item-5", "item-6")))
+        .andExpect(
+            jsonPath("$.itensMaisDesejadosQueACompra[*].nome")
+                .value(contains("Jantar fora no mês", "Bola de futebol")))
+        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra[*].intensidade").value(contains(2, 2)))
         .andExpect(jsonPath("$.avisos", hasSize(1)))
         .andExpect(
             jsonPath("$.avisos[0]")
@@ -68,11 +76,22 @@ class IntensidadeHttpTest {
   }
 
   @Test
-  @DisplayName("Sem intensidade a resposta é a do CA66, e o aviso diz que valeu 1 (CA67)")
+  @DisplayName("Sem intensidade a resposta é a da intensidade 1, e o aviso diz que valeu 1 (CA67)")
   void semIntensidadeAvisaQueFoiConsideradaUm() throws Exception {
     avaliar("300.00", null)
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra", hasSize(2)))
+        .andExpect(jsonPath("$.decisao").value("CABE_COM_CORTES"))
+        .andExpect(jsonPath("$.falta").value("200.00"))
+        .andExpect(jsonPath("$.sugestoes", hasSize(1)))
+        .andExpect(
+            jsonPath("$.sugestoes[0].itens[*].nome")
+                .value(contains("Jantar fora no mês", "Bola de futebol")))
+        .andExpect(
+            jsonPath("$.itensMaisDesejadosQueACompra[*].id").value(contains("item-5", "item-6")))
+        .andExpect(
+            jsonPath("$.itensMaisDesejadosQueACompra[*].nome")
+                .value(contains("Jantar fora no mês", "Bola de futebol")))
+        .andExpect(jsonPath("$.itensMaisDesejadosQueACompra[*].intensidade").value(contains(2, 2)))
         .andExpect(jsonPath("$.avisos", hasSize(1)))
         .andExpect(
             jsonPath("$.avisos[0]")
@@ -87,7 +106,11 @@ class IntensidadeHttpTest {
   void intensidadeTresTrazSoAViagem() throws Exception {
     avaliar("600.00", "3")
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.sugestoes[0].itens", hasSize(3)))
+        .andExpect(jsonPath("$.sugestoes", hasSize(1)))
+        .andExpect(
+            jsonPath("$.sugestoes[0].itens[*].nome")
+                .value(
+                    contains("Jantar fora no mês", "Bola de futebol", "Viagem de fim de semana")))
         .andExpect(jsonPath("$.itensMaisDesejadosQueACompra", hasSize(1)))
         .andExpect(
             jsonPath("$.itensMaisDesejadosQueACompra[0].nome").value("Viagem de fim de semana"))
@@ -99,7 +122,11 @@ class IntensidadeHttpTest {
   void intensidadeQuatroTrazOCampoVazio() throws Exception {
     avaliar("600.00", "4")
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.sugestoes[0].itens", hasSize(3)))
+        .andExpect(jsonPath("$.sugestoes", hasSize(1)))
+        .andExpect(
+            jsonPath("$.sugestoes[0].itens[*].nome")
+                .value(
+                    contains("Jantar fora no mês", "Bola de futebol", "Viagem de fim de semana")))
         .andExpect(jsonPath("$.itensMaisDesejadosQueACompra", hasSize(0)));
   }
 
@@ -118,6 +145,8 @@ class IntensidadeHttpTest {
     avaliar("80.00", "1")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("APROVADO"))
+        .andExpect(jsonPath("$.livre").value("100.00"))
+        .andExpect(jsonPath("$.saldoRestante").value("20.00"))
         .andExpect(jsonPath("$.itensMaisDesejadosQueACompra").doesNotExist())
         .andExpect(jsonPath("$.avisos", hasSize(0)));
   }
@@ -128,6 +157,9 @@ class IntensidadeHttpTest {
     avaliar("1700.00", "1")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.decisao").value("NAO_CABE"))
+        .andExpect(jsonPath("$.totalRestante").value("1600.00"))
+        .andExpect(jsonPath("$.falta").value("100.00"))
+        .andExpect(jsonPath("$.motivo").value("compra excede o total que ainda sobra no mês"))
         .andExpect(jsonPath("$.itensMaisDesejadosQueACompra").doesNotExist())
         .andExpect(jsonPath("$.avisos", hasSize(0)));
   }
